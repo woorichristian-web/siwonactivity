@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>Grammar Quest · 영어 문법 게임</title>
+<title>SiwonXAI Language Game Center</title>
 <style>
   :root{
     --bg:#0e1525; --bg2:#141d33; --card:#ffffff; --ink:#1e293b; --muted:#64748b;
@@ -65,6 +65,42 @@
     font-size:11.5px;font-weight:600;background:rgba(255,255,255,.16);border:1px solid rgba(255,255,255,.14);
     padding:4px 13px;border-radius:99px;margin-top:6px;letter-spacing:.2px;
   }
+
+  /* ===== 루트 메뉴: 3칸 나란히 (좁은 화면에선 세로) ===== */
+  #rootCats{grid-template-columns:repeat(3,1fr)}
+  @media(max-width:560px){ #rootCats{grid-template-columns:1fr} }
+
+  /* ===== 언어 선택 (Language Game Center) ===== */
+  .hero .globe{font-size:44px;margin-bottom:8px}
+  .langs{display:grid;grid-template-columns:repeat(4,1fr);gap:13px;margin-top:14px}
+  @media(max-width:600px){ .langs{grid-template-columns:repeat(3,1fr)} }
+  @media(max-width:420px){ .langs{grid-template-columns:repeat(2,1fr)} }
+  .lang{
+    position:relative;border:1px solid var(--line);border-radius:16px;padding:16px 8px 14px;cursor:pointer;
+    background:var(--soft);color:var(--ink);text-align:center;
+    display:flex;flex-direction:column;align-items:center;gap:5px;
+    transition:transform .15s ease, box-shadow .15s ease, border-color .15s ease, background .15s ease;
+    user-select:none;-webkit-user-select:none;font-family:inherit;
+  }
+  .lang .flag{font-size:30px;line-height:1}
+  .lang .nm{font-weight:700;font-size:14.5px;letter-spacing:-.2px}
+  .lang .kr{font-size:11.5px;color:var(--muted);font-weight:500}
+  .lang:hover{transform:translateY(-3px);box-shadow:0 14px 26px -16px rgba(2,6,23,.35);border-color:#c7d2fe;background:#fff}
+  .lang:active{transform:translateY(0)}
+  .lang.ready{
+    background:linear-gradient(155deg,var(--blue),var(--blue-d));color:#fff;border-color:transparent;
+    box-shadow:0 14px 30px -16px rgba(2,6,23,.55);
+  }
+  .lang.ready .kr{color:rgba(255,255,255,.8)}
+  .lang.ready:hover{filter:brightness(1.06)}
+  .lang.soon .flag,.lang.soon .nm{opacity:.55}
+  .lang .badge{
+    position:absolute;top:8px;right:8px;font-size:9.5px;font-weight:700;letter-spacing:.2px;
+    padding:2px 7px;border-radius:99px;background:#e2e8f0;color:#64748b;
+  }
+  .lang.ready .badge{background:rgba(255,255,255,.22);color:#fff}
+  @keyframes langShake{0%,100%{transform:translateX(0)}25%{transform:translateX(-5px)}75%{transform:translateX(5px)}}
+  .lang.shake{animation:langShake .3s ease 2}
 
   /* ===== Quiz ===== */
   .topbar{display:flex;align-items:center;gap:12px;margin-bottom:16px}
@@ -251,15 +287,29 @@
 <body>
 <div class="app">
   <div class="hud">
-    <div class="brand"><span class="logo">🚀</span> English Quest</div>
+    <div class="brand"><span class="logo" id="brandLogo">🌏</span> <span id="brandName">SiwonXAI Language Game Center</span></div>
     <div class="chip xp">⭐ <span id="xp">0</span> XP</div>
     <div class="chip streak">🔥 <span id="streak">0</span></div>
     <button class="soundbtn" id="soundBtn" title="소리 켜기/끄기">🔊</button>
   </div>
 
-  <!-- ============ ROOT HOME (Quest / Test) ============ -->
-  <section id="rootHome" class="card">
+  <!-- ============ LANGUAGE HOME (SiwonXAI Language Game Center) ============ -->
+  <section id="langHome" class="card">
     <div class="hero">
+      <div class="globe">🌏</div>
+      <h1>SiwonXAI Language Game Center</h1>
+      <p>학습하고 싶은 언어를 선택하세요<br>Choose the language you want to learn</p>
+    </div>
+    <div class="langs" id="langs"></div>
+  </section>
+
+  <!-- ============ ROOT HOME (Quest / Test) ============ -->
+  <section id="rootHome" class="card hide">
+    <div class="topbar">
+      <button class="iconbtn" id="rootBack" title="언어 선택으로">←</button>
+      <div class="qtag" style="margin:0">🇺🇸 English</div>
+    </div>
+    <div class="hero" style="margin-top:6px">
       <h1>English Quest</h1>
       <p>퀘스트로 즐기며 배우거나,<br>실전 테스트로 내 레벨을 진단해요.</p>
     </div>
@@ -1027,7 +1077,7 @@ function flashLocked(node){
 }
 
 function show(which){
-  ["rootHome","modeHome","testHome","test","catHome","quiz","speak","trainer","result","testResult"].forEach(s=>$(s).classList.toggle("hide", s!==which));
+  ["langHome","rootHome","modeHome","testHome","test","catHome","quiz","speak","trainer","result","testResult"].forEach(s=>$(s).classList.toggle("hide", s!==which));
 }
 
 /* =========================================================
@@ -1825,14 +1875,55 @@ const TESTS = {
   listen: { name:"리스닝", icon:"🎧", mode:"listen", bands:4, levels:LV4, items:TEST_LISTEN },
 };
 
+/* ---------- 언어 선택 (SiwonXAI Language Game Center) ---------- */
+const LANGS = [
+  { code:"en", native:"English",          kr:"영어",       flag:"🇺🇸", ready:true  },
+  { code:"zh", native:"中文",              kr:"중국어",     flag:"🇨🇳", ready:false },
+  { code:"ja", native:"日本語",            kr:"일본어",     flag:"🇯🇵", ready:false },
+  { code:"vi", native:"Tiếng Việt",       kr:"베트남어",   flag:"🇻🇳", ready:false },
+  { code:"es", native:"Español",          kr:"스페인어",   flag:"🇪🇸", ready:false },
+  { code:"fr", native:"Français",         kr:"프랑스어",   flag:"🇫🇷", ready:false },
+  { code:"de", native:"Deutsch",          kr:"독일어",     flag:"🇩🇪", ready:false },
+  { code:"ru", native:"Русский",          kr:"러시아어",   flag:"🇷🇺", ready:false },
+  { code:"th", native:"ภาษาไทย",          kr:"태국어",     flag:"🇹🇭", ready:false },
+  { code:"id", native:"Bahasa Indonesia", kr:"인도네시아어", flag:"🇮🇩", ready:false },
+  { code:"ar", native:"العربية",          kr:"아랍어",     flag:"🇸🇦", ready:false },
+  { code:"ko", native:"한국어",            kr:"한국어",     flag:"🇰🇷", ready:false },
+];
+function setBrand(logo, name){ $("brandLogo").textContent=logo; $("brandName").textContent=name; }
+function renderLangHome(){
+  Sound.stopBGM();
+  setBrand("🌏","SiwonXAI Language Game Center");
+  const wrap=$("langs");
+  if(!wrap.childElementCount){
+    LANGS.forEach(l=>{
+      const el=document.createElement("button");
+      el.className="lang "+(l.ready?"ready":"soon"); el.type="button"; el.dataset.lang=l.code;
+      el.innerHTML=`<span class="badge">${l.ready?"OPEN":"준비 중"}</span>
+        <span class="flag">${l.flag}</span><span class="nm">${l.native}</span><span class="kr">${l.kr}</span>`;
+      wrap.appendChild(el);
+    });
+  }
+  show("langHome");
+}
+$("langs").addEventListener("click",(e)=>{
+  const btn=e.target.closest(".lang"); if(!btn) return; Sound.ensure();
+  const lang=LANGS.find(l=>l.code===btn.dataset.lang); if(!lang) return;
+  if(lang.ready){ renderRootHome(); return; }
+  btn.classList.remove("shake"); void btn.offsetWidth; btn.classList.add("shake");
+  const badge=btn.querySelector(".badge"); const prev=badge.textContent;
+  badge.textContent="곧 만나요!"; setTimeout(()=>{ badge.textContent=prev; }, 1200);
+});
+
 /* ---------- 루트 메뉴 (Quest / Test) ---------- */
-function renderRootHome(){ Sound.startBGM(); show("rootHome"); }
+function renderRootHome(){ Sound.startBGM(); setBrand("🚀","English Quest"); show("rootHome"); }
 $("rootCats").addEventListener("click",(e)=>{
   const card=e.target.closest(".cat"); if(!card) return; Sound.ensure();
   if(card.dataset.root==="quest") renderModeHome();
   else if(card.dataset.root==="test") renderTestHome();
   else if(card.dataset.root==="trainer") renderTrainerHome();
 });
+$("rootBack").onclick = ()=>{ resetStreak(); renderLangHome(); };
 $("modeBack").onclick = ()=>{ resetStreak(); renderRootHome(); };
 $("testBack").onclick = ()=>{ resetStreak(); renderRootHome(); };
 
@@ -1967,7 +2058,7 @@ $("trAgain").onclick = ()=> startTest(testState.domain);
 $("trBack").onclick  = ()=> renderTestHome();
 
 /* ---------- 시작 ---------- */
-renderRootHome();
+renderLangHome();
 </script>
 </body>
 </html>
