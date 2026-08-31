@@ -93,6 +93,34 @@
   .course .go{flex:none;font-size:17px;color:#94a3b8;font-weight:700}
   .course:hover .go{color:var(--blue)}
 
+  /* ===== 학습 카드 (프레임 익히기 / 어휘 암기) ===== */
+  .fcard{
+    border:1px solid var(--line);border-radius:18px;background:var(--soft);
+    min-height:240px;padding:28px 22px;display:flex;flex-direction:column;
+    align-items:center;justify-content:center;gap:12px;cursor:pointer;text-align:center;
+    transition:box-shadow .15s ease, border-color .15s ease;
+    user-select:none;-webkit-user-select:none;
+  }
+  .fcard:hover{border-color:#c7d2fe;box-shadow:0 14px 26px -16px rgba(2,6,23,.3)}
+  .fcard .en{font-size:24px;font-weight:800;letter-spacing:-.3px;line-height:1.35}
+  .fcard .krm{font-size:17.5px;color:var(--blue-d);font-weight:700}
+  .fcard .exs{margin:2px 0 0;padding:0;list-style:none;font-size:14px;color:var(--muted);line-height:1.7}
+  .fcard .exs b{color:var(--ink);font-weight:600}
+  .fcard .hint{font-size:12px;color:#94a3b8;margin-top:4px}
+  .fcard .speakit{
+    background:#fff;border:1px solid var(--line);border-radius:99px;padding:7px 16px;
+    font-weight:700;font-size:13.5px;cursor:pointer;color:var(--blue-d);font-family:inherit;
+  }
+  .fcard .speakit:hover{border-color:#c7d2fe}
+  .lctrl{display:flex;align-items:center;justify-content:center;gap:16px;margin-top:16px}
+  .lbtn{
+    background:var(--soft);border:1px solid var(--line);border-radius:12px;
+    padding:10px 20px;font-weight:700;font-size:14.5px;cursor:pointer;font-family:inherit;color:var(--ink);
+  }
+  .lbtn:hover{border-color:#c7d2fe;background:#fff}
+  .lbtn:disabled{opacity:.4;cursor:default}
+  .lcount{font-weight:700;color:var(--muted);font-size:14px;min-width:52px;text-align:center}
+
   /* ===== 언어 선택 (Language Game Center) ===== */
   .hero .globe{font-size:44px;margin-bottom:8px}
   .langs{display:grid;grid-template-columns:repeat(4,1fr);gap:13px;margin-top:14px}
@@ -376,9 +404,27 @@
     </div>
     <div class="hero" style="margin-top:6px">
       <h1 id="modeCourseTitle">퀘스트</h1>
-      <p>문법 · 어휘 · 듣기 · 말하기를 게임처럼 학습해요.</p>
+      <p id="modeCourseDesc">문법 · 어휘 · 듣기 · 말하기를 게임처럼 학습해요.</p>
     </div>
     <div class="cats" id="modes"></div>
+  </section>
+
+  <!-- ============ LEARN (프레임 익히기 / 어휘 암기 카드) ============ -->
+  <section id="learn" class="card hide">
+    <div class="topbar">
+      <button class="iconbtn" id="learnBack" title="뒤로">←</button>
+      <div class="qtag" id="learnTag" style="margin:0">🧩 프레임 익히기</div>
+    </div>
+    <div class="hero" style="margin-top:6px">
+      <h1 id="learnTitle">프레임 익히기</h1>
+      <p id="learnDesc">카드를 눌러 뜻을 확인하고, 소리 내어 따라 읽어보세요.</p>
+    </div>
+    <div class="fcard" id="fcard"></div>
+    <div class="lctrl">
+      <button class="lbtn" id="learnPrev">← 이전</button>
+      <div class="lcount"><span id="learnCur">1</span>/<span id="learnTot">10</span></div>
+      <button class="lbtn" id="learnNext">다음 →</button>
+    </div>
   </section>
 
   <!-- ============ TEST HOME (영역 선택) ============ -->
@@ -1078,38 +1124,175 @@ $("courses").addEventListener("click",(e)=>{
 });
 
 /* =========================================================
+   과정별 액티비티 (리차드의 첫걸음 영어 스피킹 1탄)
+   ========================================================= */
+const COURSE_ACTIVITIES = {
+  "richard-speak1": [
+    { key:"sent",   name:"문장 완성하기", icon:"✍️", desc:"빈칸에 알맞은 말을 골라 문장을 완성해요",
+      c1:"#4f46e5", c2:"#4338ca", go:()=> renderTrackHome("grammar", {icon:"✍️", name:"문장 완성하기", desc:"빈칸에 알맞은 말 고르기 — 징검다리 10단계"}) },
+    { key:"frame",  name:"프레임 익히기", icon:"🧩", desc:"스피킹 핵심 패턴을 카드로 익혀요",
+      c1:"#0ea5e9", c2:"#0369a1", go:()=> renderLearn("frame") },
+    { key:"memo",   name:"어휘 암기", icon:"🧠", desc:"오늘의 단어를 카드 넘기며 암기해요",
+      c1:"#059669", c2:"#047857", go:()=> renderLearn("memo") },
+    { key:"vquiz",  name:"어휘 퀴즈", icon:"📚", desc:"암기한 단어를 퀴즈로 확인해요",
+      c1:"#d97706", c2:"#b45309", go:()=> renderTrackHome("vocab", {icon:"📚", name:"어휘 퀴즈", desc:"암기한 단어 확인 — 징검다리 10단계"}) },
+    { key:"shadow", name:"문장 쉐도잉", icon:"🎤", desc:"원어민 문장을 따라 말하며 발음 평가",
+      c1:"#e11d48", c2:"#be123c", go:()=> renderTrackHome("speak", {icon:"🎤", name:"문장 쉐도잉", desc:"따라 말하며 발음 평가 — 징검다리 10단계"}) },
+  ],
+};
+
+/* =========================================================
    상위 모드(트랙) 홈
    ========================================================= */
 function renderModeHome(){
   $("modeCourseTitle").textContent = curCourse ? curCourse.name : "퀘스트";
   const wrap = $("modes"); wrap.innerHTML = "";
-  Object.keys(BANK).forEach((tk)=>{
-    const t = BANK[tk];
-    const el = document.createElement("button");
-    el.className = "cat"; el.type = "button"; el.dataset.track = tk;
-    el.style.setProperty("--c1", t.color[0]); el.style.setProperty("--c2", t.color[1]);
-    el.innerHTML = `
-      <div class="ic">${t.icon}</div>
-      <div class="t">${t.name}</div>
-      <div class="d">${t.desc}</div>
-      <div class="best">시작하기 →</div>`;
-    wrap.appendChild(el);
-  });
+  const acts = curCourse && COURSE_ACTIVITIES[curCourse.id];
+  $("modeCourseDesc").textContent = acts
+    ? "학습할 액티비티를 선택하세요."
+    : "문법 · 어휘 · 듣기 · 말하기를 게임처럼 학습해요.";
+  if(acts){
+    wrap.className = "courselist";
+    acts.forEach(a=>{
+      const el = document.createElement("button");
+      el.className = "course"; el.type = "button"; el.dataset.act = a.key;
+      el.style.setProperty("--c1", a.c1); el.style.setProperty("--c2", a.c2);
+      el.innerHTML = `
+        <div class="cic">${a.icon}</div>
+        <div class="cbody">
+          <div class="cname">${a.name}</div>
+          <div class="cinfo">${a.desc}</div>
+        </div>
+        <div class="go">→</div>`;
+      wrap.appendChild(el);
+    });
+  } else {
+    wrap.className = "cats";
+    Object.keys(BANK).forEach((tk)=>{
+      const t = BANK[tk];
+      const el = document.createElement("button");
+      el.className = "cat"; el.type = "button"; el.dataset.track = tk;
+      el.style.setProperty("--c1", t.color[0]); el.style.setProperty("--c2", t.color[1]);
+      el.innerHTML = `
+        <div class="ic">${t.icon}</div>
+        <div class="t">${t.name}</div>
+        <div class="d">${t.desc}</div>
+        <div class="best">시작하기 →</div>`;
+      wrap.appendChild(el);
+    });
+  }
   show("modeHome");
 }
 $("modes").addEventListener("click",(e)=>{
+  Sound.ensure();
+  const act = e.target.closest(".course");
+  if(act && act.dataset.act){
+    const acts = curCourse && COURSE_ACTIVITIES[curCourse.id];
+    const a = acts && acts.find(x=>x.key===act.dataset.act);
+    if(a) a.go();
+    return;
+  }
   const card = e.target.closest(".cat");
-  if(card && card.dataset.track){ Sound.ensure(); renderTrackHome(card.dataset.track); }
+  if(card && card.dataset.track){ trackAlias = null; renderTrackHome(card.dataset.track); }
 });
+
+/* =========================================================
+   학습 카드 (프레임 익히기 / 어휘 암기)
+   ========================================================= */
+const LEARN_SETS = {
+  frame: {
+    tag:"🧩 프레임 익히기", title:"프레임 익히기",
+    desc:"카드를 눌러 뜻을 확인하고, 소리 내어 따라 읽어보세요.",
+    items:[
+      { en:"I want to ___.",      kr:"~하고 싶어요",        ex:[["I want to go home.","집에 가고 싶어요."],["I want to eat pizza.","피자를 먹고 싶어요."]] },
+      { en:"Can I ___?",          kr:"~해도 될까요?",       ex:[["Can I sit here?","여기 앉아도 될까요?"],["Can I try this on?","이거 입어봐도 될까요?"]] },
+      { en:"Let's ___.",          kr:"같이 ~해요",          ex:[["Let's take a break.","잠깐 쉬어요."],["Let's grab a coffee.","커피 한잔해요."]] },
+      { en:"I'm going to ___.",   kr:"~할 거예요",          ex:[["I'm going to call you tonight.","오늘 밤에 전화할 거예요."],["I'm going to study English.","영어 공부할 거예요."]] },
+      { en:"Do you like ___?",    kr:"~을 좋아하세요?",     ex:[["Do you like Korean food?","한국 음식 좋아하세요?"],["Do you like traveling?","여행 좋아하세요?"]] },
+      { en:"How do I ___?",       kr:"어떻게 ~해요?",       ex:[["How do I get to the station?","역까지 어떻게 가요?"],["How do I use this?","이거 어떻게 사용해요?"]] },
+      { en:"I think ___.",        kr:"~인 것 같아요",       ex:[["I think it's a good idea.","좋은 생각인 것 같아요."],["I think he's right.","그가 맞는 것 같아요."]] },
+      { en:"Could you ___?",      kr:"~해 주시겠어요?",     ex:[["Could you say that again?","다시 말씀해 주시겠어요?"],["Could you help me?","도와주시겠어요?"]] },
+      { en:"I'd like ___.",       kr:"~을 원해요 / 주세요", ex:[["I'd like a coffee, please.","커피 한 잔 주세요."],["I'd like a window seat.","창가 자리로 주세요."]] },
+      { en:"There is/are ___.",   kr:"~이 있어요",          ex:[["There is a park near my house.","집 근처에 공원이 있어요."],["There are many people here.","여기 사람이 많아요."]] },
+    ],
+  },
+  memo: {
+    tag:"🧠 어휘 암기", title:"어휘 암기",
+    desc:"카드를 눌러 뜻을 확인하고, 소리 내어 따라 읽어보세요.",
+    items:[
+      { en:"travel",      kr:"여행하다",       ex:[["I love to travel.","저는 여행을 좋아해요."]] },
+      { en:"order",       kr:"주문하다",       ex:[["Are you ready to order?","주문하시겠어요?"]] },
+      { en:"arrive",      kr:"도착하다",       ex:[["We will arrive at 7.","우리는 7시에 도착해요."]] },
+      { en:"borrow",      kr:"빌리다",         ex:[["Can I borrow your pen?","펜 좀 빌려도 될까요?"]] },
+      { en:"recommend",   kr:"추천하다",       ex:[["What do you recommend?","무엇을 추천하세요?"]] },
+      { en:"reservation", kr:"예약",           ex:[["I have a reservation.","예약했어요."]] },
+      { en:"delicious",   kr:"맛있는",         ex:[["This is delicious!","이거 맛있어요!"]] },
+      { en:"expensive",   kr:"비싼",           ex:[["It's too expensive.","너무 비싸요."]] },
+      { en:"direction",   kr:"방향, 길",       ex:[["Which direction is it?","어느 방향이에요?"]] },
+      { en:"luggage",     kr:"짐, 수하물",     ex:[["Where is my luggage?","제 짐이 어디 있죠?"]] },
+      { en:"receipt",     kr:"영수증",         ex:[["Can I get a receipt?","영수증 주시겠어요?"]] },
+      { en:"refund",      kr:"환불",           ex:[["I'd like a refund, please.","환불하고 싶어요."]] },
+    ],
+  },
+};
+let learnState = null;
+function renderLearn(kind){
+  const set = LEARN_SETS[kind]; if(!set) return;
+  learnState = { kind, idx:0, open:false };
+  $("learnTag").textContent = set.tag;
+  $("learnTitle").textContent = set.title;
+  $("learnDesc").textContent = set.desc;
+  $("learnTot").textContent = set.items.length;
+  drawLearnCard();
+  show("learn");
+}
+function drawLearnCard(){
+  const set = LEARN_SETS[learnState.kind];
+  const it = set.items[learnState.idx];
+  $("learnCur").textContent = learnState.idx + 1;
+  $("learnPrev").disabled = learnState.idx === 0;
+  $("learnNext").textContent = learnState.idx === set.items.length-1 ? "처음으로 ↻" : "다음 →";
+  let html = `<div class="en">${it.en}</div>
+    <button class="speakit" type="button" id="fcardSay">🔊 발음 듣기</button>`;
+  if(learnState.open){
+    html += `<div class="krm">${it.kr}</div>
+      <ul class="exs">${it.ex.map(([e,k])=>`<li><b>${e}</b><br>${k}</li>`).join("")}</ul>`;
+  } else {
+    html += `<div class="hint">카드를 누르면 뜻이 보여요 👆</div>`;
+  }
+  $("fcard").innerHTML = html;
+}
+$("fcard").addEventListener("click",(e)=>{
+  if(!learnState) return;
+  if(e.target.closest("#fcardSay")){
+    const it = LEARN_SETS[learnState.kind].items[learnState.idx];
+    speakText(it.en.replace(/_+/g, "").trim());
+    return;
+  }
+  learnState.open = !learnState.open; drawLearnCard();
+});
+$("learnPrev").onclick = ()=>{ if(!learnState || learnState.idx===0) return; learnState.idx--; learnState.open=false; drawLearnCard(); };
+$("learnNext").onclick = ()=>{
+  if(!learnState) return;
+  const n = LEARN_SETS[learnState.kind].items.length;
+  learnState.idx = (learnState.idx + 1) % n; learnState.open=false; drawLearnCard();
+};
+$("learnBack").onclick = ()=>{ learnState=null; renderModeHome(); };
 
 /* ---------- 트랙별 징검다리 지도 ---------- */
 const ZIGZAG = [0, 1, 1, 0, -1, -1, 0, 1, 1, 0];   // 좌우 흔들림 패턴
-function renderTrackHome(trackKey){
+let trackAlias = null;   // 과정 액티비티에서 진입 시 표시 이름 유지
+function renderTrackHome(trackKey, alias){
   curTrack = trackKey;
+  if(alias) trackAlias = { track:trackKey, ...alias };
+  const eff = (trackAlias && trackAlias.track === trackKey) ? trackAlias : null;
   const t = BANK[trackKey];
-  $("trackTag").textContent = t.icon + " " + t.name;
-  $("trackTitle").textContent = t.name;
-  $("trackDesc").textContent = t.desc;
+  const icon = (eff && eff.icon) || t.icon;
+  const name = (eff && eff.name) || t.name;
+  const desc = (eff && eff.desc) || t.desc;
+  $("trackTag").textContent = icon + " " + name;
+  $("trackTitle").textContent = name;
+  $("trackDesc").textContent = desc;
   $("adaptNote").textContent = (trackKey === "listen")
     ? "단어 → 문장 → 대화 → 단락으로 단계가 올라갈수록 점점 어려워져요. 한 단계를 깨야 다음이 열립니다."
     : "징검다리를 하나씩 깨며 올라가요. 각 단계는 적응형 10문제 — 맞히면 어려워지고 틀리면 쉬워져요.";
@@ -1151,7 +1334,7 @@ function flashLocked(node){
 }
 
 function show(which){
-  ["langHome","rootHome","courseHome","modeHome","testHome","test","catHome","quiz","speak","trainer","result","testResult"].forEach(s=>$(s).classList.toggle("hide", s!==which));
+  ["langHome","rootHome","courseHome","modeHome","learn","testHome","test","catHome","quiz","speak","trainer","result","testResult"].forEach(s=>$(s).classList.toggle("hide", s!==which));
 }
 
 /* =========================================================
