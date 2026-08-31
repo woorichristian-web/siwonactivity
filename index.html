@@ -1,0 +1,1973 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Grammar Quest · 영어 문법 게임</title>
+<style>
+  :root{
+    --bg:#0e1525; --bg2:#141d33; --card:#ffffff; --ink:#1e293b; --muted:#64748b;
+    --green:#059669; --green-d:#047857; --red:#e11d48; --red-d:#be123c;
+    --blue:#4f46e5; --blue-d:#4338ca; --amber:#d97706; --purple:#7c3aed;
+    --line:#e7eaf0; --soft:#f5f7fa;
+    --shadow:0 18px 44px -20px rgba(2,6,23,.45);
+  }
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  body{
+    margin:0;font-family:"Inter","Pretendard","Segoe UI",system-ui,-apple-system,"Malgun Gothic",sans-serif;
+    background:radial-gradient(1100px 700px at 50% -10%,#1c2a47 0%,transparent 60%),
+               linear-gradient(165deg,#0e1525,#121b30 55%,#0c1322);
+    background-attachment:fixed;
+    color:var(--ink);min-height:100vh;display:flex;align-items:flex-start;justify-content:center;
+    padding:28px 16px;
+  }
+  .app{width:100%;max-width:680px}
+  .hide{display:none!important}
+
+  /* ===== Header / HUD ===== */
+  .hud{
+    display:flex;align-items:center;gap:10px;color:#e2e8f0;margin-bottom:14px;flex-wrap:wrap;
+  }
+  .brand{font-weight:700;font-size:19px;letter-spacing:-.2px;color:#f1f5f9;margin-right:auto;display:flex;align-items:center;gap:8px}
+  .brand .logo{font-size:24px}
+  .chip{background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.12);
+    padding:6px 12px;border-radius:999px;font-weight:600;font-size:13.5px;display:flex;align-items:center;gap:6px}
+  .chip.xp{color:#e9d8a6}
+  .chip.streak{color:#e8b4b8}
+
+  /* ===== Cards ===== */
+  .card{background:var(--card);border-radius:18px;box-shadow:var(--shadow);padding:28px 26px;
+    border:1px solid rgba(255,255,255,.5)}
+
+  /* ===== Home ===== */
+  .hero{text-align:center;margin-bottom:18px}
+  .hero h1{margin:0 0 6px;font-size:27px;font-weight:700;letter-spacing:-.4px}
+  .hero p{margin:0;color:var(--muted);font-size:15px;line-height:1.5}
+  .cats{display:grid;grid-template-columns:1fr 1fr;gap:18px;margin-top:10px}
+  .cat{
+    position:relative;border:1px solid rgba(255,255,255,.14);border-radius:18px;padding:26px 18px 22px;cursor:pointer;
+    color:#fff;text-align:center;display:flex;flex-direction:column;align-items:center;gap:8px;
+    background:linear-gradient(155deg,var(--c1),var(--c2));
+    box-shadow:0 14px 30px -16px rgba(2,6,23,.55);
+    transition:transform .15s ease, box-shadow .15s ease, filter .15s ease;
+    user-select:none;-webkit-user-select:none;
+  }
+  .cat:hover{transform:translateY(-3px);box-shadow:0 20px 38px -16px rgba(2,6,23,.6);filter:brightness(1.04)}
+  .cat:active{transform:translateY(0);box-shadow:0 8px 18px -12px rgba(2,6,23,.5)}
+  .cat .ic{
+    font-size:34px;width:68px;height:68px;border-radius:18px;
+    background:rgba(255,255,255,.16);display:flex;align-items:center;justify-content:center;
+    box-shadow:inset 0 0 0 1px rgba(255,255,255,.22);margin-bottom:2px;
+  }
+  .cat .t{font-weight:700;font-size:19px;letter-spacing:-.2px}
+  .cat .d{font-size:12.5px;line-height:1.45;opacity:.85;padding:0 4px;font-weight:400}
+  .cat .best{
+    font-size:11.5px;font-weight:600;background:rgba(255,255,255,.16);border:1px solid rgba(255,255,255,.14);
+    padding:4px 13px;border-radius:99px;margin-top:6px;letter-spacing:.2px;
+  }
+
+  /* ===== Quiz ===== */
+  .topbar{display:flex;align-items:center;gap:12px;margin-bottom:16px}
+  .iconbtn{background:var(--soft);border:1px solid var(--line);border-radius:12px;width:40px;height:40px;
+    font-size:18px;cursor:pointer;display:flex;align-items:center;justify-content:center}
+  .progress{flex:1;height:14px;background:#e2e8f0;border-radius:99px;overflow:hidden}
+  .progress > i{display:block;height:100%;width:0;background:linear-gradient(90deg,var(--blue),var(--blue-d));transition:.35s;border-radius:99px}
+  .qcount{font-weight:600;color:var(--muted);font-size:14px;min-width:48px;text-align:right}
+
+  .qtag{display:inline-block;font-size:12px;font-weight:600;color:var(--blue-d);background:#eef0fe;
+    padding:5px 12px;border-radius:99px;margin-bottom:14px;letter-spacing:.2px}
+  .sentence{font-size:23px;font-weight:700;line-height:1.55;margin:0 0 6px}
+  .sentence .blank{color:var(--blue-d);border-bottom:3px dotted var(--blue);padding:0 16px}
+  .kr{color:var(--muted);font-size:14.5px;margin:0 0 18px}
+
+  .options{display:grid;gap:11px}
+  .opt{
+    border:1.5px solid #e7eaf0;background:#fff;border-radius:13px;padding:15px 16px;font-size:16px;font-weight:600;
+    text-align:left;cursor:pointer;display:flex;align-items:center;gap:12px;color:var(--ink);
+    box-shadow:0 1px 2px rgba(2,6,23,.05);transition:border-color .14s, background .14s, box-shadow .14s;
+    user-select:none;-webkit-user-select:none;
+  }
+  .opt .key{width:28px;height:28px;border-radius:8px;background:var(--soft);display:flex;align-items:center;
+    justify-content:center;font-size:13px;font-weight:700;color:var(--muted);flex:none;border:1px solid var(--line)}
+  .opt:hover:not(:disabled){background:#fafbff;border-color:#c7d2fe;box-shadow:0 2px 8px -2px rgba(79,70,229,.18)}
+  .opt:active:not(:disabled){transform:translateY(1px)}
+  .opt:disabled{cursor:default}
+  .opt.correct{border-color:var(--green);background:#ecfdf5;color:var(--green-d);box-shadow:0 0 0 1px var(--green)}
+  .opt.correct .key{background:var(--green);color:#fff;border-color:var(--green)}
+  .opt.wrong{border-color:var(--red);background:#fff1f3;color:var(--red-d);box-shadow:0 0 0 1px var(--red)}
+  .opt.wrong .key{background:var(--red);color:#fff;border-color:var(--red)}
+  .opt.dim{opacity:.4;box-shadow:none}
+
+  /* ===== Audio (듣기) ===== */
+  .audiobox{display:flex;flex-direction:column;align-items:center;gap:14px;margin:8px 0 20px}
+  .playbtn{
+    width:104px;height:104px;border-radius:50%;border:none;cursor:pointer;color:#fff;font-size:42px;
+    background:linear-gradient(155deg,var(--blue),var(--blue-d));box-shadow:0 16px 30px -12px rgba(79,70,229,.6);
+    transition:transform .15s ease, box-shadow .15s ease;
+  }
+  .playbtn:active{transform:scale(.96)}
+  .playbtn.small{width:60px;height:60px;font-size:26px}
+  .replay{background:var(--soft);border:1px solid var(--line);border-radius:99px;padding:8px 18px;
+    font-weight:800;font-size:14px;cursor:pointer;color:var(--ink)}
+  .qprompt{font-size:20px;font-weight:800;text-align:center;margin:0 0 6px}
+
+  /* ===== Speaking (말하기) ===== */
+  .speakwrap{text-align:center}
+  .target{font-size:27px;font-weight:800;line-height:1.5;margin:6px 0 4px}
+  .target .w{padding:1px 3px;border-radius:5px}
+  .target .w.ok{background:#dcfce7;color:var(--green-d)}
+  .target .w.miss{background:#fee2e2;color:var(--red-d)}
+  .speakctrl{display:flex;flex-direction:column;align-items:center;gap:12px;margin:18px 0}
+  .micbtn{
+    width:112px;height:112px;border-radius:50%;border:none;cursor:pointer;color:#fff;font-size:48px;
+    background:linear-gradient(155deg,var(--red),var(--red-d));box-shadow:0 16px 30px -12px rgba(225,29,72,.6);
+    transition:transform .15s ease, box-shadow .15s ease;
+  }
+  .micbtn:active{transform:scale(.96)}
+  .micbtn.rec{animation:pulse 1.4s infinite}
+  @keyframes pulse{0%,100%{box-shadow:0 16px 30px -12px rgba(225,29,72,.6),0 0 0 0 rgba(225,29,72,.4)}50%{box-shadow:0 16px 30px -12px rgba(225,29,72,.6),0 0 0 16px rgba(225,29,72,0)}}
+  .microw{display:flex;gap:12px;justify-content:center}
+  .heard{font-size:15px;color:var(--muted);min-height:22px}
+  .acc{font-size:42px;font-weight:900;margin:4px 0}
+
+  /* ===== Feedback ===== */
+  .fb{margin-top:18px;border-radius:14px;padding:15px 16px;border:1.5px solid;animation:pop .2s ease}
+  @keyframes pop{from{transform:scale(.97);opacity:0}to{transform:scale(1);opacity:1}}
+  .fb .h{display:flex;align-items:center;gap:9px;font-weight:800;font-size:17px;margin-bottom:6px}
+  .fb .body{font-size:15px;line-height:1.6}
+  .fb .body b{color:inherit}
+  .fb.hint{background:#fffbeb;border-color:#fcd34d;color:#92400e}
+  .fb.good{background:#ecfdf5;border-color:#6ee7b7;color:#065f46}
+  .fb.explain{background:#eff6ff;border-color:#93c5fd;color:#1e3a8a}
+  .fb .ansline{margin-top:8px;font-size:14.5px;background:rgba(255,255,255,.6);padding:8px 12px;border-radius:10px}
+
+  .actions{display:flex;gap:10px;margin-top:16px;flex-wrap:wrap}
+  .btn{flex:1;min-width:130px;border:none;border-radius:12px;padding:14px 18px;font-size:15.5px;font-weight:600;
+    cursor:pointer;transition:transform .12s, filter .12s, box-shadow .12s;color:#fff;box-shadow:0 6px 16px -8px rgba(2,6,23,.4)}
+  .btn:hover{filter:brightness(1.05)}
+  .btn:active{transform:translateY(1px)}
+  .btn.retry{background:var(--amber)}
+  .btn.show{background:#475569}
+  .btn.next{background:var(--blue)}
+  .btn.ghost{background:var(--soft);color:var(--ink);border:1px solid var(--line);box-shadow:none}
+
+  /* ===== Result ===== */
+  .result{text-align:center}
+  .result .big{font-size:60px;margin:4px 0}
+  .result h2{margin:0 0 4px;font-size:26px}
+  .stars{font-size:34px;letter-spacing:6px;margin:10px 0;color:#d4a843}
+  .statgrid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin:20px 0}
+  .stat{background:var(--soft);border-radius:14px;padding:14px 10px}
+  .stat .n{font-size:24px;font-weight:800;color:var(--blue-d)}
+  .stat .l{font-size:12.5px;color:var(--muted);font-weight:700;margin-top:2px}
+  .footer{color:#94a3b8;text-align:center;font-size:12.5px;margin-top:18px}
+
+  /* ===== Level / Set additions ===== */
+  .tagrow{display:flex;align-items:center;flex-wrap:wrap;gap:8px;margin-bottom:14px}
+  .lvbadge{display:inline-flex;align-items:center;gap:6px;font-size:12.5px;font-weight:600;letter-spacing:.2px;
+    padding:5px 13px;border-radius:99px;color:#fff;background:var(--blue-d);transition:background .25s}
+  .lvbadge.bump{animation:bump .45s ease}
+  @keyframes bump{0%{transform:scale(1)}35%{transform:scale(1.22)}100%{transform:scale(1)}}
+  .cat .lvdots{display:flex;gap:5px;margin-top:6px}
+  .cat .lvdots i{width:9px;height:9px;border-radius:50%;background:rgba(255,255,255,.35)}
+  .cat .lvdots i.on{background:#fff}
+  .adaptnote{color:#cbd5e1;font-size:13px;text-align:center;margin:-4px 0 14px;line-height:1.5}
+
+  /* ===== 사운드 버튼 ===== */
+  .soundbtn{background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.12);color:#cbd5e1;
+    width:36px;height:36px;border-radius:50%;font-size:16px;cursor:pointer;display:flex;
+    align-items:center;justify-content:center;flex:none}
+
+  /* ===== 징검다리 경로 (Duolingo 스타일) ===== */
+  .path{display:flex;flex-direction:column;align-items:center;gap:24px;padding:14px 0 26px;position:relative}
+  .path::before{content:"";position:absolute;top:30px;bottom:60px;left:50%;width:3px;margin-left:-1.5px;
+    background:repeating-linear-gradient(rgba(148,163,184,.45) 0 9px, transparent 9px 22px);border-radius:99px;z-index:0}
+  .node{position:relative;z-index:1;background:none;border:none;cursor:pointer;display:flex;
+    flex-direction:column;align-items:center;gap:8px;transform:translateX(calc(var(--nx,0) * 84px));transition:transform .2s}
+  .node .bub{width:66px;height:66px;border-radius:20px;display:flex;align-items:center;justify-content:center;
+    font-size:25px;font-weight:700;color:#fff;box-shadow:0 12px 22px -10px rgba(2,6,23,.55)}
+  .node .cap{font-size:12.5px;font-weight:600;color:#cbd5e1;background:rgba(15,23,42,.5);
+    padding:3px 11px;border-radius:99px;white-space:nowrap}
+  .node:active .bub{transform:scale(.95)}
+  .node.done .bub{background:linear-gradient(155deg,#d9b25e,#b8923a);box-shadow:0 12px 22px -10px rgba(184,146,58,.6)}
+  .node.current .bub{background:linear-gradient(155deg,#6366f1,#4338ca);
+    box-shadow:0 14px 26px -10px rgba(79,70,229,.6);animation:bob 2s ease-in-out infinite}
+  .node.current::after{content:"START";position:absolute;top:-14px;left:50%;transform:translateX(-50%);
+    background:#4f46e5;color:#fff;font-size:9.5px;font-weight:700;padding:3px 9px;border-radius:7px;
+    letter-spacing:.6px;box-shadow:0 4px 10px -3px rgba(79,70,229,.6);white-space:nowrap}
+  .node.locked{cursor:not-allowed}
+  .node.locked .bub{background:#334155;box-shadow:none;color:#7c8aa0}
+  .node.locked .cap{opacity:.6}
+  .node.reward .bub{width:78px;height:78px;font-size:34px;background:linear-gradient(155deg,#9d6bd6,#6d28d9);
+    box-shadow:0 14px 26px -10px rgba(109,40,217,.55)}
+  .node.reward.locked .bub{background:#334155;box-shadow:none}
+  .node.reward.done .bub{animation:bob 2s ease-in-out infinite}
+  @keyframes bob{0%,100%{transform:translateY(0)}50%{transform:translateY(-7px)}}
+
+  /* ===== confetti & 보상 쿠폰 ===== */
+  #confettiCanvas{position:fixed;inset:0;width:100vw;height:100vh;pointer-events:none;z-index:9999}
+  .coupon{margin:14px auto 4px;max-width:340px;background:linear-gradient(135deg,#fff7ed,#ffedd5);
+    border:2px dashed #f59e0b;border-radius:16px;padding:16px;color:#9a3412}
+  .coupon .big2{font-size:19px;font-weight:900}
+  .coupon .code{font-family:ui-monospace,monospace;font-size:18px;font-weight:800;letter-spacing:2px;
+    background:#fff;border-radius:8px;padding:6px 12px;margin-top:10px;display:inline-block;border:1px solid #fcd34d}
+
+  /* ===== Test: 그림(이모지) 보기 & 결과 밴드 ===== */
+  .options.pics{grid-template-columns:1fr 1fr}
+  .opt.pic{justify-content:center;font-size:52px;padding:22px 10px}
+  .band{display:flex;align-items:center;gap:10px;margin:9px 0}
+  .band .bn{width:62px;flex:none;font-size:13.5px;font-weight:800;color:#94a3b8}
+  .band.reached .bn{color:#0f172a}
+  .band .track{flex:1;height:14px;background:#e2e8f0;border-radius:99px;overflow:hidden}
+  .band .fill{height:100%;border-radius:99px;background:linear-gradient(90deg,#34d399,#10b981);transition:width .5s}
+  .band .sc{width:46px;text-align:right;flex:none;font-size:13px;font-weight:800;color:#475569}
+  .lvbig{display:inline-flex;align-items:center;gap:8px;padding:6px 16px;border-radius:99px;color:#fff;font-size:22px}
+
+  /* ===== 트레이너봇 (쉐도잉 챗봇) ===== */
+  .tr-chips{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:14px}
+  .tr-chip{border:1.5px solid var(--line);background:#fff;border-radius:99px;padding:7px 14px;font-size:13.5px;
+    font-weight:700;color:var(--muted);cursor:pointer;transition:.15s}
+  .tr-chip.on{background:var(--blue);border-color:var(--blue);color:#fff}
+  .tr-log{display:flex;flex-direction:column;gap:12px;margin:6px 0 4px}
+  .tr-msg{max-width:88%;border-radius:16px;padding:12px 15px;font-size:15px;line-height:1.55;animation:pop .2s ease}
+  .tr-msg.bot{align-self:flex-start;background:#eef2ff;border:1px solid #c7d2fe;color:#1e3a8a;border-bottom-left-radius:5px}
+  .tr-msg.me{align-self:flex-end;background:#ecfdf5;border:1px solid #a7f3d0;color:#065f46;border-bottom-right-radius:5px}
+  .tr-msg .en{font-size:19px;font-weight:800;margin:2px 0 4px;line-height:1.45}
+  .tr-msg .en .w{padding:1px 3px;border-radius:5px}
+  .tr-msg .en .w.ok{background:#dcfce7;color:var(--green-d)}
+  .tr-msg .en .w.miss{background:#fee2e2;color:var(--red-d)}
+  .tr-msg .kr{font-size:13.5px;color:#475569;margin:0}
+  .tr-msg .tip{font-size:13px;color:#6d28d9;margin-top:6px}
+  .tr-msg .listen{margin-top:9px;background:rgba(255,255,255,.7);border:1px solid #c7d2fe;border-radius:99px;
+    padding:6px 14px;font-weight:800;font-size:13px;cursor:pointer;color:var(--blue-d)}
+  .tr-msg .score{font-size:15px;font-weight:900}
+  .tr-msg .fbline{margin-top:7px;font-size:14px;line-height:1.55}
+  .tr-msg .fbline b{color:inherit}
+  .tr-typing{align-self:flex-start;color:var(--muted);font-size:14px;padding:4px 6px}
+  .tr-ctrl{display:flex;flex-direction:column;align-items:center;gap:10px;margin-top:18px}
+  .tr-status{font-size:14px;color:var(--muted);min-height:20px;text-align:center}
+</style>
+</head>
+<body>
+<div class="app">
+  <div class="hud">
+    <div class="brand"><span class="logo">🚀</span> English Quest</div>
+    <div class="chip xp">⭐ <span id="xp">0</span> XP</div>
+    <div class="chip streak">🔥 <span id="streak">0</span></div>
+    <button class="soundbtn" id="soundBtn" title="소리 켜기/끄기">🔊</button>
+  </div>
+
+  <!-- ============ ROOT HOME (Quest / Test) ============ -->
+  <section id="rootHome" class="card">
+    <div class="hero">
+      <h1>English Quest</h1>
+      <p>퀘스트로 즐기며 배우거나,<br>실전 테스트로 내 레벨을 진단해요.</p>
+    </div>
+    <div class="cats" id="rootCats">
+      <button class="cat" type="button" data-root="quest" style="--c1:#4f46e5;--c2:#4338ca">
+        <div class="ic">🎮</div><div class="t">Quest</div>
+        <div class="d">징검다리 10단계로 게임처럼 학습</div>
+        <div class="best">시작하기 →</div>
+      </button>
+      <button class="cat" type="button" data-root="test" style="--c1:#7c3aed;--c2:#6d28d9">
+        <div class="ic">📋</div><div class="t">Test</div>
+        <div class="d">실전 배치고사로 내 레벨 진단</div>
+        <div class="best">레벨 진단 →</div>
+      </button>
+      <button class="cat" type="button" data-root="trainer" style="--c1:#0ea5e9;--c2:#0369a1">
+        <div class="ic">🤖</div><div class="t">트레이너봇</div>
+        <div class="d">따라 말하기(쉐도잉) · 발음·문법 즉시 교정</div>
+        <div class="best">대화 시작 →</div>
+      </button>
+    </div>
+  </section>
+
+  <!-- ============ MODE HOME (Quest 상위 메뉴) ============ -->
+  <section id="modeHome" class="card hide">
+    <div class="topbar">
+      <button class="iconbtn" id="modeBack" title="뒤로">←</button>
+      <div class="qtag" style="margin:0">🎮 Quest</div>
+    </div>
+    <div class="hero" style="margin-top:6px">
+      <h1>퀘스트</h1>
+      <p>문법 · 어휘 · 듣기 · 말하기를 게임처럼 학습해요.</p>
+    </div>
+    <div class="cats" id="modes"></div>
+  </section>
+
+  <!-- ============ TEST HOME (영역 선택) ============ -->
+  <section id="testHome" class="card hide">
+    <div class="topbar">
+      <button class="iconbtn" id="testBack" title="뒤로">←</button>
+      <div class="qtag" style="margin:0">📋 Test</div>
+    </div>
+    <div class="hero" style="margin-top:6px">
+      <h1>레벨 테스트</h1>
+      <p>영역을 골라 실전처럼 풀어보세요.<br>결과로 내 레벨을 진단해 드려요.</p>
+    </div>
+    <div class="cats" id="testCats"></div>
+  </section>
+
+  <!-- ============ TEST (진행) ============ -->
+  <section id="test" class="card hide">
+    <div class="topbar">
+      <button class="iconbtn" id="testQuit" title="그만두기">←</button>
+      <div class="progress"><i id="tbar"></i></div>
+      <div class="qcount"><span id="tcur">1</span>/<span id="ttot">20</span></div>
+    </div>
+    <div class="tagrow"><span class="qtag" id="testTag" style="margin:0">📋 테스트</span></div>
+    <div class="audiobox hide" id="taudiobox">
+      <button class="playbtn" id="tplayBtn">🔊</button>
+      <button class="replay" id="treplayBtn">🔁 다시 듣기</button>
+    </div>
+    <p class="qprompt hide" id="tprompt"></p>
+    <p class="sentence" id="tsentence"></p>
+    <p class="kr" id="tkr"></p>
+    <div class="options" id="toptions"></div>
+  </section>
+
+  <!-- ============ CATEGORY HOME (트랙별 카테고리) ============ -->
+  <section id="catHome" class="card hide">
+    <div class="topbar">
+      <button class="iconbtn" id="catBack" title="뒤로">←</button>
+      <div class="qtag" id="trackTag" style="margin:0">문법</div>
+    </div>
+    <div class="hero" style="margin-top:6px">
+      <h1 id="trackTitle">영어 문법</h1>
+      <p id="trackDesc"></p>
+    </div>
+    <p class="adaptnote" id="adaptNote"></p>
+    <div class="cats" id="cats"></div>
+  </section>
+
+  <!-- ============ QUIZ ============ -->
+  <section id="quiz" class="card hide">
+    <div class="topbar">
+      <button class="iconbtn" id="homeBtn" title="홈으로">←</button>
+      <div class="progress"><i id="bar"></i></div>
+      <div class="qcount"><span id="cur">1</span>/<span id="tot">30</span></div>
+    </div>
+
+    <div class="tagrow">
+      <span class="qtag" id="qtag" style="margin:0">세트 1</span>
+      <span class="lvbadge" id="lvBadge">🟡 중급</span>
+    </div>
+
+    <!-- 듣기 모드 전용 오디오 -->
+    <div class="audiobox hide" id="audiobox">
+      <button class="playbtn" id="playBtn">🔊</button>
+      <button class="replay" id="replayBtn">🔁 다시 듣기</button>
+    </div>
+    <p class="qprompt hide" id="qprompt"></p>
+
+    <!-- 문법/어휘 모드 전용 문장 -->
+    <p class="sentence" id="sentence"></p>
+    <p class="kr" id="kr"></p>
+
+    <div class="options" id="options"></div>
+
+    <div id="feedback"></div>
+    <div class="actions" id="actions"></div>
+  </section>
+
+  <!-- ============ SPEAKING (말하기) ============ -->
+  <section id="speak" class="card hide">
+    <div class="topbar">
+      <button class="iconbtn" id="speakBack" title="뒤로">←</button>
+      <div class="progress"><i id="sbar"></i></div>
+      <div class="qcount"><span id="scur">1</span>/<span id="stot">10</span></div>
+    </div>
+    <div class="qtag" id="speakTag">🎤 말하기</div>
+    <div class="speakwrap">
+      <p class="kr" id="speakHintKr" style="margin:2px 0 0"></p>
+      <p class="target" id="target"></p>
+      <button class="replay" id="speakListen">🔊 원어민 발음 듣기</button>
+
+      <div class="speakctrl">
+        <button class="micbtn" id="micBtn">🎤</button>
+        <div class="heard" id="heard">마이크를 누르고 따라 말해보세요</div>
+      </div>
+      <div class="acc hide" id="acc"></div>
+
+      <div id="speakFb"></div>
+      <div class="actions" id="speakActions"></div>
+    </div>
+  </section>
+
+  <!-- ============ TRAINER BOT (쉐도잉 챗봇) ============ -->
+  <section id="trainer" class="card hide">
+    <div class="topbar">
+      <button class="iconbtn" id="trainerBack" title="뒤로">←</button>
+      <div class="qtag" style="margin:0">🤖 트레이너봇</div>
+    </div>
+    <div class="hero" style="margin-top:6px">
+      <h1>트레이너봇</h1>
+      <p>봇이 문장을 한국어로 설명하고 영어로 읽어줘요.<br>그대로 따라 말하면 발음·문법을 교정해 드려요.<br><span style="font-size:12.5px;color:#94a3b8">설치·서버·계정 없이 무료로 동작해요.</span></p>
+    </div>
+
+    <!-- 주제 / 난이도 -->
+    <div id="trConfig">
+      <div class="tr-chips" id="trTopics"></div>
+      <div class="tr-chips" id="trLevels"></div>
+    </div>
+
+    <!-- 대화 로그 -->
+    <div class="tr-log" id="trLog"></div>
+
+    <!-- 컨트롤 -->
+    <div class="tr-ctrl">
+      <button class="micbtn" id="trMic" style="display:none">🎤</button>
+      <div class="tr-status" id="trStatus"></div>
+      <div class="actions" id="trActions" style="justify-content:center"></div>
+    </div>
+  </section>
+
+  <!-- ============ RESULT ============ -->
+  <section id="result" class="card result hide">
+    <div class="big" id="rEmoji">🎉</div>
+    <h2 id="rTitle">완료!</h2>
+    <div class="stars" id="rStars">★★★</div>
+    <p style="color:var(--muted);margin:0" id="rMsg"></p>
+    <div class="statgrid">
+      <div class="stat"><div class="n" id="rScore">0</div><div class="l">정답</div></div>
+      <div class="stat"><div class="n" id="rFirst">0</div><div class="l">한번에 맞춤</div></div>
+      <div class="stat"><div class="n" id="rXp">0</div><div class="l">획득 XP</div></div>
+    </div>
+    <div class="actions">
+      <button class="btn next" id="againBtn">다시 도전</button>
+      <button class="btn ghost" id="backBtn">다른 주제 풀기</button>
+    </div>
+  </section>
+
+  <!-- ============ TEST RESULT (레벨 진단) ============ -->
+  <section id="testResult" class="card result hide">
+    <div class="big" id="trEmoji">🎯</div>
+    <h2 id="trTitle">레벨 진단 결과</h2>
+    <div id="trLevel" style="font-size:30px;font-weight:900;color:var(--blue-d);margin:6px 0"></div>
+    <p style="color:var(--muted);margin:0" id="trMsg"></p>
+    <div id="trBands" style="margin:18px 0 6px;text-align:left"></div>
+    <div class="actions">
+      <button class="btn next" id="trAgain">다시 보기</button>
+      <button class="btn ghost" id="trBack">테스트 목록</button>
+    </div>
+  </section>
+
+  <div class="footer" id="footer">English Quest · 문법 · 어휘 · 듣기 · 말하기</div>
+</div>
+<canvas id="confettiCanvas"></canvas>
+
+<script>
+/* =========================================================
+   English Quest — 5단계 난이도 + 적응형(adaptive) 문제은행
+   각 트랙은 levels{1..5}로 구성:
+     1 왕초보 · 2 초보 · 3 중급 · 4 중고급 · 5 최고급
+   문법/어휘/듣기 = 적응형 세트(맞히면↑, 틀리면↓), 말하기 = 레벨 선택형
+   ========================================================= */
+
+/* 객관식 문항: {q, kr, opts[4], a, hint, exp}
+   듣기 문항:   {audio, q, opts[4], a, hint, exp}
+   말하기 문항: {text, kr, tip} */
+
+const GRAMMAR = {
+  1: [
+    {q:"She ___ a teacher.",kr:"그녀는 선생님이다.",opts:["am","is","are","be"],a:1,
+     hint:"주어가 She(3인칭 단수)예요.",exp:"3인칭 단수 주어(He/She/It)의 be동사는 <b>is</b>입니다. 정답 <b>is</b>."},
+    {q:"I ___ from Korea.",kr:"나는 한국에서 왔다.",opts:["is","are","am","be"],a:2,
+     hint:"주어가 I예요.",exp:"주어가 I일 때 be동사는 <b>am</b>입니다. 정답 <b>am</b>."},
+    {q:"They ___ my friends.",kr:"그들은 내 친구들이다.",opts:["is","am","be","are"],a:3,
+     hint:"주어가 복수(They)예요.",exp:"복수 주어(We/You/They)의 be동사는 <b>are</b>입니다. 정답 <b>are</b>."},
+    {q:"I have two ___.",kr:"나는 고양이 두 마리가 있다.",opts:["cat","cats","cates","caties"],a:1,
+     hint:"two(둘)니까 복수형이에요.",exp:"셀 수 있는 명사가 둘 이상이면 보통 <b>-s</b>를 붙입니다. 정답 <b>cats</b>."},
+    {q:"She ___ to school every day.",kr:"그녀는 매일 학교에 간다.",opts:["go","goes","going","gone"],a:1,
+     hint:"3인칭 단수 + 반복되는 일상이에요.",exp:"3인칭 단수 주어의 현재시제 동사에는 -es를 붙여 <b>goes</b>가 됩니다. 정답 <b>goes</b>."},
+    {q:"I saw ___ apple on the table.",kr:"탁자 위에서 사과 하나를 봤다.",opts:["a","an","the","(no article)"],a:1,
+     hint:"apple은 모음 소리로 시작해요.",exp:"모음 소리로 시작하는 단어 앞에는 <b>an</b>을 씁니다 (an apple). 정답 <b>an</b>."},
+    {q:"This ___ my book.",kr:"이것은 내 책이다.",opts:["am","is","are","do"],a:1,
+     hint:"This(단수)예요.",exp:"단수 지시대명사 This의 be동사는 <b>is</b>입니다. 정답 <b>is</b>."},
+    {q:"We ___ happy today.",kr:"우리는 오늘 행복하다.",opts:["is","am","are","be"],a:2,
+     hint:"We(복수)예요.",exp:"We의 be동사는 <b>are</b>입니다. 정답 <b>are</b>."},
+  ],
+  2: [
+    {q:"Look! The baby ___ right now.",kr:"봐! 아기가 지금 울고 있어.",opts:["cries","is crying","cried","cry"],a:1,
+     hint:"'right now / Look!'은 지금 진행 중인 일을 가리켜요.",exp:"지금 이 순간 진행 중인 동작은 <b>현재진행형(be + -ing)</b>입니다. 따라서 <b>is crying</b>."},
+    {q:"I ___ TV last night.",kr:"나는 어젯밤 TV를 봤다.",opts:["watch","watched","watching","watches"],a:1,
+     hint:"last night는 끝난 과거예요.",exp:"끝난 과거 시점에는 과거시제를 씁니다. watch의 과거형은 <b>watched</b>."},
+    {q:"I usually wake up ___ 7 a.m.",kr:"나는 보통 오전 7시에 일어난다.",opts:["on","in","at","to"],a:2,
+     hint:"'정확한 시각' 앞에 쓰는 전치사예요.",exp:"정확한 '시각' 앞에는 <b>at</b>을 씁니다 (at 7 a.m.). 정답 <b>at</b>."},
+    {q:"My birthday is ___ July.",kr:"내 생일은 7월이다.",opts:["at","on","in","by"],a:2,
+     hint:"'월(月)' 앞에 쓰는 전치사예요.",exp:"월·연도·계절 앞에는 <b>in</b>을 씁니다 (in July). 정답 <b>in</b>."},
+    {q:"We have a meeting ___ Monday.",kr:"우리는 월요일에 회의가 있다.",opts:["in","on","at","of"],a:1,
+     hint:"'요일·날짜' 앞에 쓰는 전치사예요.",exp:"요일·특정 날짜 앞에는 <b>on</b>을 씁니다 (on Monday). 정답 <b>on</b>."},
+    {q:"He is ___ than me.",kr:"그는 나보다 키가 크다.",opts:["tall","taller","tallest","more tall"],a:1,
+     hint:"than이 있으니 비교급이에요.",exp:"짧은 형용사의 비교급은 <b>-er</b>을 붙입니다 (tall→taller). 정답 <b>taller</b>."},
+    {q:"I ___ to Paris last summer.",kr:"나는 지난여름 파리에 갔다.",opts:["go","have gone","went","was going"],a:2,
+     hint:"'last summer'는 끝난 과거 시점이에요.",exp:"끝난 과거 시점에는 <b>과거시제</b>를 씁니다. go의 과거형은 불규칙하게 <b>went</b>."},
+    {q:"There is a picture ___ the wall.",kr:"벽에 그림이 하나 있다.",opts:["in","at","on","under"],a:2,
+     hint:"표면에 '붙어 있는' 상태예요.",exp:"벽처럼 표면에 붙어 있을 때는 <b>on</b>을 씁니다 (on the wall). 정답 <b>on</b>."},
+  ],
+  3: [
+    {q:"I ___ here since 2019.",kr:"나는 2019년부터 여기 살았다.",opts:["live","lived","have lived","living"],a:2,
+     hint:"since + 과거시점이면 현재완료예요.",exp:"'since + 시점'은 과거부터 지금까지 계속됨을 뜻해 <b>현재완료(have p.p.)</b>를 씁니다. 정답 <b>have lived</b>."},
+    {q:"If it rains tomorrow, we ___ at home.",kr:"내일 비가 오면 우리는 집에 있을 것이다.",opts:["stay","will stay","stayed","would stay"],a:1,
+     hint:"실현 가능한 미래 조건문이에요. if절은 현재, 주절은?",exp:"실현 가능한 조건문(1st conditional)은 'If + 현재시제, 주어 + will + 동사원형'입니다. 정답 <b>will stay</b>."},
+    {q:"___ you ever ___ to Japan?",kr:"일본에 가본 적 있어?",opts:["Did / go","Have / been","Are / going","Do / go"],a:1,
+     hint:"'ever'와 함께 평생의 경험을 묻는 표현이에요.",exp:"평생의 '경험'을 묻는 현재완료 의문문입니다. 'have been to'는 '가본 적 있다'를 뜻해요. 정답 <b>Have / been</b>."},
+    {q:"This is the man ___ helped me.",kr:"이 사람이 나를 도와준 남자다.",opts:["which","who","whom","where"],a:1,
+     hint:"선행사가 사람이고 관계절의 주어 역할이에요.",exp:"선행사가 사람이고 관계절의 주어 역할이면 주격 관계대명사 <b>who</b>를 씁니다. 정답 <b>who</b>."},
+    {q:"He usually drinks coffee, but today he ___ tea.",kr:"그는 보통 커피를 마시지만 오늘은 차를 마시고 있다.",opts:["drinks","is drinking","drank","drink"],a:1,
+     hint:"'usually' vs 'today(오늘만 지금)'의 대조예요.",exp:"평소 습관은 현재시제지만, 평소와 다르게 '지금 일시적으로' 하는 일은 <b>현재진행형</b>으로 대조합니다. 정답 <b>is drinking</b>."},
+    {q:"___ it was cold, we went swimming.",kr:"추웠지만 우리는 수영하러 갔다.",opts:["Because","Although","So","Unless"],a:1,
+     hint:"'비록 ~지만'이라는 양보를 나타내요.",exp:"'비록 ~일지라도'라는 양보(예상과 반대 결과)는 <b>Although</b>를 씁니다. 정답 <b>Although</b>."},
+    {q:"She is the ___ student in the class.",kr:"그녀는 반에서 가장 똑똑한 학생이다.",opts:["smart","smarter","smartest","most smart"],a:2,
+     hint:"the와 함께 쓰는 최상급이에요.",exp:"짧은 형용사의 최상급은 the + -est입니다 (the smartest). 정답 <b>smartest</b>."},
+    {q:"You should stop ___ so much sugar.",kr:"너는 설탕을 그렇게 많이 먹는 걸 그만둬야 해.",opts:["to eat","eat","eating","ate"],a:2,
+     hint:"'~하는 것을 멈추다'는 stop + 동명사예요.",exp:"'stop + -ing'는 '~하던 것을 멈추다'입니다 (stop eating). 'stop to do'는 '~하려고 멈추다'로 뜻이 달라요. 정답 <b>eating</b>."},
+  ],
+  4: [
+    {q:"By the time we arrived, the train ___.",kr:"우리가 도착했을 때 기차는 이미 떠나 있었다.",opts:["leaves","has left","had left","left"],a:2,
+     hint:"우리가 도착한 것보다 '더 먼저' 일어난 일이에요.",exp:"과거의 어떤 시점보다 더 먼저 일어난 일은 <b>과거완료(had p.p.)</b>로 씁니다. 정답 <b>had left</b>."},
+    {q:"After he ___ dinner, he went to bed.",kr:"저녁을 먹은 후에 그는 잠자리에 들었다.",opts:["had eaten","eats","has eaten","eating"],a:0,
+     hint:"두 과거 사건 중 '더 먼저' 일어난 일이에요.",exp:"두 과거 사건의 순서를 분명히 할 때 먼저 일어난 일은 <b>과거완료(had p.p.)</b>로 씁니다. 정답 <b>had eaten</b>."},
+    {q:"This bridge ___ in 1990.",kr:"이 다리는 1990년에 지어졌다.",opts:["built","was built","has built","builds"],a:1,
+     hint:"다리는 '지어지는' 대상이고, 과거 한 시점이에요.",exp:"다리는 행위의 대상이므로 수동태가 필요하고, 'in 1990'은 과거 시점이라 <b>과거 수동태(was + p.p.)</b>를 씁니다. 정답 <b>was built</b>."},
+    {q:"She said she ___ tired.",kr:"그녀는 피곤하다고 말했다.",opts:["is","was","will be","has been"],a:1,
+     hint:"주절(said)이 과거라 종속절 시제도 과거로 가요.",exp:"간접화법에서 주절이 과거(said)이면 종속절의 시제도 한 단계 과거로 일치시킵니다. is → <b>was</b>."},
+    {q:"If I ___ rich, I would travel the world.",kr:"내가 부자라면 세계를 여행할 텐데.",opts:["am","was","were","will be"],a:2,
+     hint:"현재 사실의 반대를 가정해요. be동사는 인칭과 무관하게?",exp:"가정법 과거(2nd conditional)에서는 be동사를 인칭과 무관하게 <b>were</b>로 씁니다('If I were ~'). 정답 <b>were</b>."},
+    {q:"By next year, she ___ her degree.",kr:"내년이면 그녀는 학위를 마쳤을 것이다.",opts:["will finish","finishes","will have finished","finished"],a:2,
+     hint:"미래의 한 시점까지 '완료될' 일이에요.",exp:"미래의 특정 시점까지 완료될 일은 <b>미래완료(will have p.p.)</b>로 씁니다. 정답 <b>will have finished</b>."},
+    {q:"The report ___ by tomorrow.",kr:"보고서는 내일까지 완료될 것이다.",opts:["will finish","will be finished","finishes","is finishing"],a:1,
+     hint:"보고서는 '완료되는' 대상이에요(수동).",exp:"보고서는 행위의 대상이므로 미래 수동태 <b>will be finished</b>를 씁니다. 정답 <b>will be finished</b>."},
+    {q:"I'd rather you ___ smoke here.",kr:"나는 네가 여기서 담배를 피우지 않으면 좋겠어.",opts:["don't","didn't","won't","not"],a:1,
+     hint:"'I'd rather + 주어 + 과거형'은 현재·미래의 바람을 나타내요.",exp:"'I'd rather (that) + 주어 + 과거동사'는 현재·미래에 대한 바람을 나타냅니다. 부정은 <b>didn't</b>. 정답 <b>didn't</b>."},
+  ],
+  5: [
+    {q:"I ___ for three hours, so I'm really tired now.",kr:"세 시간째 일하고 있어서 지금 너무 피곤해.",opts:["work","worked","have been working","will work"],a:2,
+     hint:"과거부터 지금까지 '계속 진행'되어 현재에 영향을 줘요.",exp:"과거부터 지금까지 계속 이어지며 결과가 현재에 영향을 주는 동작은 <b>현재완료진행형(have been -ing)</b>입니다. 정답 <b>have been working</b>."},
+    {q:"This time tomorrow, I ___ on a plane to Paris.",kr:"내일 이맘때면 나는 파리행 비행기에 타고 있을 것이다.",opts:["will sit","am sitting","will be sitting","sit"],a:2,
+     hint:"미래의 특정 시점에 '진행 중일' 동작이에요.",exp:"미래의 특정 시점에 진행 중일 동작은 <b>미래진행형(will be -ing)</b>입니다. 정답 <b>will be sitting</b>."},
+    {q:"Not only ___ he sing, but he also dances.",kr:"그는 노래뿐 아니라 춤도 춘다.",opts:["does","did","is","can"],a:0,
+     hint:"'Not only'가 문두에 오면 도치돼요. 현재시제 일반동사는?",exp:"부정어구(Not only)가 문두에 오면 도치되어 'does + 주어 + 동사원형' 순서가 됩니다. 정답 <b>does</b>."},
+    {q:"Neither John ___ Mary came to the party.",kr:"존도 메리도 파티에 오지 않았다.",opts:["or","and","nor","but"],a:2,
+     hint:"'neither A ___ B'는 굳어진 상관접속사예요.",exp:"'A도 B도 아니다'는 <b>neither A nor B</b> 형태로 씁니다. 정답 <b>nor</b>."},
+    {q:"Had I known, I ___ you.",kr:"내가 알았더라면 너에게 말했을 텐데.",opts:["would tell","will tell","would have told","told"],a:2,
+     hint:"가정법 과거완료의 도치형(Had I known)이에요.",exp:"가정법 과거완료(If I had known)의 도치형 'Had I known' 뒤 주절은 <b>would have p.p.</b>입니다. 정답 <b>would have told</b>."},
+    {q:"Seldom ___ I seen such a beautiful view.",kr:"그렇게 아름다운 광경은 좀처럼 본 적이 없다.",opts:["have","had","do","am"],a:0,
+     hint:"부정부사 문두 도치 + 현재완료예요.",exp:"부정부사(Seldom/Rarely/Never)가 문두에 오면 도치되어 'Seldom have I p.p.' 형태가 됩니다. 정답 <b>have</b>."},
+    {q:"It was ___ a boring movie ___ I fell asleep.",kr:"너무 지루한 영화여서 나는 잠들었다.",opts:["so / that","such / that","as / as","too / to"],a:1,
+     hint:"'명사(movie)'가 있어요. so가 아니라?",exp:"'such + (a/an) + 형용사 + 명사 + that'은 '너무 ~해서 …하다'입니다. 명사가 있으니 <b>such</b>예요. 정답 <b>such / that</b>."},
+    {q:"If I ___ harder, I would have passed the exam.",kr:"더 열심히 했더라면 시험에 합격했을 텐데.",opts:["studied","had studied","study","have studied"],a:1,
+     hint:"과거 사실의 반대를 가정하는 가정법이에요.",exp:"가정법 과거완료의 if절은 <b>had p.p.</b>입니다 (If I had studied ... would have passed). 정답 <b>had studied</b>."},
+  ],
+};
+
+const VOCAB = {
+  1: [
+    {q:"'cat'의 알맞은 뜻은?",kr:"e.g. The cat is sleeping.",opts:["개","고양이","새","토끼"],a:1,
+     hint:"'야옹' 우는 동물.",exp:"<b>cat</b> = 고양이. dog(개)·rabbit(토끼)와 헷갈리지 마세요."},
+    {q:"'water'의 알맞은 뜻은?",kr:"e.g. I drink water.",opts:["불","물","공기","흙"],a:1,
+     hint:"매일 마시는 것.",exp:"<b>water</b> = 물. fire(불)·air(공기)와 구분."},
+    {q:"'big'의 알맞은 뜻은?",kr:"e.g. a big house",opts:["넓은","깊은","큰","높은"],a:2,
+     hint:"크기 전반을 가리켜요.",exp:"<b>big</b> = 큰(크기 전반). wide(넓은)·deep(깊은)·high(높은)와 구분하세요."},
+    {q:"'run'의 알맞은 뜻은?",kr:"e.g. I run every morning.",opts:["걷다","뛰다","서다","앉다"],a:1,
+     hint:"빠르게 움직이는 동작.",exp:"<b>run</b> = 뛰다·달리다. walk(걷다)와 구분."},
+    {q:"'happy'의 알맞은 뜻은?",kr:"e.g. I am happy.",opts:["놀란","행복한","차분한","수줍은"],a:1,
+     hint:"기분이 좋은 상태.",exp:"<b>happy</b> = 행복한. calm(차분한)·surprised(놀란)와 구분."},
+    {q:"'eat'의 알맞은 뜻은?",kr:"e.g. Let's eat lunch.",opts:["마시다","씹다","요리하다","먹다"],a:3,
+     hint:"음식을 입으로 넣는 것.",exp:"<b>eat</b> = 먹다. drink(마시다)·chew(씹다)·cook(요리하다)와 구분."},
+    {q:"'red'의 알맞은 뜻은?",kr:"e.g. a red apple",opts:["파란","노란","빨간","초록"],a:2,
+     hint:"잘 익은 사과 색.",exp:"<b>red</b> = 빨간. blue(파란)·yellow(노란)·green(초록)."},
+    {q:"'book'의 알맞은 뜻은?",kr:"e.g. I read a book.",opts:["연필","공책","책","지우개"],a:2,
+     hint:"읽는 것.",exp:"<b>book</b> = 책. notebook(공책)·pencil(연필)과 구분."},
+  ],
+  2: [
+    {q:"'borrow'의 알맞은 뜻은?",kr:"e.g. Can I borrow your pen?",opts:["사다","빌리다","빌려주다","돌려주다"],a:1,
+     hint:"남에게서 잠시 가져오는 것.",exp:"<b>borrow</b> = (남에게서) 빌리다. lend(빌려주다)·return(돌려주다)과 헷갈리기 쉬워요."},
+    {q:"'delicious'의 알맞은 뜻은?",kr:"e.g. This soup is delicious!",opts:["매운","신선한","맛있는","짭짤한"],a:2,
+     hint:"맛 전반이 아주 좋은.",exp:"<b>delicious</b> = 맛있는. spicy(매운)·fresh(신선한)·salty(짭짤한)는 특정 맛이에요."},
+    {q:"'expensive'의 알맞은 뜻은?",kr:"e.g. This bag is too expensive.",opts:["값진","귀한","비싼","화려한"],a:2,
+     hint:"'가격'이 높은 것.",exp:"<b>expensive</b> = (가격이) 비싼. valuable(값진)·precious(귀한)는 '가치'에 초점이라 달라요."},
+    {q:"'arrive'의 알맞은 뜻은?",kr:"e.g. We arrived early.",opts:["떠나다","도착하다","출발하다","멈추다"],a:1,
+     hint:"목적지에 닿는 것.",exp:"<b>arrive</b> = 도착하다. leave(떠나다)·depart(출발하다)와 반대예요."},
+    {q:"'remember'의 알맞은 뜻은?",kr:"e.g. I can't remember his name.",opts:["잊다","후회하다","기억하다","상상하다"],a:2,
+     hint:"잊지 않고 떠올리는 것.",exp:"<b>remember</b> = 기억하다. forget(잊다)·imagine(상상하다)과 구분."},
+    {q:"'difficult'의 알맞은 뜻은?",kr:"e.g. This question is difficult.",opts:["복잡한","어려운","위험한","중요한"],a:1,
+     hint:"해내기 힘든.",exp:"<b>difficult</b> = 어려운(=hard). complex(복잡한)와 미묘하게 달라요."},
+    {q:"'quiet'의 알맞은 뜻은?",kr:"e.g. Please be quiet.",opts:["시끄러운","차분한","조용한","느린"],a:2,
+     hint:"소리가 거의 없는.",exp:"<b>quiet</b> = 조용한(소리). calm(차분한·마음)과 헷갈리기 쉬워요."},
+    {q:"'busy'의 알맞은 뜻은?",kr:"e.g. I'm too busy today.",opts:["한가한","바쁜","느긋한","지친"],a:1,
+     hint:"할 일이 많은.",exp:"<b>busy</b> = 바쁜. free(한가한)·relaxed(느긋한)와 구분."},
+  ],
+  3: [
+    {q:"'happy'와 뜻이 가장 비슷한 단어는?",kr:"기쁜·행복한",opts:["calm","glad","proud","polite"],a:1,
+     hint:"기쁨을 나타내는 단어.",exp:"<b>happy ≈ glad</b> (기쁜). calm(차분한)·proud(자랑스러운)는 다른 긍정 감정이에요."},
+    {q:"'big'과 뜻이 가장 비슷한 단어는?",kr:"큰",opts:["wide","huge","tall","broad"],a:1,
+     hint:"크기가 매우 큰.",exp:"<b>big ≈ huge</b> (거대한). wide(넓은)·tall(높은)·broad(폭넓은)는 특정 차원이에요."},
+    {q:"'begin'과 뜻이 가장 비슷한 단어는?",kr:"시작하다",opts:["arrive","prepare","start","continue"],a:2,
+     hint:"무언가를 개시하는 것.",exp:"<b>begin ≈ start</b> (시작하다). prepare(준비하다)·continue(계속하다)는 단계가 달라요."},
+    {q:"'fast'와 뜻이 가장 비슷한 단어는?",kr:"빠른",opts:["early","quick","smooth","light"],a:1,
+     hint:"속도가 빠른.",exp:"<b>fast ≈ quick</b> (빠른). early(이른)·smooth(매끄러운)와 혼동하지 마세요."},
+    {q:"'decide'의 알맞은 뜻은?",kr:"e.g. I decided to study abroad.",opts:["고민하다","결정하다","미루다","제안하다"],a:1,
+     hint:"마음을 정하는 것(명사 decision).",exp:"<b>decide</b> = 결정하다. ponder(고민하다)·postpone(미루다)는 결정 '전' 단계예요."},
+    {q:"'improve'의 알맞은 뜻은?",kr:"e.g. I want to improve my English.",opts:["유지하다","향상시키다","측정하다","조절하다"],a:1,
+     hint:"더 나아지게 하는 것.",exp:"<b>improve</b> = 향상시키다. maintain(유지하다)·adjust(조절하다)와 구분."},
+    {q:"'invite'의 알맞은 뜻은?",kr:"e.g. She invited me to her party.",opts:["방문하다","환영하다","초대하다","소개하다"],a:2,
+     hint:"오라고 부르는 것(명사 invitation).",exp:"<b>invite</b> = 초대하다. visit(방문하다)·welcome(환영하다)과 헷갈리기 쉬워요."},
+    {q:"'important'와 뜻이 가장 비슷한 단어는?",kr:"중요한",opts:["useful","crucial","famous","modern"],a:1,
+     hint:"결정적으로 중요한.",exp:"<b>important ≈ crucial</b> (대단히 중요한). useful(유용한)·famous(유명한)와 구분."},
+  ],
+  4: [
+    {q:"'schedule'의 알맞은 뜻은?",kr:"e.g. Let's check the schedule.",opts:["계약","일정","회의","예산"],a:1,
+     hint:"언제 무엇을 할지 정한 표.",exp:"<b>schedule</b> = 일정. contract(계약)·budget(예산)과 구분."},
+    {q:"'deadline'의 알맞은 뜻은?",kr:"e.g. The deadline is Friday.",opts:["근무 시간","마감 기한","휴가 기간","회의 일정"],a:1,
+     hint:"반드시 끝내야 하는 시점.",exp:"<b>deadline</b> = 마감 기한. 다른 '시간' 표현과 구분하세요."},
+    {q:"'colleague'의 알맞은 뜻은?",kr:"e.g. She is my colleague.",opts:["상사","고객","부하","동료"],a:3,
+     hint:"같은 위치에서 함께 일하는 사람(=coworker).",exp:"<b>colleague</b> = (직장) 동료. boss(상사)·client(고객)·subordinate(부하)와 구분."},
+    {q:"'budget'의 알맞은 뜻은?",kr:"e.g. We are over budget.",opts:["수익","예산","세금","대출"],a:1,
+     hint:"쓸 수 있도록 미리 정한 돈.",exp:"<b>budget</b> = 예산. profit(수익)·tax(세금)·loan(대출)과 구분."},
+    {q:"'negotiate'의 알맞은 뜻은?",kr:"e.g. We need to negotiate the price.",opts:["합의하다","협상하다","제안하다","발표하다"],a:1,
+     hint:"조건을 주고받으며 의논하는 것.",exp:"<b>negotiate</b> = 협상하다. agree(합의하다)는 협상의 '결과'라 달라요."},
+    {q:"'efficient'의 알맞은 뜻은?",kr:"e.g. a more efficient method",opts:["생산적인","효율적인","체계적인","경제적인"],a:1,
+     hint:"적은 자원으로 큰 성과를 내는.",exp:"<b>efficient</b> = 효율적인. productive(생산적인)·economical(경제적인)과 미묘하게 달라요."},
+    {q:"'require'의 알맞은 뜻은?",kr:"e.g. This job requires experience.",opts:["제공하다","필요로 하다","요청하다","포함하다"],a:1,
+     hint:"꼭 있어야 한다고 하는 것.",exp:"<b>require</b> = 필요로 하다·요구하다. request(요청하다)보다 강제성이 강해요."},
+    {q:"'propose'의 알맞은 뜻은?",kr:"e.g. I'd like to propose a new plan.",opts:["발표하다","제안하다","검토하다","보고하다"],a:1,
+     hint:"새 아이디어를 내놓는 것(명사 proposal).",exp:"<b>propose</b> = 제안하다. present(발표하다)·report(보고하다)와 구분."},
+  ],
+  5: [
+    {q:"'meticulous'의 알맞은 뜻은?",kr:"e.g. a meticulous worker",opts:["꼼꼼한","성실한","신중한","유능한"],a:0,
+     hint:"아주 세밀하게 신경 쓰는.",exp:"<b>meticulous</b> = 꼼꼼한·세심한. diligent(성실한)·prudent(신중한)와 구분."},
+    {q:"'ambiguous'의 알맞은 뜻은?",kr:"e.g. an ambiguous answer",opts:["복잡한","추상적인","애매모호한","불완전한"],a:2,
+     hint:"여러 뜻으로 해석돼 분명하지 않은.",exp:"<b>ambiguous</b> = 애매모호한. complex(복잡한)·abstract(추상적인)와 구분."},
+    {q:"'inevitable'의 알맞은 뜻은?",kr:"e.g. an inevitable result",opts:["예측 가능한","피할 수 없는","당연한","일시적인"],a:1,
+     hint:"반드시 일어나고 마는.",exp:"<b>inevitable</b> = 불가피한. predictable(예측 가능한)과 달리 '막을 수 없음'에 초점."},
+    {q:"'pragmatic'의 알맞은 뜻은?",kr:"e.g. a pragmatic approach",opts:["논리적인","현실적인","실용적인","체계적인"],a:2,
+     hint:"이론보다 실제 효과를 중시하는.",exp:"<b>pragmatic</b> = 실용적인. realistic(현실적인)과 비슷해 보이지만 '효용 중심'이에요."},
+    {q:"'scrutinize'와 뜻이 가장 비슷한 단어는?",kr:"면밀히 살피다",opts:["observe","mention","examine","arrange"],a:2,
+     hint:"꼼꼼히 따져 검토하다.",exp:"<b>scrutinize ≈ examine</b> (면밀히 조사하다). observe(관찰하다)보다 더 따져보는 뉘앙스."},
+    {q:"'reluctant'의 알맞은 뜻은?",kr:"e.g. reluctant to agree",opts:["신중한","무관심한","꺼리는","소극적인"],a:2,
+     hint:"하고 싶지 않아 망설이는.",exp:"<b>reluctant</b> = 꺼리는·마지못한. passive(소극적인)·indifferent(무관심한)와 구분."},
+    {q:"'abundant'와 뜻이 가장 비슷한 단어는?",kr:"풍부한",opts:["frequent","massive","plentiful","various"],a:2,
+     hint:"양이 아주 많은.",exp:"<b>abundant ≈ plentiful</b> (풍부한). frequent(잦은)·various(다양한)는 양과 무관해요."},
+    {q:"'deteriorate'의 알맞은 뜻은?",kr:"e.g. Her health deteriorated.",opts:["변동되다","악화되다","지연되다","둔화되다"],a:1,
+     hint:"점점 나빠지다.",exp:"<b>deteriorate</b> = 악화되다. fluctuate(변동되다)·slow down(둔화되다)과 구분."},
+  ],
+};
+
+const LISTEN = {
+  1: [
+    {audio:"red",q:"들은 단어를 고르세요",opts:["red","bed","read","bread"],a:0,
+     hint:"r 소리로 시작해요.",exp:"정답: <b>red</b> (빨강). bed/bread와 첫소리를 구분하세요."},
+    {audio:"three",q:"들은 단어를 고르세요",opts:["tree","free","three","see"],a:2,
+     hint:"'th' 발음에 집중.",exp:"정답: <b>three</b> (3). 'th'는 혀를 윗니 사이에."},
+    {audio:"cat",q:"들은 단어를 고르세요",opts:["cut","cat","cap","cup"],a:1,
+     hint:"모음 a 소리.",exp:"정답: <b>cat</b> (고양이). cut/cup의 모음과 구분."},
+    {audio:"nine",q:"들은 단어를 고르세요",opts:["mine","nine","line","night"],a:1,
+     hint:"숫자예요.",exp:"정답: <b>nine</b> (9). 첫소리 n과 m/l을 구분."},
+    {audio:"blue",q:"들은 단어를 고르세요",opts:["blue","blow","glue","blew"],a:0,
+     hint:"색깔이에요.",exp:"정답: <b>blue</b> (파랑)."},
+    {audio:"book",q:"들은 단어를 고르세요",opts:["back","book","look","buck"],a:1,
+     hint:"읽는 것.",exp:"정답: <b>book</b> (책). look과 첫소리(b/l)를 구분."},
+  ],
+  2: [
+    {audio:"I have a dog.",q:"들은 문장을 고르세요",opts:["I have a dog.","I have a duck.","I have a doll.","I had a dog."],a:0,
+     hint:"끝 단어와 have/had를 구분.",exp:"정답: <b>I have a dog.</b> dog/duck/doll을 구분하세요."},
+    {audio:"She is my mom.",q:"들은 문장을 고르세요",opts:["She is my mom.","She is my man.","She was my mom.","See is my mom."],a:0,
+     hint:"is/was, mom/man.",exp:"정답: <b>She is my mom.</b>"},
+    {audio:"It is hot today.",q:"들은 문장을 고르세요",opts:["It is hot today.","It is hard today.","It is not today.","It is hot to play."],a:0,
+     hint:"hot/hard/not.",exp:"정답: <b>It is hot today.</b>"},
+    {audio:"I can see the ship.",q:"들은 문장을 고르세요",opts:["I can see the sheep.","I can see the ship.","I can see the chip.","I can see the cheap."],a:1,
+     hint:"sh/ch와 모음 길이.",exp:"정답: <b>I can see the ship.</b> (배). sheep(양)·chip(조각)과 비슷해요."},
+    {audio:"They went to the park.",q:"들은 문장을 고르세요",opts:["They want to the park.","They went to the park.","They went to the pork.","They sent two parks."],a:1,
+     hint:"went/want, park/pork.",exp:"정답: <b>They went to the park.</b> went(go의 과거) vs want."},
+    {audio:"He works very hard.",q:"들은 문장을 고르세요",opts:["He walks very hard.","He works very hard.","He works very hot.","He works very far."],a:1,
+     hint:"work/walk 모음.",exp:"정답: <b>He works very hard.</b> work(일하다) vs walk(걷다)."},
+  ],
+  3: [
+    {audio:"Please close the door.",q:"들은 문장을 고르세요",opts:["Please close the door.","Please close the floor.","Please chose the door.","Please clothes the door."],a:0,
+     hint:"door/floor, close/chose.",exp:"정답: <b>Please close the door.</b>"},
+    {audio:"I have three apples.",q:"들은 문장을 고르세요",opts:["I have free apples.","I have tree apples.","I have three apples.","I have three apple."],a:2,
+     hint:"three의 'th'와 복수형(-s).",exp:"정답: <b>I have three apples.</b> three의 'th' 발음에 주의."},
+    {audio:"The coffee is very hot.",q:"들은 문장을 고르세요",opts:["The copy is very hot.","The coffee is very hot.","The coffee is very hat.","The coffee is very what."],a:1,
+     hint:"coffee/copy.",exp:"정답: <b>The coffee is very hot.</b>"},
+    {audio:"Can you turn on the light?",q:"들은 문장을 고르세요",opts:["Can you turn on the light?","Can you turn on the right?","Can you turn on the night?","Can you turn off the light?"],a:0,
+     hint:"l/r/n, on/off.",exp:"정답: <b>Can you turn on the light?</b> light/right/night를 구분하세요."},
+    {audio:"I live on the third floor.",q:"들은 문장을 고르세요",opts:["I leave on the third floor.","I live on the third floor.","I live on the third door.","I live on the dirty floor."],a:1,
+     hint:"live/leave, third 발음.",exp:"정답: <b>I live on the third floor.</b> live(살다) vs leave(떠나다)."},
+    {audio:"She bought a new watch.",q:"들은 문장을 고르세요",opts:["She bought a new watch.","She bought a new wash.","She bought a new much.","She brought a new watch."],a:0,
+     hint:"bought/brought, watch/wash.",exp:"정답: <b>She bought a new watch.</b> buy의 과거 bought, bring의 과거 brought."},
+  ],
+  4: [
+    {audio:"The library closes at eight in the evening.",q:"What time does the library close?",opts:["6 p.m.","7 p.m.","8 p.m.","9 p.m."],a:2,
+     hint:"닫는 시각 숫자에 집중.",exp:"정답: <b>8 p.m.</b> 'closes at eight in the evening'."},
+    {audio:"Tom has two brothers and one sister.",q:"How many sisters does Tom have?",opts:["One","Two","Three","None"],a:0,
+     hint:"sister(여자형제)의 수만.",exp:"정답: <b>One.</b> 'one sister' (형제는 둘)."},
+    {audio:"It will be rainy tomorrow, so take an umbrella.",q:"How will the weather be tomorrow?",opts:["Sunny","Rainy","Snowy","Windy"],a:1,
+     hint:"날씨를 나타내는 단어.",exp:"정답: <b>Rainy.</b> 'rainy tomorrow'."},
+    {audio:"The train to Busan leaves from platform five.",q:"Which platform does the train leave from?",opts:["Four","Five","Nine","Fifteen"],a:1,
+     hint:"platform 번호.",exp:"정답: <b>Five.</b> 'platform five'."},
+    {audio:"My birthday is on the first of May.",q:"When is the speaker's birthday?",opts:["April 1st","May 1st","May 5th","March 1st"],a:1,
+     hint:"월과 날짜를 함께.",exp:"정답: <b>May 1st.</b> 'the first of May'."},
+    {audio:"She bought three apples and two oranges.",q:"How many oranges did she buy?",opts:["One","Two","Three","Five"],a:1,
+     hint:"orange의 수만.",exp:"정답: <b>Two.</b> 'two oranges'."},
+  ],
+  5: [
+    {audio:"He usually drinks coffee, but today he ordered tea.",q:"What did he order today?",opts:["Coffee","Juice","Tea","Water"],a:2,
+     hint:"today(평소와 다름)에 주목.",exp:"정답: <b>Tea.</b> 평소엔 커피지만 오늘은 차를 주문했어요."},
+    {audio:"The meeting was moved from Monday to Wednesday.",q:"When is the meeting now?",opts:["Monday","Tuesday","Wednesday","Friday"],a:2,
+     hint:"옮겨진(to) 요일.",exp:"정답: <b>Wednesday.</b> 'moved ... to Wednesday'."},
+    {audio:"You can pay by cash or card, but not by check.",q:"Which payment is NOT accepted?",opts:["Cash","Card","Check","Coupon"],a:2,
+     hint:"'not by ___'를 들으세요.",exp:"정답: <b>Check.</b> 'not by check'."},
+    {audio:"The museum is free for children under twelve.",q:"Who can enter the museum for free?",opts:["Everyone","Adults","Children under 12","Students"],a:2,
+     hint:"'free for ___'를 들으세요.",exp:"정답: <b>Children under 12.</b>"},
+    {audio:"The flight was delayed by two hours because of the storm.",q:"Why was the flight delayed?",opts:["Heavy traffic","A storm","A strike","An engine problem"],a:1,
+     hint:"'because of ___'를 들으세요.",exp:"정답: <b>A storm.</b> 'because of the storm'."},
+    {audio:"Although it was expensive, she decided to buy the laptop.",q:"What did she do?",opts:["She didn't buy it","She bought the laptop","She returned it","She borrowed one"],a:1,
+     hint:"'decided to ___'에 주목.",exp:"정답: <b>She bought the laptop.</b> 비쌌지만 사기로 결정했어요."},
+  ],
+};
+
+/* =========================================================
+   듣기 Quest — 10단계 '고정·점진' 구조 (단계마다 다른 문제, 점점 어려워짐)
+   1~2 단어/구 · 3~4 짧은 문장 · 5~6 정보 청취 · 7 문법문장 · 8 대화 · 9 복문/추론 · 10 단락
+   type:"pic" 이면 이모지 보기. q = 화면 지시문/질문.
+   ========================================================= */
+const PARA10 = "Last summer, Mina traveled to Canada to study English for two months. She stayed with a host family who had two young children. Every morning, she went to a language school by bus. After class, she often went to the library to do her homework. Although she missed her family, she really enjoyed her time there.";
+const LISTEN_STAGES = {
+  1: [
+    {audio:"cat",q:"들은 단어를 고르세요",opts:["cap","cat","cut","cup"],a:1,hint:"끝소리 t.",exp:"정답: <b>cat</b> (고양이)."},
+    {audio:"red",q:"들은 단어를 고르세요",opts:["bed","read","red","bread"],a:2,hint:"첫소리 r.",exp:"정답: <b>red</b> (빨강)."},
+    {audio:"dog",q:"들은 단어에 맞는 그림을 고르세요",type:"pic",opts:["🐱","🐭","🐶","🐰"],a:2,hint:"'멍멍'.",exp:"정답: <b>dog</b> 🐶."},
+    {audio:"book",q:"들은 단어를 고르세요",opts:["look","cook","foot","book"],a:3,hint:"첫소리 b.",exp:"정답: <b>book</b> (책)."},
+    {audio:"sun",q:"들은 단어에 맞는 그림을 고르세요",type:"pic",opts:["☀️","🌙","⭐","☁️"],a:0,hint:"낮에 뜨는 것.",exp:"정답: <b>sun</b> ☀️."},
+  ],
+  2: [
+    {audio:"three",q:"들은 단어를 고르세요",opts:["tree","three","free","see"],a:1,hint:"'th' 발음.",exp:"정답: <b>three</b> (3)."},
+    {audio:"nine",q:"들은 숫자를 고르세요",opts:["five","nineteen","nine","ninety"],a:2,hint:"한 자리 숫자.",exp:"정답: <b>nine</b> (9). nineteen(19)·ninety(90)와 구분."},
+    {audio:"blue",q:"들은 색에 맞는 그림을 고르세요",type:"pic",opts:["🟥","🟩","🟦","🟨"],a:2,hint:"하늘 색.",exp:"정답: <b>blue</b> 🟦."},
+    {audio:"a big dog",q:"들은 말을 고르세요",opts:["a bad dog","a big dog","a big duck","the big dog"],a:1,hint:"big vs bad.",exp:"정답: <b>a big dog</b>."},
+    {audio:"ten apples",q:"들은 말을 고르세요",opts:["ten apple","two apples","ten apples","tan apples"],a:2,hint:"수와 복수형.",exp:"정답: <b>ten apples</b> (복수 -s)."},
+  ],
+  3: [
+    {audio:"I like coffee.",q:"들은 문장을 고르세요",opts:["I'd like coffee.","I like toffee.","I like coffee.","I like coffees."],a:2,hint:"like vs 'd like.",exp:"정답: <b>I like coffee.</b>"},
+    {audio:"She is my sister.",q:"들은 문장의 뜻을 고르세요",opts:["그녀는 내 엄마다.","그녀는 내 여동생이다.","그는 내 형이다.","그녀는 내 친구다."],a:1,hint:"sister.",exp:"정답: <b>그녀는 내 여동생(누나/언니)이다.</b>"},
+    {audio:"He has a red car.",q:"들은 문장을 고르세요",opts:["She has a red car.","He had a red car.","He has a red card.","He has a red car."],a:3,hint:"car vs card, has vs had.",exp:"정답: <b>He has a red car.</b>"},
+    {audio:"They went home.",q:"들은 문장을 고르세요",opts:["They want home.","They went home.","They sent home.","They went to home."],a:1,hint:"went vs want.",exp:"정답: <b>They went home.</b> (home 앞엔 to 없음)"},
+    {audio:"I eat breakfast at seven.",q:"들은 문장의 뜻을 고르세요",opts:["나는 7시에 일어난다.","나는 7시에 아침을 먹는다.","나는 아침을 거른다.","나는 9시에 아침을 먹는다."],a:1,hint:"eat breakfast, seven.",exp:"정답: <b>나는 7시에 아침을 먹는다.</b>"},
+  ],
+  4: [
+    {audio:"The baby is crying.",q:"들은 문장의 뜻을 고르세요",opts:["아기가 자고 있다.","아기가 울고 있다.","아기가 웃고 있다.","아기가 먹고 있다."],a:1,hint:"crying.",exp:"정답: <b>아기가 울고 있다.</b> (현재진행)"},
+    {audio:"What time is it?",q:"들은 문장을 고르세요",opts:["What time was it?","What time is it?","Where time is it?","What time it is?"],a:1,hint:"is/was, 어순.",exp:"정답: <b>What time is it?</b>"},
+    {audio:"She is reading a book.",q:"들은 문장에 맞는 그림을 고르세요",type:"pic",opts:["✍️","📖","🎨","🎧"],a:1,hint:"reading.",exp:"정답: 책을 읽는 모습 📖."},
+    {audio:"I am cooking dinner now.",q:"들은 문장의 뜻을 고르세요",opts:["나는 저녁을 다 먹었다.","나는 지금 저녁을 요리하고 있다.","나는 저녁을 살 것이다.","나는 점심을 요리한다."],a:1,hint:"cooking, now.",exp:"정답: <b>나는 지금 저녁을 요리하고 있다.</b>"},
+    {audio:"Where are you going?",q:"들은 문장을 고르세요",opts:["Why are you going?","Where do you go?","Where are you going?","Where were you going?"],a:2,hint:"Where, are -ing.",exp:"정답: <b>Where are you going?</b>"},
+  ],
+  5: [
+    {audio:"I have finished my homework.",q:"들은 문장의 뜻을 고르세요",opts:["나는 숙제를 할 것이다.","나는 숙제를 끝냈다.","나는 숙제를 한다.","나는 숙제를 안 했다."],a:1,hint:"have finished(완료).",exp:"정답: <b>나는 숙제를 끝냈다.</b> (현재완료)"},
+    {audio:"The keys are on the table.",q:"열쇠는 어디에 있나요?",opts:["탁자 아래","탁자 위","의자 위","서랍 안"],a:1,hint:"on the table.",exp:"정답: <b>탁자 위</b> (on)."},
+    {audio:"I will call you tomorrow.",q:"들은 문장을 고르세요",opts:["I called you yesterday.","I will call you today.","I will call you tomorrow.","I will email you tomorrow."],a:2,hint:"will, tomorrow.",exp:"정답: <b>I will call you tomorrow.</b>"},
+    {audio:"We first met in 2010.",q:"두 사람은 언제 처음 만났나요?",opts:["2019년","2002년","2010년","2012년"],a:2,hint:"in 2010.",exp:"정답: <b>2010년</b>."},
+    {audio:"She has lived here for ten years.",q:"들은 문장의 뜻을 고르세요",opts:["그녀는 10년 전에 떠났다.","그녀는 여기 살 것이다.","그녀는 10년 동안 여기 살았다.","그녀는 10개월 살았다."],a:2,hint:"for ten years(현재완료).",exp:"정답: <b>그녀는 10년 동안 여기 살았다.</b>"},
+  ],
+  6: [
+    {audio:"Tom has two brothers and one sister.",q:"How many sisters does Tom have?",opts:["Two","One","Three","None"],a:1,hint:"sister 수만.",exp:"정답: <b>One.</b> ('one sister')"},
+    {audio:"The train leaves at six p.m. from platform four.",q:"기차는 몇 번 승강장에서 출발하나요?",opts:["6번","2번","4번","14번"],a:2,hint:"platform 번호.",exp:"정답: <b>4번</b> (platform four)."},
+    {audio:"It will be sunny tomorrow, so wear sunglasses.",q:"내일 날씨는 어떤가요?",opts:["비","흐림","맑음","눈"],a:2,hint:"sunny.",exp:"정답: <b>맑음</b> (sunny)."},
+    {audio:"The store opens at nine and closes at eight.",q:"What time does the store close?",opts:["9 a.m.","6 p.m.","8 p.m.","9 p.m."],a:2,hint:"closes at ~.",exp:"정답: <b>8 p.m.</b>"},
+    {audio:"My sister is a nurse, and my brother is a pilot.",q:"누나(여동생)의 직업은?",opts:["조종사","간호사","의사","교사"],a:1,hint:"sister = nurse.",exp:"정답: <b>간호사</b> (nurse)."},
+  ],
+  7: [
+    {audio:"The window was broken by the storm.",q:"들은 문장의 뜻을 고르세요",opts:["폭풍이 창문을 닫았다.","창문이 폭풍에 깨졌다.","창문을 고쳤다.","창문이 저절로 열렸다."],a:1,hint:"was broken(수동).",exp:"정답: <b>창문이 폭풍에 깨졌다.</b> (수동태)"},
+    {audio:"You should see a doctor.",q:"들은 문장의 뜻을 고르세요",opts:["나는 의사를 봤다.","의사에게 가보는 게 좋겠다.","나는 의사가 될 것이다.","나는 의사를 안다."],a:1,hint:"should(충고).",exp:"정답: <b>의사에게 가보는 게 좋겠다.</b>"},
+    {audio:"This box is heavier than that one.",q:"어느 상자가 더 무겁나요?",opts:["저 상자","이 상자","둘 다 같다","알 수 없다"],a:1,hint:"heavier than.",exp:"정답: <b>이 상자</b> (this box)."},
+    {audio:"The report must be finished by Friday.",q:"들은 문장의 뜻을 고르세요",opts:["보고서는 금요일까지 끝내야 한다.","보고서를 금요일에 시작한다.","보고서는 이미 끝났다.","보고서를 안 써도 된다."],a:0,hint:"must, by Friday.",exp:"정답: <b>보고서는 금요일까지 끝내야 한다.</b>"},
+    {audio:"English is spoken in many countries.",q:"들은 문장을 고르세요",opts:["English speaks many countries.","English is spoken in many countries.","Many countries speak to English.","English is speaking many countries."],a:1,hint:"is spoken(수동).",exp:"정답: <b>English is spoken in many countries.</b>"},
+  ],
+  8: [
+    {audio:"A: Are you free this weekend? B: No, I have to work on Saturday.",q:"B는 토요일에 무엇을 하나요?",opts:["쉰다","일한다","여행 간다","공부한다"],a:1,hint:"have to work.",exp:"정답: <b>일한다</b> (work on Saturday)."},
+    {audio:"A: How was the movie? B: It was boring. I almost fell asleep.",q:"B는 영화를 어떻게 느꼈나요?",opts:["재미있었다","무서웠다","지루했다","슬펐다"],a:2,hint:"boring.",exp:"정답: <b>지루했다</b> (boring)."},
+    {audio:"A: Would you like coffee or tea? B: Tea, please.",q:"B가 고른 것은?",opts:["커피","차","주스","물"],a:1,hint:"Tea, please.",exp:"정답: <b>차</b> (tea)."},
+    {audio:"A: Excuse me, where is the station? B: Go straight and turn left.",q:"역에 가려면 어떻게 하나요?",opts:["직진 후 우회전","뒤로 돌아가기","직진 후 좌회전","좌회전 후 직진"],a:2,hint:"straight, left.",exp:"정답: <b>직진 후 좌회전</b>."},
+    {audio:"A: Did you finish the book? B: Not yet, I'm on the last chapter.",q:"B는 책을 다 읽었나요?",opts:["다 읽었다","아직 다 못 읽었다","안 읽었다","읽지 않을 것이다"],a:1,hint:"Not yet.",exp:"정답: <b>아직 다 못 읽었다</b> (마지막 장)."},
+  ],
+  9: [
+    {audio:"Although it was raining, we decided to go hiking.",q:"들은 문장의 뜻을 고르세요",opts:["비가 와서 집에 있었다.","비가 왔지만 등산하기로 했다.","비가 오면 등산한다.","날이 맑아 등산했다."],a:1,hint:"Although(양보).",exp:"정답: <b>비가 왔지만 등산하기로 했다.</b>"},
+    {audio:"If I had known about the meeting, I would have come.",q:"화자는 회의에 왔나요?",opts:["왔다","오지 않았다","늦게 왔다","올 것이다"],a:1,hint:"가정법 과거완료.",exp:"정답: <b>오지 않았다.</b> (알았더라면 왔을 텐데 = 실제론 못 옴)"},
+    {audio:"She was so tired that she went to bed early.",q:"그녀는 왜 일찍 잤나요?",opts:["배고파서","너무 피곤해서","심심해서","아파서"],a:1,hint:"so tired that ~.",exp:"정답: <b>너무 피곤해서</b>."},
+    {audio:"The flight, which was delayed by two hours, finally took off.",q:"비행기는 얼마나 지연됐나요?",opts:["2분","2시간","12시간","지연되지 않았다"],a:1,hint:"delayed by two hours.",exp:"정답: <b>2시간</b>."},
+    {audio:"He couldn't attend the party because his car broke down.",q:"그는 왜 파티에 못 갔나요?",opts:["아파서","바빠서","차가 고장 나서","초대받지 못해서"],a:2,hint:"car broke down.",exp:"정답: <b>차가 고장 나서</b>."},
+  ],
+  10: [
+    {audio:PARA10,q:"미나는 어디로 갔나요?",opts:["미국","캐나다","영국","호주"],a:1,hint:"traveled to ~.",exp:"정답: <b>캐나다</b> (Canada)."},
+    {audio:PARA10,q:"얼마 동안 머물렀나요?",opts:["두 주","두 해","두 달","한 달"],a:2,hint:"for two months.",exp:"정답: <b>두 달</b> (two months)."},
+    {audio:PARA10,q:"학교에 어떻게 갔나요?",opts:["버스로","지하철로","자전거로","걸어서"],a:0,hint:"by bus.",exp:"정답: <b>버스로</b> (by bus)."},
+    {audio:PARA10,q:"수업이 끝난 뒤 자주 무엇을 했나요?",opts:["쇼핑했다","도서관에서 숙제했다","운동했다","아르바이트했다"],a:1,hint:"library, homework.",exp:"정답: <b>도서관에서 숙제했다</b>."},
+    {audio:PARA10,q:"미나의 전반적인 경험은 어땠나요?",opts:["즐거웠다","끔찍했다","지루했다","무서웠다"],a:0,hint:"really enjoyed.",exp:"정답: <b>즐거웠다</b> (enjoyed her time)."},
+  ],
+};
+
+const SPEAK = {
+  1: [
+    {text:"cat",kr:"고양이",tip:"짧게 '캣'."},
+    {text:"dog",kr:"개",tip:"'도그' — 끝의 g는 약하게."},
+    {text:"apple",kr:"사과",tip:"'애플' — 첫 음절에 강세."},
+    {text:"book",kr:"책",tip:"'북' — 짧은 모음."},
+    {text:"hello",kr:"안녕하세요",tip:"'헬로우' — 둘째 음절에 강세."},
+    {text:"thank you",kr:"고마워요",tip:"'th'는 혀를 윗니 사이에."},
+  ],
+  2: [
+    {text:"water",kr:"물",tip:"미국식은 '워-러'처럼 t를 부드럽게."},
+    {text:"world",kr:"세계",tip:"'월ㄷ' — r과 l을 한 번에 굴려요."},
+    {text:"really",kr:"정말",tip:"'륄-리' — r은 입술을 둥글게."},
+    {text:"three",kr:"셋",tip:"'th'는 혀를 윗니 사이에. 'θri'."},
+    {text:"vegetable",kr:"채소",tip:"'베쥐터블' (3음절)."},
+    {text:"comfortable",kr:"편안한",tip:"'컴ㄹ터블'로 뭉개요."},
+  ],
+  3: [
+    {text:"Nice to meet you.",kr:"만나서 반가워요.",tip:"'meet you'는 '미-츄'처럼 이어요."},
+    {text:"How are you today?",kr:"오늘 어때요?",tip:"'How are'를 부드럽게 이어요."},
+    {text:"What is your name?",kr:"이름이 뭐예요?",tip:"'What is'는 '왓츠'처럼."},
+    {text:"I am from Korea.",kr:"저는 한국에서 왔어요.",tip:"'from'의 f는 윗니를 아랫입술에."},
+    {text:"See you tomorrow.",kr:"내일 봐요.",tip:"'See you'는 '씨유'처럼 이어요."},
+    {text:"Thank you for your help.",kr:"도와주셔서 감사합니다.",tip:"'Thank'의 'th'는 혀를 윗니 사이에."},
+  ],
+  4: [
+    {text:"Could you help me, please?",kr:"좀 도와주시겠어요?",tip:"'Could you'는 '쿠쥬'처럼 연음."},
+    {text:"I would like a cup of coffee.",kr:"커피 한 잔 주세요.",tip:"'cup of'는 '커퍼브'처럼 이어요."},
+    {text:"How much does it cost?",kr:"얼마예요?",tip:"'does it'은 '더짓'처럼 연음."},
+    {text:"Where is the nearest station?",kr:"가장 가까운 역이 어디예요?",tip:"'nearest'의 강세는 'near'에."},
+    {text:"Can I have the menu, please?",kr:"메뉴 좀 주시겠어요?",tip:"'Can I'는 '캐나이'처럼 이어요."},
+    {text:"What time does the store open?",kr:"가게는 몇 시에 열어요?",tip:"'What time'의 t는 약하게."},
+  ],
+  5: [
+    {text:"I'm looking forward to the trip.",kr:"여행이 정말 기대돼요.",tip:"'forward to'는 부드럽게 이어요."},
+    {text:"I think it's a great idea.",kr:"좋은 생각인 것 같아요.",tip:"'think'의 'th'와 'great idea' 연음."},
+    {text:"Could you tell me how to get to the station?",kr:"역에 어떻게 가는지 알려주시겠어요?",tip:"긴 문장이라도 끊지 말고 자연스럽게."},
+    {text:"I'd appreciate it if you could help me.",kr:"도와주시면 감사하겠습니다.",tip:"'appreciate'의 강세는 'pre'에."},
+    {text:"The weather is absolutely beautiful today.",kr:"오늘 날씨가 정말 좋네요.",tip:"'absolutely'의 강세는 'ab'에."},
+    {text:"Let me know if you have any questions.",kr:"질문 있으면 알려주세요.",tip:"'Let me'는 '렛미'. 문장 끝을 올리지 않아요."},
+  ],
+};
+
+/* =========================================================
+   난이도 메타 & 트랙
+   ========================================================= */
+const LEVELS = [
+  {n:1, name:"왕초보",  emoji:"", color:["#0d9488","#0f766e"]},
+  {n:2, name:"초보",    emoji:"", color:["#0284c7","#075985"]},
+  {n:3, name:"중급",    emoji:"", color:["#4f46e5","#4338ca"]},
+  {n:4, name:"중고급",  emoji:"", color:["#7c3aed","#6d28d9"]},
+  {n:5, name:"최고급",  emoji:"", color:["#db2777","#9d174d"]},
+];
+const lvMeta = (n)=> LEVELS[Math.max(1,Math.min(5,n))-1];
+
+const BANK = {
+  grammar:{name:"영어 문법", icon:"📝", color:["#4f46e5","#4338ca"], mode:"mcq",
+           desc:"시제·전치사·관사·접속사 — 징검다리 10단계", levels:GRAMMAR},
+  vocab:  {name:"영어 어휘", icon:"📚", color:["#0d9488","#0f766e"], mode:"mcq",
+           desc:"기초 단어부터 고급 어휘까지 — 징검다리 10단계", levels:VOCAB},
+  listen: {name:"듣기", icon:"🎧", color:["#7c3aed","#6d28d9"], mode:"listen",
+           desc:"단어부터 내용 듣기까지 — 징검다리 10단계", levels:LISTEN},
+  speak:  {name:"말하기", icon:"🎤", color:["#0284c7","#075985"], mode:"speak",
+           desc:"따라 말하며 발음 평가 — 징검다리 10단계", levels:SPEAK},
+};
+
+
+/* =========================================================
+   상태 & 진행
+   ========================================================= */
+const $ = (id)=>document.getElementById(id);
+let state = null;
+let totalXP = Number(localStorage.getItem("gq_xp")||0);
+let bestScores   = JSON.parse(localStorage.getItem("gq_best")||"{}");
+let clearedStage = JSON.parse(localStorage.getItem("gq_stage")||"{}");  // track -> 최고 클리어 단계(0..10)
+$("xp").textContent = totalXP;
+
+const STAGES = 10;        // 트랙당 징검다리 단계 수
+const QUESTIONS = 10;     // 단계당 문항 수
+const START_LEVEL = 3;    // 적응형 시작 난이도(중급)
+const PASS = 0.6;         // 클리어 기준 비율
+let curTrack = null;
+
+function stageUnlocked(track, s){ return s<=1 || (clearedStage[track]||0) >= s-1; }
+
+/* 시드 셔플 (단계마다 다른 순서) */
+function mulberry32(a){ return function(){ a|=0; a=a+0x6D2B79F5|0; let t=Math.imul(a^a>>>15,1|a);
+  t=t+Math.imul(t^t>>>7,61|t)^t; return ((t^t>>>14)>>>0)/4294967296; }; }
+function shuffleSeeded(arr, seed){ const a=arr.slice(); const rnd=mulberry32(seed);
+  for(let i=a.length-1;i>0;i--){ const j=Math.floor(rnd()*(i+1)); [a[i],a[j]]=[a[j],a[i]]; } return a; }
+
+/* =========================================================
+   사운드 — WebAudio로 잔잔한 BGM + 팡파레 (외부 파일 없음)
+   ========================================================= */
+const Sound = (function(){
+  let ctx=null, bgmGain=null, playing=false, timer=null, step=0, nextT=0;
+  let muted = localStorage.getItem("gq_muted")==="1";
+  const BASE=261.63; // C4
+  const MEL=[0,4,7,9,7,4, 2,5,9,12,9,5, 5,9,12,9, 0,4,7,4]; // 잔잔한 멜로디(반음 오프셋)
+  function nf(s){ return BASE*Math.pow(2,s/12); }
+  function ensure(){ if(!ctx){ try{ ctx=new (window.AudioContext||window.webkitAudioContext)(); }catch(e){ return null; } }
+    if(ctx.state==="suspended"){ try{ctx.resume();}catch(e){} } return ctx; }
+  function note(freq,t,dur,vol,type){ if(!ctx)return; const o=ctx.createOscillator(), g=ctx.createGain();
+    o.type=type||"triangle"; o.frequency.value=freq;
+    g.gain.setValueAtTime(0.0001,t); g.gain.linearRampToValueAtTime(vol,t+0.04);
+    g.gain.exponentialRampToValueAtTime(0.0008,t+dur); o.connect(g); g.connect(bgmGain||ctx.destination);
+    o.start(t); o.stop(t+dur+0.05); }
+  function tick(){ if(!ctx||!playing) return; const now=ctx.currentTime; const beat=0.46;
+    while(nextT < now+0.6){ const s=MEL[step%MEL.length]; note(nf(s),nextT,beat*0.95,0.13,"triangle");
+      if(step%4===0) note(nf(s-12),nextT,beat*2.2,0.09,"sine");      // 부드러운 베이스
+      nextT+=beat; step++; }
+    timer=setTimeout(tick,140); }
+  function startBGM(){ if(muted) return; if(!ensure()) return; if(playing) return;
+    if(!bgmGain){ bgmGain=ctx.createGain(); bgmGain.gain.value=0.45; bgmGain.connect(ctx.destination); }
+    playing=true; nextT=ctx.currentTime+0.12; tick(); }
+  function stopBGM(){ playing=false; if(timer){ clearTimeout(timer); timer=null; } }
+  function duck(on){ if(bgmGain&&ctx) bgmGain.gain.setTargetAtTime(on?0.0:0.45, ctx.currentTime, 0.08); }
+  function fanfare(){ if(muted||!ensure()) return; const seq=[0,4,7,12,12,16]; const t0=ctx.currentTime;
+    seq.forEach((s,i)=>{ const t=t0+i*0.10; note(nf(s+12),t,0.5,0.16,"square"); });
+    note(nf(19),t0+0.55,0.7,0.16,"square"); }
+  function setMuted(m){ muted=m; localStorage.setItem("gq_muted", m?"1":"0"); if(m) stopBGM(); }
+  function isMuted(){ return muted; }
+  return { ensure, startBGM, stopBGM, duck, fanfare, setMuted, isMuted };
+})();
+
+/* =========================================================
+   종이 confetti (canvas)
+   ========================================================= */
+const Confetti = (function(){
+  const cv=$("confettiCanvas"); const ctx2=cv?cv.getContext("2d"):null;
+  let parts=[], raf=null, W=0, H=0;
+  const COLORS=["#ef4444","#f59e0b","#22c55e","#3b82f6","#8b5cf6","#ec4899","#06b6d4","#fde047"];
+  function resize(){ if(!cv)return; W=cv.width=window.innerWidth; H=cv.height=window.innerHeight; }
+  function burst(n){ if(!ctx2)return; resize(); n=n||150;
+    for(let i=0;i<n;i++){ parts.push({ x:W*(0.2+Math.random()*0.6), y:H*0.3,
+      vx:(Math.random()-0.5)*10, vy:Math.random()*-13-3, g:0.30+Math.random()*0.22,
+      rot:Math.random()*6.28, vr:(Math.random()-0.5)*0.35, w:6+Math.random()*7, h:9+Math.random()*9,
+      c:COLORS[(Math.random()*COLORS.length)|0], life:0 }); }
+    if(!raf) loop(); }
+  function loop(){ ctx2.clearRect(0,0,W,H);
+    for(const p of parts){ p.vy+=p.g; p.x+=p.vx; p.y+=p.vy; p.rot+=p.vr; p.life++;
+      ctx2.save(); ctx2.translate(p.x,p.y); ctx2.rotate(p.rot); ctx2.fillStyle=p.c;
+      ctx2.fillRect(-p.w/2,-p.h/2,p.w,p.h); ctx2.restore(); }
+    parts=parts.filter(p=>p.y<H+50 && p.life<300);
+    if(parts.length) raf=requestAnimationFrame(loop); else { ctx2.clearRect(0,0,W,H); raf=null; } }
+  return { burst };
+})();
+
+/* =========================================================
+   상위 모드(트랙) 홈
+   ========================================================= */
+function renderModeHome(){
+  const wrap = $("modes"); wrap.innerHTML = "";
+  Object.keys(BANK).forEach((tk)=>{
+    const t = BANK[tk];
+    const el = document.createElement("button");
+    el.className = "cat"; el.type = "button"; el.dataset.track = tk;
+    el.style.setProperty("--c1", t.color[0]); el.style.setProperty("--c2", t.color[1]);
+    el.innerHTML = `
+      <div class="ic">${t.icon}</div>
+      <div class="t">${t.name}</div>
+      <div class="d">${t.desc}</div>
+      <div class="best">시작하기 →</div>`;
+    wrap.appendChild(el);
+  });
+  show("modeHome");
+}
+$("modes").addEventListener("click",(e)=>{
+  const card = e.target.closest(".cat");
+  if(card && card.dataset.track){ Sound.ensure(); renderTrackHome(card.dataset.track); }
+});
+
+/* ---------- 트랙별 징검다리 지도 ---------- */
+const ZIGZAG = [0, 1, 1, 0, -1, -1, 0, 1, 1, 0];   // 좌우 흔들림 패턴
+function renderTrackHome(trackKey){
+  curTrack = trackKey;
+  const t = BANK[trackKey];
+  $("trackTag").textContent = t.icon + " " + t.name;
+  $("trackTitle").textContent = t.name;
+  $("trackDesc").textContent = t.desc;
+  $("adaptNote").textContent = (trackKey === "listen")
+    ? "단어 → 문장 → 대화 → 단락으로 단계가 올라갈수록 점점 어려워져요. 한 단계를 깨야 다음이 열립니다."
+    : "징검다리를 하나씩 깨며 올라가요. 각 단계는 적응형 10문제 — 맞히면 어려워지고 틀리면 쉬워져요.";
+
+  const wrap = $("cats"); wrap.className = "path"; wrap.innerHTML = "";
+  const done = clearedStage[trackKey] || 0;
+  for(let s=1; s<=STAGES; s++){
+    const unlocked = stageUnlocked(trackKey, s);
+    const cleared  = done >= s;
+    const node = document.createElement("button");
+    node.className = "node " + (cleared ? "done" : unlocked ? "current" : "locked");
+    node.style.setProperty("--nx", ZIGZAG[(s-1)%ZIGZAG.length]);
+    if(unlocked) node.dataset.stage = s; else node.dataset.locked = "1";
+    node.innerHTML = `<span class="bub">${cleared?"⭐":unlocked?s:"🔒"}</span>
+      <span class="cap">단계 ${s}${cleared?" ✓":""}${trackKey==="listen"&&s===10?" 📖":""}</span>`;
+    wrap.appendChild(node);
+  }
+  const allDone = done >= STAGES;
+  const rnode = document.createElement("div");
+  rnode.className = "node reward " + (allDone ? "done" : "locked");
+  rnode.innerHTML = `<span class="bub">🎁</span><span class="cap">시원스쿨 수강할인권</span>`;
+  wrap.appendChild(rnode);
+
+  Sound.startBGM();   // 지도/홈에서도 BGM (듣기 단계 진입 시에만 정지)
+  show("catHome");
+}
+$("cats").addEventListener("click",(e)=>{
+  const node = e.target.closest(".node"); if(!node) return;
+  if(node.dataset.locked){ flashLocked(node); return; }
+  if(!node.dataset.stage) return;
+  const s = +node.dataset.stage;
+  if(BANK[curTrack].mode === "speak") startSpeakStage(curTrack, s);
+  else startStage(curTrack, s);
+});
+function flashLocked(node){
+  const cap = node.querySelector(".cap"); if(!cap) return;
+  const prev = cap.textContent; cap.textContent = "🔒 앞 단계를 먼저 깨세요";
+  setTimeout(()=>{ cap.textContent = prev; }, 1200);
+}
+
+function show(which){
+  ["rootHome","modeHome","testHome","test","catHome","quiz","speak","trainer","result","testResult"].forEach(s=>$(s).classList.toggle("hide", s!==which));
+}
+
+/* =========================================================
+   적응형 단계 (문법 / 어휘 / 듣기)
+   ========================================================= */
+function startStage(track, stage){
+  curTrack = track;
+  const t = BANK[track];
+
+  // 듣기: 단계마다 다른 '고정·점진' 문제 (적응형 아님). 10단계 = 단락 듣기.
+  if(track === "listen"){
+    const seq = (LISTEN_STAGES[stage]||[]).slice();
+    const tier = Math.min(5, Math.ceil(stage/2));   // 단계→난이도 배지(왕초보~최고급)
+    state = {
+      track, mode:"listen", stage, level:tier, maxLevel:tier, listenFixed:true,
+      seq, total:seq.length, count:0, score:0, firstTry:0, earnedXP:0, attempt:0, cur:null,
+    };
+    $("tot").textContent = state.total;
+    $("qtag").textContent = "단계 " + stage;
+    Sound.stopBGM();
+    show("quiz");
+    state.cur = pickNext();
+    loadQuestion();
+    return;
+  }
+
+  const queues = {};
+  for(let L=1; L<=5; L++) queues[L] = shuffleSeeded(t.levels[L]||[], stage*9173 + L*131 + 7);
+  state = {
+    track, mode:t.mode, stage, level:START_LEVEL, queues,
+    total:QUESTIONS, count:0, score:0, firstTry:0, earnedXP:0, attempt:0, maxLevel:START_LEVEL, cur:null,
+  };
+  $("tot").textContent = state.total;
+  $("qtag").textContent = "단계 " + stage;
+  Sound.startBGM();
+  show("quiz");
+  state.cur = pickNext();
+  loadQuestion();
+}
+
+/* 현재 목표 난이도에서 문항 추출, 비었으면 가장 가까운 난이도에서 대체.
+   듣기(고정)는 순서대로 추출. */
+function pickNext(){
+  if(state.listenFixed){ return state.seq[state.count] || null; }
+  const lv = state.level;
+  const order = [lv];
+  for(let d=1; d<5; d++){ if(lv-d>=1) order.push(lv-d); if(lv+d<=5) order.push(lv+d); }
+  for(const L of order){ const q=state.queues[L]; if(q && q.length){ const it=q.shift(); state.level=L; return it; } }
+  return null;
+}
+
+function setLevelBadge(bump){
+  const b = $("lvBadge"); const m = lvMeta(state.level);
+  b.textContent = m.name; b.style.background = m.color[1];
+  if(bump){ b.classList.remove("bump"); void b.offsetWidth; b.classList.add("bump"); }
+}
+
+function loadQuestion(){
+  const it = state.cur; state.attempt = 0;
+  $("cur").textContent = state.count+1;
+  $("bar").style.width = (state.count/state.total*100)+"%";
+  setLevelBadge();
+
+  const listen = state.mode === "listen";
+  $("audiobox").classList.toggle("hide", !listen);
+  $("qprompt").classList.toggle("hide", !listen);
+  $("sentence").classList.toggle("hide", listen);
+  $("kr").classList.toggle("hide", listen);
+
+  if(listen){
+    state.audioText = it.audio;
+    $("qprompt").textContent = it.q || "들은 내용을 고르세요";
+    speakText(it.audio);
+  } else {
+    $("sentence").innerHTML = escapeHtml(it.q).replace(/___/g, '<span class="blank">&nbsp;?&nbsp;</span>');
+    $("kr").textContent = it.kr;
+  }
+
+  const opts = $("options"); opts.innerHTML = "";
+  const pic = it.type === "pic";
+  opts.className = "options" + (pic ? " pics" : "");
+  const keys = ["A","B","C","D"];
+  it.opts.forEach((text,i)=>{
+    const b = document.createElement("button");
+    b.className = "opt" + (pic ? " pic" : ""); b.type = "button";
+    b.innerHTML = pic ? escapeHtml(text) : `<span class="key">${keys[i]}</span><span>${escapeHtml(text)}</span>`;
+    b.onclick = ()=>choose(i);
+    opts.appendChild(b);
+  });
+  $("feedback").innerHTML = ""; $("actions").innerHTML = "";
+}
+
+function choose(i){
+  const it = state.cur;
+  const buttons = [...$("options").children];
+  const correct = i === it.a;
+
+  // 적응형: '첫 시도' 결과로만 난이도 조정 (듣기 고정 단계는 제외)
+  if(!state.listenFixed && state.attempt === 0){
+    if(correct) state.level = Math.min(5, state.level+1);
+    else        state.level = Math.max(1, state.level-1);
+    state.maxLevel = Math.max(state.maxLevel, state.level);
+  }
+
+  if(correct){
+    buttons.forEach((b,j)=>{ b.disabled = true; if(j!==i) b.classList.add("dim"); });
+    buttons[i].classList.add("correct");
+    state.score++;
+    let gained;
+    if(state.attempt === 0){ state.firstTry++; gained = 10; updateStreak(true); }
+    else { gained = 5; updateStreak(false); }
+    state.earnedXP += gained; totalXP += gained; persistXP();
+    const msg = state.attempt===0 ? "정답입니다! 🎉 (+10 XP)" : "정답입니다! 👍 (+5 XP)";
+    feedback("good","✅ "+msg, it.exp);
+    nextButton();
+  } else {
+    updateStreak(false);
+    if(state.attempt === 0){
+      buttons[i].classList.add("wrong");
+      buttons.forEach(b=> b.disabled = true);
+      feedback("hint","💡 아쉬워요! 힌트를 줄게요.", it.hint);
+      hintButtons();
+    } else {
+      buttons[i].classList.add("wrong");
+      buttons[it.a].classList.add("correct");
+      buttons.forEach(b=> b.disabled = true);
+      feedbackWithAnswer("explain","📘 다시 풀어도 틀렸네요. 자세히 설명해 드릴게요.", it.exp, it.opts[it.a]);
+      nextButton();
+    }
+  }
+}
+
+function retry(){
+  state.attempt++;
+  const buttons = [...$("options").children];
+  buttons.forEach(b=>{ b.disabled = false; b.classList.remove("wrong","correct","dim"); });
+  $("feedback").innerHTML = ""; $("actions").innerHTML = "";
+}
+function reveal(){
+  const it = state.cur;
+  const buttons = [...$("options").children];
+  buttons.forEach(b=> b.disabled = true);
+  buttons[it.a].classList.add("correct");
+  feedbackWithAnswer("explain","📘 정답과 상세 설명이에요.", it.exp, it.opts[it.a]);
+  nextButton();
+}
+
+function feedback(type, head, body){
+  $("feedback").innerHTML = `<div class="fb ${type}"><div class="h">${head}</div><div class="body">${body}</div></div>`;
+}
+function feedbackWithAnswer(type, head, body, answerText){
+  $("feedback").innerHTML =
+    `<div class="fb ${type}"><div class="h">${head}</div>
+      <div class="ansline">✔️ 정답: <b>${escapeHtml(answerText)}</b></div>
+      <div class="body" style="margin-top:8px">${body}</div></div>`;
+}
+
+function hintButtons(){
+  $("actions").innerHTML = "";
+  $("actions").append(mkBtn("🔄 다시 시도하기","retry",retry), mkBtn("👀 정답 보기","show",reveal));
+}
+function nextButton(){
+  $("actions").innerHTML = "";
+  const last = state.count === state.total-1;
+  $("actions").append(mkBtn(last? "🏁 결과 보기" : "다음 문제 →","next",next));
+}
+function mkBtn(label,cls,fn){
+  const b = document.createElement("button");
+  b.className = "btn "+cls; b.textContent = label; b.onclick = fn; return b;
+}
+
+function next(){
+  if(state.count >= state.total-1){ finish(); return; }
+  state.count++;
+  const before = state.level;
+  state.cur = pickNext();
+  if(!state.cur){ finish(); return; }
+  loadQuestion();
+  if(state.level !== before) setLevelBadge(true);  // 난이도 변동 강조
+}
+
+/* =========================================================
+   결과 + 클리어/해금/보상
+   ========================================================= */
+function finish(){
+  const tot = state.total;
+  const bestKey = state.track + ":s" + state.stage;
+  if((bestScores[bestKey]||0) < state.score){
+    bestScores[bestKey] = state.score; localStorage.setItem("gq_best", JSON.stringify(bestScores));
+  }
+  const passNeeded = Math.ceil(tot * PASS);
+  const passed = state.score >= passNeeded;
+
+  let newlyCleared = false, allDone = false;
+  if(passed && state.stage > (clearedStage[state.track]||0)){
+    clearedStage[state.track] = state.stage;
+    localStorage.setItem("gq_stage", JSON.stringify(clearedStage));
+    newlyCleared = true;
+    if(state.stage >= STAGES){ allDone = true; localStorage.setItem("gq_reward","1"); }
+  }
+
+  const ratio = tot ? state.score/tot : 0;
+  const stars = ratio>=0.9?3 : ratio>=0.7?2 : ratio>=0.4?1 : 0;
+  $("rStars").textContent = "★".repeat(stars) + "☆".repeat(3-stars);
+  $("rScore").textContent = state.score + "/" + tot;
+  $("rFirst").textContent = state.firstTry;
+  $("rXp").textContent = state.earnedXP;
+
+  const m = lvMeta(state.maxLevel);
+  let emoji, title, msg;
+  if(allDone){
+    emoji = "🎁"; title = "🎉 10단계 정복!";
+    msg = `<b>${BANK[state.track].name}</b>의 징검다리를 모두 건넜어요!`
+        + `<div class="coupon"><div class="big2">🎟️ 시원스쿨 수강할인권 획득!</div>`
+        + `<div style="margin-top:4px">아래 코드를 캡처해서 보관하세요.</div>`
+        + `<div class="code">SIWON-EQ-${state.track.toUpperCase().slice(0,3)}10</div></div>`;
+  } else if(passed){
+    emoji = "🔓"; title = `단계 ${state.stage} 클리어!`;
+    msg = (state.stage < STAGES)
+        ? `통과했어요! 다음 징검다리 <b>단계 ${state.stage+1}</b>가 열렸어요. 🎉`
+        : `통과! 정말 잘했어요.`;
+    msg += ` <span style="color:#94a3b8">(도달 난이도 ${m.name})</span>`;
+  } else {
+    emoji = "💪"; title = "조금만 더!";
+    msg = `통과하려면 <b>${passNeeded}/${tot}</b> 이상 맞혀야 해요. 설명을 보고 다시 도전! `
+        + `<span style="color:#94a3b8">(도달 ${m.name})</span>`;
+  }
+  $("rEmoji").textContent = emoji; $("rTitle").textContent = title; $("rMsg").innerHTML = msg;
+  $("againBtn").textContent = "🔄 다시 도전";
+  $("backBtn").textContent  = (passed && state.stage < STAGES) ? "다음 징검다리 →" : "징검다리 지도";
+
+  Sound.startBGM();
+  show("result");
+  if(newlyCleared){
+    Sound.fanfare(); Confetti.burst(allDone?260:150);
+    if(allDone){ setTimeout(()=>Confetti.burst(220),500); setTimeout(()=>Confetti.burst(220),1100); }
+  }
+}
+
+/* ---------- 연속 정답(streak) ---------- */
+let streak = 0;
+function updateStreak(up){ streak = up ? streak+1 : 0; $("streak").textContent = streak; }
+function resetStreak(){ streak=0; $("streak").textContent=0; }
+
+/* ---------- 유틸 ---------- */
+function persistXP(){ localStorage.setItem("gq_xp", totalXP); $("xp").textContent = totalXP; }
+function escapeHtml(s){ return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;"); }
+
+/* ---------- 사운드 토글 ---------- */
+$("soundBtn").textContent = Sound.isMuted() ? "🔇" : "🔊";
+$("soundBtn").onclick = ()=>{
+  const m = !Sound.isMuted(); Sound.setMuted(m); $("soundBtn").textContent = m ? "🔇" : "🔊";
+  if(!m){
+    const onListenQuiz = !$("quiz").classList.contains("hide") && state && state.track==="listen";
+    if(!onListenQuiz) Sound.startBGM();
+  }
+};
+
+/* ---------- 내비게이션 ---------- */
+$("homeBtn").onclick  = ()=>{ resetStreak(); renderTrackHome(state.track); };
+$("catBack").onclick  = ()=>{ resetStreak(); Sound.startBGM(); renderModeHome(); };
+$("speakBack").onclick= ()=>{ stopRecog(); resetStreak(); renderTrackHome(state.track); };
+$("againBtn").onclick = ()=>{ curTrack = state.track;
+  if(state.mode==="speak") startSpeakStage(state.track, state.stage);
+  else startStage(state.track, state.stage); };
+$("backBtn").onclick  = ()=>{ resetStreak(); renderTrackHome(state.track); };
+$("playBtn").onclick   = ()=> speakText(state.audioText);
+$("replayBtn").onclick = ()=> speakText(state.audioText);
+
+/* ---------- 키보드 단축키 ---------- */
+document.addEventListener("keydown",(e)=>{
+  if($("quiz").classList.contains("hide")) return;
+  const map = {"a":0,"b":1,"c":2,"d":3,"1":0,"2":1,"3":2,"4":3};
+  const k = e.key.toLowerCase();
+  if(k in map){ const btns = $("options").children; if(btns[map[k]] && !btns[map[k]].disabled) btns[map[k]].click(); }
+});
+
+/* =========================================================
+   말하기 단계 (적응형) + Web Speech API
+   ========================================================= */
+const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+let recog = null, recognizing = false;
+
+function speakText(text, rate){
+  if(!window.speechSynthesis) return;
+  try{
+    window.speechSynthesis.cancel();
+    const u = new SpeechSynthesisUtterance(text);
+    u.lang = "en-US"; u.rate = rate || 0.95;
+    const v = window.speechSynthesis.getVoices().find(v=>/en[-_]US/i.test(v.lang));
+    if(v) u.voice = v;
+    window.speechSynthesis.speak(u);
+  }catch(e){}
+}
+function stopRecog(){ try{ if(recog && recognizing) recog.stop(); }catch(e){} recognizing=false; Sound.duck(false); }
+
+function startSpeakStage(track, stage){
+  curTrack = "speak";
+  const t = BANK[track];
+  const queues = {};
+  for(let L=1; L<=5; L++) queues[L] = shuffleSeeded(t.levels[L]||[], stage*7919 + L*97 + 3);
+  state = {
+    track:"speak", mode:"speak", stage, level:START_LEVEL, queues,
+    total:QUESTIONS, count:0, score:0, firstTry:0, earnedXP:0, attempt:0, maxLevel:START_LEVEL, cur:null,
+  };
+  $("stot").textContent = state.total;
+  Sound.startBGM();
+  show("speak");
+  state.cur = pickNext();
+  loadSpeak();
+}
+
+function loadSpeak(){
+  const it = state.cur; state.attempt = 0;
+  $("scur").textContent = state.count+1;
+  $("sbar").style.width = (state.count/state.total*100)+"%";
+  const m = lvMeta(state.level);
+  $("speakTag").textContent = `🎤 단계 ${state.stage} · ${m.name}`;
+  $("speakHintKr").textContent = it.kr || "";
+  $("target").innerHTML = it.text.split(" ").map(w=>`<span class="w">${escapeHtml(w)}</span>`).join(" ");
+  $("acc").classList.add("hide");
+  $("speakFb").innerHTML = ""; $("speakActions").innerHTML = "";
+  $("micBtn").disabled = !SR; $("micBtn").style.opacity = SR ? "1" : ".45";
+  if(SR){
+    $("heard").textContent = "마이크를 누르고 따라 말해보세요";
+  } else {
+    $("heard").textContent = "이 브라우저는 음성인식 미지원이에요. 발음을 듣고 따라 말한 뒤 '다음'을 누르세요. (Chrome 권장)";
+    $("speakActions").append(mkBtn(state.count===state.total-1?"🏁 결과 보기":"다음으로 →","next",nextSpeak));
+  }
+}
+
+function ensureRecog(){
+  if(!SR) return null;
+  if(recog) return recog;
+  recog = new SR();
+  recog.lang = "en-US"; recog.interimResults = false; recog.maxAlternatives = 3;
+  recog.onresult = (e)=>{ const alts=[...e.results[0]].map(r=>r.transcript); evalSpeak(alts); };
+  recog.onerror  = ()=>{ recognizing=false; Sound.duck(false); $("micBtn").classList.remove("rec"); $("heard").textContent="인식하지 못했어요. 다시 시도해 주세요."; };
+  recog.onend    = ()=>{ recognizing=false; Sound.duck(false); $("micBtn").classList.remove("rec"); };
+  return recog;
+}
+$("micBtn").onclick = ()=>{
+  if(!SR) return;
+  const r = ensureRecog();
+  if(recognizing){ r.stop(); return; }
+  try{ r.start(); recognizing=true; Sound.duck(true); $("micBtn").classList.add("rec"); $("heard").textContent="듣고 있어요... 🎙️"; }
+  catch(e){ recognizing=false; Sound.duck(false); }
+};
+$("speakListen").onclick = ()=> speakText(state.cur.text);
+
+function norm(s){ return s.toLowerCase().replace(/[^a-z0-9' ]/g," ").replace(/\s+/g," ").trim(); }
+
+function evalSpeak(alts){
+  const it = state.cur;
+  const targetWords = norm(it.text).split(" ").filter(Boolean);
+  let best = {ratio:-1, heardWords:[], raw:alts[0]||""};
+  alts.forEach(a=>{
+    const hw = norm(a).split(" ").filter(Boolean);
+    const pool = [...hw]; let m=0;
+    targetWords.forEach(w=>{ const k=pool.indexOf(w); if(k>=0){ m++; pool.splice(k,1); } });
+    const ratio = targetWords.length ? m/targetWords.length : 0;
+    if(ratio>best.ratio) best = {ratio, heardWords:hw, raw:a};
+  });
+  const acc = Math.round(best.ratio*100);
+
+  // 적응형: 첫 시도 결과로 난이도 조정
+  if(state.attempt === 0){
+    if(acc>=70) state.level = Math.min(5, state.level+1);
+    else        state.level = Math.max(1, state.level-1);
+    state.maxLevel = Math.max(state.maxLevel, state.level);
+  }
+
+  const words = it.text.split(" ");
+  const pool = [...best.heardWords];
+  $("target").innerHTML = targetWords.map((w,i)=>{
+    const k = pool.indexOf(w); const ok = k>=0; if(ok) pool.splice(k,1);
+    return `<span class="w ${ok?'ok':'miss'}">${escapeHtml(words[i]||w)}</span>`;
+  }).join(" ");
+
+  $("heard").textContent = `들린 말: "${best.raw}"`;
+  const accEl = $("acc"); accEl.classList.remove("hide");
+  accEl.textContent = acc + "%";
+  accEl.style.color = acc>=80 ? "#16a34a" : acc>=50 ? "#f59e0b" : "#ef4444";
+
+  if(acc>=70){
+    updateStreak(true);
+    if(state.attempt===0){ state.firstTry++; state.score++; addXP(10); feedbackSpeak("good","✅ 훌륭한 발음이에요! (+10 XP)", it.tip||"정확하게 잘 말했어요."); }
+    else { state.score++; addXP(5); feedbackSpeak("good","✅ 좋아요, 통과! (+5 XP)", it.tip||"이제 자연스러워요."); }
+    speakActionsNext();
+  } else {
+    updateStreak(false);
+    if(state.attempt===0){
+      feedbackSpeak("hint","💡 거의 다 왔어요! 다시 해볼까요?", (it.tip?it.tip+" ":"")+"빨간 단어를 또박또박 발음해 보세요.");
+      $("speakActions").innerHTML = "";
+      $("speakActions").append(
+        mkBtn("🎤 다시 말하기","retry",retrySpeak),
+        mkBtn("🔊 듣고 따라하기","show",()=>speakText(it.text,0.8)),
+        mkBtn("건너뛰기 →","ghost",nextSpeak)
+      );
+    } else {
+      feedbackSpeak("explain","📘 이 표현은 이렇게 발음해요", (it.tip?it.tip+" ":"")+`전체: "${escapeHtml(it.text)}"`);
+      speakActionsNext();
+    }
+  }
+}
+
+function retrySpeak(){
+  state.attempt++;
+  $("speakFb").innerHTML = ""; $("speakActions").innerHTML = "";
+  $("acc").classList.add("hide");
+  $("heard").textContent = "마이크를 누르고 다시 말해보세요";
+  $("target").innerHTML = state.cur.text.split(" ").map(w=>`<span class="w">${escapeHtml(w)}</span>`).join(" ");
+}
+function speakActionsNext(){
+  $("speakActions").innerHTML = "";
+  const last = state.count === state.total-1;
+  $("speakActions").append(mkBtn(last?"🏁 결과 보기":"다음으로 →","next",nextSpeak));
+}
+function nextSpeak(){
+  if(state.count >= state.total-1){ finish(); return; }
+  state.count++;
+  state.cur = pickNext();
+  if(!state.cur){ finish(); return; }
+  loadSpeak();
+}
+function feedbackSpeak(type,head,body){
+  $("speakFb").innerHTML = `<div class="fb ${type}"><div class="h">${head}</div><div class="body">${body}</div></div>`;
+}
+function addXP(n){ state.earnedXP += n; totalXP += n; persistXP(); }
+
+if(window.speechSynthesis){ window.speechSynthesis.onvoiceschanged = ()=>{}; }
+
+/* =========================================================
+   트레이너봇 — 따라 말하기(쉐도잉) 챗봇 (완전 오프라인 · 무료)
+   봇이 한국어로 설명 → 영어로 읽어줌(TTS) → 학습자가 따라 말함(음성인식)
+   → 발음/문법 교정 피드백을 규칙 기반으로 제공. 외부 API/서버/비용 없음.
+   ========================================================= */
+const TR_TOPICS = ["일상 대화","여행","자기소개","음식·맛집","비즈니스","영화·취미"];
+const TR_LEVELS = ["왕초보","초급","중급","고급"];
+
+/* 내장 문장 모음: 주제 → 난이도 → [{en 영어, kr 뜻, tip 발음팁, gr 문법포인트}] */
+const TR_BANK = {
+ "일상 대화":{
+  "왕초보":[
+   {en:"How are you today?",kr:"오늘 기분 어때요?",tip:"are you를 '아유'처럼 이어서 발음해요.",gr:"How + be동사(are) + 주어 형태의 안부 의문문."},
+   {en:"I am really hungry now.",kr:"나 지금 정말 배고파요.",tip:"really의 'r'을 부드럽게 굴려요.",gr:"주어 + be동사 + 부사 + 형용사."},
+   {en:"See you again tomorrow.",kr:"내일 또 봐요.",tip:"See you를 '씨유'로 붙여 발음해요.",gr:"작별 인사로 쓰는 명령문 형태 표현."}],
+  "초급":[
+   {en:"I usually get up at seven.",kr:"나는 보통 7시에 일어나요.",tip:"get up을 '게럽'처럼 연음해요.",gr:"빈도부사 usually는 일반동사 앞에 와요."},
+   {en:"What did you do last weekend?",kr:"지난 주말에 뭐 했어요?",tip:"did you를 '디쥬'로 연음해요.",gr:"과거 의문문: did + 주어 + 동사원형."},
+   {en:"Can you help me for a second?",kr:"잠깐만 도와줄 수 있어요?",tip:"help me를 끊지 말고 이어요.",gr:"조동사 can으로 만든 부탁 의문문."}],
+  "중급":[
+   {en:"I've been a little under the weather lately.",kr:"요즘 컨디션이 좀 안 좋았어요.",tip:"under the weather를 한 덩어리로 빠르게요.",gr:"현재완료 + 관용구 under the weather(컨디션 난조)."},
+   {en:"Would you mind turning down the volume?",kr:"소리 좀 줄여 주시겠어요?",tip:"Would you를 '우쥬'로 발음해요.",gr:"Would you mind + 동명사: 정중한 부탁."},
+   {en:"I'm not really in the mood for going out.",kr:"별로 나갈 기분이 아니에요.",tip:"in the mood for를 이어서요.",gr:"be in the mood for + 동명사: ~할 기분이다."}],
+  "고급":[
+   {en:"If I had known earlier, I would have called you.",kr:"더 일찍 알았더라면 전화했을 거예요.",tip:"would have를 '우드햅'으로 줄여요.",gr:"가정법 과거완료: If + had p.p., would have p.p."},
+   {en:"I can't help but wonder how things turned out.",kr:"일이 어떻게 됐는지 궁금하지 않을 수 없네요.",tip:"can't help but을 끊김 없이요.",gr:"can't help but + 동사원형: ~하지 않을 수 없다."},
+   {en:"You might as well tell me the truth now.",kr:"이제 사실대로 말하는 게 나을 거예요.",tip:"might as well을 자연스럽게 이어요.",gr:"might as well + 동사원형: ~하는 편이 낫다."}]},
+ "여행":{
+  "왕초보":[
+   {en:"Where is the bus stop?",kr:"버스 정류장이 어디예요?",tip:"Where is를 '웨어리즈'로 이어요.",gr:"Where + be동사 의문문(위치 묻기)."},
+   {en:"I want a window seat.",kr:"창가 자리를 원해요.",tip:"want a를 '워너'로 연음해요.",gr:"want + 명사: 원하는 것 말하기."},
+   {en:"How much is this ticket?",kr:"이 표 얼마예요?",tip:"How much를 또박또박요.",gr:"가격을 묻는 How much is ~ 표현."}],
+  "초급":[
+   {en:"Could you tell me the way to the station?",kr:"역으로 가는 길 좀 알려주실래요?",tip:"Could you를 '쿠쥬'로요.",gr:"Could you + 동사원형: 정중한 부탁."},
+   {en:"I would like to check in, please.",kr:"체크인 하고 싶어요.",tip:"would like to를 '우들라익투'로 이어요.",gr:"would like to + 동사원형: 정중한 희망."},
+   {en:"Is there a pharmacy near here?",kr:"이 근처에 약국이 있나요?",tip:"near here를 부드럽게 이어요.",gr:"Is there ~?: ~가 있나요(존재 의문문)."}],
+  "중급":[
+   {en:"I'd appreciate it if you could call me a taxi.",kr:"택시 좀 불러주시면 감사하겠어요.",tip:"appreciate it을 '어프리시에잇잇'으로요.",gr:"I'd appreciate it if + 가정: 정중한 요청."},
+   {en:"We ended up missing our connecting flight.",kr:"결국 연결 항공편을 놓치고 말았어요.",tip:"ended up을 '엔디덥'으로 연음해요.",gr:"end up + 동명사: 결국 ~하게 되다."},
+   {en:"Make sure you keep your passport handy.",kr:"여권을 꼭 가까이 두세요.",tip:"keep your를 '키퓨어'로요.",gr:"Make sure (that) ~: 반드시 ~하도록 하다."}],
+  "고급":[
+   {en:"Had we booked earlier, we would have saved money.",kr:"더 일찍 예약했더라면 돈을 아꼈을 거예요.",tip:"Had we를 도치로 자연스럽게요.",gr:"가정법 도치: Had + 주어 + p.p. = If had p.p."},
+   {en:"The sooner we leave, the better our chances are.",kr:"빨리 떠날수록 가능성이 더 좋아져요.",tip:"the sooner ~ the better 리듬을 살려요.",gr:"The 비교급 ~, the 비교급 ~: ~할수록 더 ~하다."},
+   {en:"I'd rather take the train than fly this time.",kr:"이번엔 비행기보다 기차를 타는 게 낫겠어요.",tip:"I'd rather를 '아이드 래더'로요.",gr:"would rather A than B: B보다 A하는 게 낫다."}]},
+ "자기소개":{
+  "왕초보":[
+   {en:"My name is Mina.",kr:"제 이름은 미나예요.",tip:"name is를 '네이미즈'로 이어요.",gr:"My name is ~: 이름 말하기."},
+   {en:"I am from Korea.",kr:"저는 한국에서 왔어요.",tip:"I am을 'I'm'처럼 줄여도 돼요.",gr:"be from + 장소: 출신 말하기."},
+   {en:"I like music and movies.",kr:"저는 음악과 영화를 좋아해요.",tip:"and를 약하게 '언'으로요.",gr:"like + 명사: 좋아하는 것 말하기."}],
+  "초급":[
+   {en:"I work as a designer at a small company.",kr:"저는 작은 회사에서 디자이너로 일해요.",tip:"work as a를 이어서요.",gr:"work as + 직업: ~로 일하다."},
+   {en:"I have been learning English for two years.",kr:"영어를 배운 지 2년 됐어요.",tip:"been learning을 부드럽게요.",gr:"현재완료진행: have been + ~ing(지속)."},
+   {en:"In my free time, I enjoy hiking.",kr:"여가 시간에 등산을 즐겨요.",tip:"enjoy hiking을 이어요.",gr:"enjoy + 동명사: ~하기를 즐기다."}],
+  "중급":[
+   {en:"I'd describe myself as a curious and patient person.",kr:"저는 호기심 많고 인내심 있는 사람이라고 할 수 있어요.",tip:"describe myself를 또박또박요.",gr:"describe A as B: A를 B라고 묘사하다."},
+   {en:"I'm passionate about solving real problems.",kr:"실제 문제를 해결하는 데 열정이 있어요.",tip:"passionate about을 이어요.",gr:"be passionate about + 명사/동명사."},
+   {en:"What got me into coding was a school project.",kr:"제가 코딩에 빠진 계기는 학교 프로젝트였어요.",tip:"got me into를 '갓미인투'로요.",gr:"What ~ was ...: 주어를 강조하는 구문."}],
+  "고급":[
+   {en:"Having lived abroad, I've grown more open-minded.",kr:"해외에 살아본 덕분에 더 열린 마음을 갖게 됐어요.",tip:"Having lived를 부드럽게 시작해요.",gr:"분사구문 Having p.p.: 이유·완료를 나타냄."},
+   {en:"What sets me apart is my attention to detail.",kr:"제 차별점은 디테일에 신경 쓴다는 거예요.",tip:"sets me apart를 이어요.",gr:"What ~ is ... 강조 + set apart(차별화하다)."},
+   {en:"I tend to thrive under pressure rather than crumble.",kr:"저는 압박 속에서 무너지기보다 오히려 잘해내는 편이에요.",tip:"thrive의 'th'를 혀끝으로요.",gr:"tend to + 동사원형: ~하는 경향이 있다."}]},
+ "음식·맛집":{
+  "왕초보":[
+   {en:"This food is very good.",kr:"이 음식 정말 맛있어요.",tip:"food의 'oo'를 길게요.",gr:"주어 + be동사 + 부사 + 형용사."},
+   {en:"I want some water, please.",kr:"물 좀 주세요.",tip:"want some을 '원썸'으로요.",gr:"want + some + 명사: 정중한 요청."},
+   {en:"Can I see the menu?",kr:"메뉴 좀 볼 수 있을까요?",tip:"Can I를 '캐나이'로 이어요.",gr:"Can I + 동사원형: 허락 요청."}],
+  "초급":[
+   {en:"I'd like to order a cheeseburger.",kr:"치즈버거를 주문할게요.",tip:"order a를 '오더러'로요.",gr:"would like to + 동사원형: 정중한 주문."},
+   {en:"Could we get the bill, please?",kr:"계산서 좀 주시겠어요?",tip:"get the를 '겟더'로요.",gr:"Could we + 동사원형: 정중한 요청."},
+   {en:"Is this dish spicy or mild?",kr:"이 음식 매워요, 순해요?",tip:"or를 약하게 '어'로요.",gr:"A or B 선택 의문문."}],
+  "중급":[
+   {en:"This restaurant is known for its fresh seafood.",kr:"이 식당은 신선한 해산물로 유명해요.",tip:"known for를 이어요.",gr:"be known for + 명사: ~로 유명하다."},
+   {en:"I'm allergic to peanuts, so I have to be careful.",kr:"저는 땅콩 알레르기가 있어서 조심해야 해요.",tip:"allergic to를 '얼러직투'로요.",gr:"be allergic to + 명사 / so로 결과 연결."},
+   {en:"The sooner we order, the faster we will eat.",kr:"빨리 주문할수록 빨리 먹겠죠.",tip:"the sooner ~ the faster 리듬을요.",gr:"The 비교급 ~, the 비교급 ~ 구문."}],
+  "고급":[
+   {en:"I'd say the dessert was the highlight of the meal.",kr:"제 생각엔 디저트가 식사의 하이라이트였어요.",tip:"I'd say를 '아이드 쎄이'로요.",gr:"I'd say (that) ~: 제 생각엔 ~인 것 같다."},
+   {en:"No matter how full I am, I always save room for cake.",kr:"아무리 배불러도 케이크 먹을 배는 늘 남겨둬요.",tip:"No matter how를 이어서요.",gr:"No matter how + 형용사: 아무리 ~해도."},
+   {en:"This is by far the best ramen I have ever had.",kr:"이건 지금까지 먹어본 라멘 중 단연 최고예요.",tip:"by far를 강조해서요.",gr:"by far + 최상급 / I have ever had(경험 강조)."}]},
+ "비즈니스":{
+  "왕초보":[
+   {en:"Nice to meet you.",kr:"만나서 반가워요.",tip:"meet you를 '미츄'로요.",gr:"처음 만났을 때 쓰는 인사 표현."},
+   {en:"Here is my business card.",kr:"제 명함이에요.",tip:"Here is를 '히어리즈'로요.",gr:"Here is + 단수 명사: 건네며 소개하기."},
+   {en:"Let's start the meeting.",kr:"회의를 시작합시다.",tip:"Let's를 '레츠'로요.",gr:"Let's + 동사원형: ~합시다(제안)."}],
+  "초급":[
+   {en:"Could you send me the report by Friday?",kr:"금요일까지 보고서 보내주실 수 있어요?",tip:"send me를 이어요.",gr:"Could you + 동사원형 / by + 기한."},
+   {en:"I'll get back to you as soon as possible.",kr:"가능한 한 빨리 다시 연락드릴게요.",tip:"get back to를 이어요.",gr:"as soon as possible: 가능한 한 빨리."},
+   {en:"Let me know if you have any questions.",kr:"질문 있으면 알려주세요.",tip:"Let me를 '렘미'로요.",gr:"Let me know if ~: ~하면 알려줘."}],
+  "중급":[
+   {en:"I'd like to follow up on our previous conversation.",kr:"지난 대화에 대해 후속 논의를 하고 싶어요.",tip:"follow up on을 이어요.",gr:"follow up on + 명사: ~에 대해 후속 조치하다."},
+   {en:"We need to touch base before the deadline.",kr:"마감 전에 한번 상의해야 해요.",tip:"touch base를 한 덩어리로요.",gr:"touch base: 간단히 상의·확인하다(관용구)."},
+   {en:"Let's circle back to this issue tomorrow.",kr:"이 문제는 내일 다시 다루죠.",tip:"circle back을 이어요.",gr:"circle back to: ~로 다시 돌아오다(관용구)."}],
+  "고급":[
+   {en:"Going forward, we should streamline our workflow.",kr:"앞으로는 업무 흐름을 간소화해야 해요.",tip:"Going forward를 부드럽게요.",gr:"Going forward: 앞으로는(문두 부사구)."},
+   {en:"I'd appreciate it if we could finalize the terms today.",kr:"오늘 조건을 마무리할 수 있으면 감사하겠어요.",tip:"finalize를 '파이널라이즈'로요.",gr:"I'd appreciate it if + 가정: 정중한 요청."},
+   {en:"Let's not lose sight of the bigger picture here.",kr:"여기서 큰 그림을 놓치지 맙시다.",tip:"lose sight of를 이어요.",gr:"lose sight of: ~을 놓치다(관용구)."}]},
+ "영화·취미":{
+  "왕초보":[
+   {en:"I like action movies.",kr:"저는 액션 영화를 좋아해요.",tip:"like action을 이어요.",gr:"like + 명사: 좋아하는 장르 말하기."},
+   {en:"This movie is so fun.",kr:"이 영화 정말 재밌어요.",tip:"so fun을 또렷하게요.",gr:"so + 형용사: 강조 표현."},
+   {en:"Let's watch a film tonight.",kr:"오늘 밤 영화 보자.",tip:"watch a를 '워치어'로요.",gr:"Let's + 동사원형: 제안하기."}],
+  "초급":[
+   {en:"What kind of music do you listen to?",kr:"어떤 종류의 음악을 들어요?",tip:"listen to를 이어요.",gr:"What kind of + 명사: 어떤 종류의 ~."},
+   {en:"I've been into photography recently.",kr:"요즘 사진에 빠져 있어요.",tip:"been into를 부드럽게요.",gr:"be into + 명사: ~에 푹 빠져 있다."},
+   {en:"I usually read before going to bed.",kr:"저는 보통 자기 전에 책을 읽어요.",tip:"before going을 이어요.",gr:"before + 동명사: ~하기 전에."}],
+  "중급":[
+   {en:"That film really resonated with me.",kr:"그 영화는 정말 와닿았어요.",tip:"resonated with를 이어요.",gr:"resonate with: ~에게 공감을 일으키다."},
+   {en:"I'm hooked on this series; I can't stop watching.",kr:"이 시리즈에 푹 빠져서 멈출 수가 없어요.",tip:"hooked on을 이어요.",gr:"be hooked on: ~에 빠지다/중독되다."},
+   {en:"The plot kept me on the edge of my seat.",kr:"줄거리가 손에 땀을 쥐게 했어요.",tip:"on the edge를 이어요.",gr:"on the edge of one's seat: 손에 땀을 쥐는(관용구)."}],
+  "고급":[
+   {en:"What I love most is how the director builds tension.",kr:"제가 가장 좋아하는 건 감독이 긴장감을 쌓는 방식이에요.",tip:"What I love most를 한 호흡으로요.",gr:"What ~ is how ...: 명사절 강조 구문."},
+   {en:"This soundtrack never fails to give me goosebumps.",kr:"이 사운드트랙은 늘 소름이 돋게 해요.",tip:"never fails to를 이어요.",gr:"never fail to + 동사원형: 반드시 ~하다."},
+   {en:"I'd go so far as to call it a modern masterpiece.",kr:"저는 이걸 현대의 걸작이라고까지 부르겠어요.",tip:"go so far as to를 이어요.",gr:"go so far as to + 동사원형: ~하기까지 하다."}]}
+};
+const TR_CHEER_GOOD = ["완벽에 가까워요! 👏","아주 자연스러웠어요! 🌟","발음이 또렷했어요! 잘했어요 ✨","원어민 같았어요! 계속 이렇게 👍"];
+const TR_CHEER_OK   = ["좋아요, 조금만 더 또박또박! 💪","거의 다 왔어요, 한 번 더 해볼까요? 🙂","점점 자연스러워지고 있어요! 🔥"];
+const TR_CHEER_LOW  = ["천천히 다시 따라 해볼까요? 괜찮아요 🙂","듣고 한 단어씩 끊어 말해봐요 💡","연습하면 금방 늘어요! 다시 도전 💪"];
+
+let trState = { topic:"일상 대화", level:"초급", cur:null, used:[], busy:false };
+let trRecog = null, trRecognizing = false;
+
+function renderTrainerHome(){
+  Sound.stopBGM();              // 음성에 집중하도록 BGM 끔
+  trState = { topic:"일상 대화", level:"초급", cur:null, used:[], busy:false };
+  $("trLog").innerHTML = "";
+  $("trMic").style.display = "none";
+  $("trStatus").textContent = "";
+  renderTrChips();
+  show("trainer");
+  trBot(`안녕하세요! 따라 말하기 트레이너예요. 주제와 난이도를 고른 뒤 <b>시작하기</b>를 누르면, 제가 문장을 한국어로 설명하고 영어로 읽어드릴게요. 그대로 따라 말해보세요 🎤`);
+  trSetActions([ mkBtn("▶ 시작하기","next", trStart) ]);
+}
+function renderTrChips(){
+  const tWrap = $("trTopics"); tWrap.innerHTML = "";
+  TR_TOPICS.forEach(t=>{
+    const b = document.createElement("button");
+    b.className = "tr-chip" + (t===trState.topic?" on":"");
+    b.textContent = t; b.onclick = ()=>{ trState.topic=t; renderTrChips(); };
+    tWrap.appendChild(b);
+  });
+  const lWrap = $("trLevels"); lWrap.innerHTML = "";
+  TR_LEVELS.forEach(l=>{
+    const b = document.createElement("button");
+    b.className = "tr-chip" + (l===trState.level?" on":"");
+    b.textContent = l; b.onclick = ()=>{ trState.level=l; renderTrChips(); };
+    lWrap.appendChild(b);
+  });
+}
+function trSetActions(btns){
+  const wrap = $("trActions"); wrap.innerHTML = "";
+  (btns||[]).forEach(b=>wrap.appendChild(b));
+}
+function trBot(html){
+  const el = document.createElement("div");
+  el.className = "tr-msg bot"; el.innerHTML = html;
+  $("trLog").appendChild(el); el.scrollIntoView({behavior:"smooth", block:"end"});
+  return el;
+}
+function trMe(html){
+  const el = document.createElement("div");
+  el.className = "tr-msg me"; el.innerHTML = html;
+  $("trLog").appendChild(el); el.scrollIntoView({behavior:"smooth", block:"end"});
+  return el;
+}
+
+/* 다음 문장 선택 (내장 모음에서, 최근 반복 회피) */
+function trPick(){
+  const list = (TR_BANK[trState.topic]||{})[trState.level] || [];
+  if(!list.length) return null;
+  let pool = list.filter(x=>!trState.used.includes(x.en));
+  if(!pool.length){ trState.used = trState.used.filter(u=>!list.some(x=>x.en===u)); pool = list; }
+  const it = pool[Math.floor(Math.random()*pool.length)];
+  trState.used.push(it.en);
+  return it;
+}
+
+function trStart(){ trSetActions([]); trNextSentence(); }
+
+function trNextSentence(){
+  $("trMic").style.display = "none"; $("trStatus").textContent = "";
+  const it = trPick();
+  if(!it){ trBot("이 주제·난이도의 문장을 준비 중이에요. 다른 조합을 골라보세요!"); return; }
+  trState.cur = it;
+  const el = trBot(
+    `<div class="kr">${escapeHtml(it.kr)}</div>
+     <div class="en">${it.en.split(" ").map(w=>`<span class="w">${escapeHtml(w)}</span>`).join(" ")}</div>
+     ${it.tip?`<div class="tip">💡 ${escapeHtml(it.tip)}</div>`:""}
+     <button class="listen" type="button">🔊 다시 듣기</button>`);
+  el.querySelector(".listen").onclick = ()=> speakText(it.en, 0.9);
+  speakText(it.en, 0.9);
+  if(SR){
+    $("trMic").style.display = ""; $("trStatus").textContent = "마이크를 누르고 따라 말해보세요";
+    trSetActions([ mkBtn("🔊 천천히 듣기","show",()=>speakText(it.en,0.7)),
+                   mkBtn("다음 문장 →","ghost",trNextSentence) ]);
+  } else {
+    $("trStatus").textContent = "이 브라우저는 음성인식을 지원하지 않아요 (Chrome·Edge 권장). 듣고 따라 말한 뒤 다음으로 넘어가세요.";
+    trSetActions([ mkBtn("🔊 천천히 듣기","show",()=>speakText(it.en,0.7)),
+                   mkBtn("다음 문장 →","next",trNextSentence) ]);
+  }
+}
+
+/* 음성인식 */
+function trEnsureRecog(){
+  if(!SR) return null;
+  if(trRecog) return trRecog;
+  trRecog = new SR();
+  trRecog.lang = "en-US"; trRecog.interimResults = false; trRecog.maxAlternatives = 3;
+  trRecog.onresult = (e)=>{ const alts=[...e.results[0]].map(r=>r.transcript); trEvaluate(alts); };
+  trRecog.onerror  = ()=>{ trRecognizing=false; $("trMic").classList.remove("rec"); $("trStatus").textContent="인식하지 못했어요. 다시 시도해 주세요."; };
+  trRecog.onend    = ()=>{ trRecognizing=false; $("trMic").classList.remove("rec"); };
+  return trRecog;
+}
+$("trMic").onclick = ()=>{
+  if(!SR || trState.busy || !trState.cur) return;
+  const r = trEnsureRecog();
+  if(trRecognizing){ r.stop(); return; }
+  try{ r.start(); trRecognizing=true; $("trMic").classList.add("rec"); $("trStatus").textContent="듣고 있어요… 🎙️"; }
+  catch(_){ trRecognizing=false; }
+};
+
+/* 발음/문법 교정 (오프라인 · 규칙 기반) */
+function trEvaluate(alts){
+  const it = trState.cur; if(!it) return;
+  const tw = norm(it.en).split(" ").filter(Boolean);
+  // 여러 인식 후보 중 가장 잘 맞는 것 선택
+  let best = { ratio:-1, hw:[], raw:(alts&&alts[0])||"" };
+  (alts||[]).forEach(a=>{
+    const hw = norm(a).split(" ").filter(Boolean);
+    const pool=[...hw]; let m=0;
+    tw.forEach(w=>{ const k=pool.indexOf(w); if(k>=0){ m++; pool.splice(k,1); } });
+    const ratio = tw.length ? m/tw.length : 0;
+    if(ratio>best.ratio) best = { ratio, hw, raw:a };
+  });
+  const score = Math.round(best.ratio*100);
+  const good = score>=80;
+
+  // 정확/누락 단어 하이라이트
+  const words = it.en.split(" ");
+  const pool = [...best.hw]; const missed = [];
+  const marks = tw.map((w,i)=>{ const k=pool.indexOf(w); const ok=k>=0; if(ok) pool.splice(k,1); else missed.push(words[i]||w);
+    return `<span class="w ${ok?'ok':'miss'}">${escapeHtml(words[i]||w)}</span>`; }).join(" ");
+  trMe(`<div class="kr">내가 말한 내용 (인식)</div><div class="en">${marks}</div>
+        <div class="tip" style="color:#475569">“${escapeHtml(best.raw||'(인식 안 됨)')}”</div>`);
+
+  // 발음 피드백 (누락 단어 + 저장된 발음 팁)
+  let pron;
+  if(good) pron = "거의 정확했어요! 원어민 억양으로 한 번 더 따라 하면 완벽해요.";
+  else if(missed.length) pron = `‘${missed.slice(0,4).join(", ")}’ 발음이 약하게 들렸어요. ${it.tip||""}`;
+  else pron = `또박또박 한 번 더 말해볼까요? ${it.tip||""}`;
+  const cheerArr = good ? TR_CHEER_GOOD : score>=50 ? TR_CHEER_OK : TR_CHEER_LOW;
+  const enc = cheerArr[Math.floor(Math.random()*cheerArr.length)];
+  const col = good?"#16a34a":score>=50?"#f59e0b":"#ef4444";
+
+  trBot(
+    `<div class="score" style="color:${col}">${good?"✅":"🔁"} 정확도 ${score}점</div>
+     <div class="fbline">🗣️ <b>발음</b> · ${escapeHtml(pron)}</div>
+     <div class="fbline">📘 <b>문법</b> · ${escapeHtml(it.gr||"")}</div>
+     <div class="fbline" style="color:#6d28d9">💪 ${escapeHtml(enc)}</div>`);
+  if(good){ addXPSafe(10); Sound.fanfare(); } else addXPSafe(3);
+  trSetActions([
+    mkBtn("🎤 다시 말하기","retry", trRetry),
+    mkBtn("🔊 다시 듣기","show", ()=>speakText(it.en,0.85)),
+    mkBtn("다음 문장 →","next", trNextSentence)
+  ]);
+}
+function trRetry(){
+  if(!trState.cur) return;
+  $("trMic").style.display = SR ? "" : "none";
+  $("trStatus").textContent = SR ? "마이크를 누르고 다시 말해보세요" : "";
+  trSetActions([ mkBtn("🔊 다시 듣기","show",()=>speakText(trState.cur.en,0.85)),
+                 mkBtn("다음 문장 →","ghost",trNextSentence) ]);
+}
+/* 트레이너봇은 단계 state가 없으므로 XP만 누적 */
+function addXPSafe(n){ totalXP += n; persistXP(); }
+
+$("trainerBack").onclick = ()=>{ try{ if(trRecog && trRecognizing) trRecog.stop(); }catch(_){}
+  if(window.speechSynthesis) window.speechSynthesis.cancel(); renderRootHome(); };
+
+/* =========================================================
+   TEST — 실전 배치고사 (문법 / 어휘 / 리스닝)
+   band = 난이도 밴드. 통과한 가장 높은 밴드가 진단 레벨.
+   문항 빈도순위는 단어 난이도로 근사 분류했어요.
+   ========================================================= */
+const LV4 = ["왕초보","초보","중급","고급"];          // 문법 · 리스닝 (4밴드)
+const LV5 = ["왕초보","초보","초중급","중급","고급"];  // 어휘 (5밴드, 빈도대)
+const BANDCOL = ["#0d9488","#0284c7","#4f46e5","#7c3aed","#db2777"];
+
+/* 어휘: content word(명·동·형·부)만. band1=빈도1~2000 … band5=8001~10000 */
+const TEST_VOCAB = [
+  // band1 (1~2000)
+  {band:1, q:"'easy'의 뜻으로 알맞은 것은?", opts:["쉬운","복잡한","지루한","낯선"], a:0, exp:"easy = 쉬운. complex(복잡한)·unfamiliar(낯선)와 구분."},
+  {band:1, q:"'big'과 뜻이 가장 비슷한 단어는?", opts:["wide","large","tall","deep"], a:1, exp:"big ≈ large (큰). wide(넓은)·tall(높은)·deep(깊은)은 특정 차원이에요."},
+  {band:1, q:"'fast'와 뜻이 <u>반대</u>인 단어는?", opts:["quick","rapid","slow","swift"], a:2, exp:"fast ↔ slow(느린). quick·rapid·swift는 모두 fast의 '유의어' 함정이에요."},
+  {band:1, q:"'begin'과 뜻이 가장 비슷한 단어는?", opts:["prepare","arrive","continue","start"], a:3, exp:"begin ≈ start (시작하다). prepare(준비)·continue(계속)는 단계가 달라요."},
+  // band2 (2001~4000)
+  {band:2, q:"'improve'의 뜻으로 알맞은 것은?", opts:["향상시키다","유지하다","조절하다","측정하다"], a:0, exp:"improve = 향상시키다. maintain(유지)·adjust(조절)와 구분."},
+  {band:2, q:"'choose'와 뜻이 가장 비슷한 단어는?", opts:["compare","select","collect","prefer"], a:1, exp:"choose ≈ select (고르다). compare(비교)·prefer(선호)와 구분."},
+  {band:2, q:"'increase'와 뜻이 <u>반대</u>인 단어는?", opts:["grow","expand","decrease","rise"], a:2, exp:"increase ↔ decrease(줄다). grow·expand·rise는 모두 increase의 '유의어' 함정."},
+  {band:2, q:"'advice'의 뜻으로 알맞은 것은?", opts:["요청","경고","불만","조언"], a:3, exp:"advice = 조언. request(요청)·warning(경고)·complaint(불만)와 구분."},
+  // band3 (4001~6000)
+  {band:3, q:"'genuine'의 뜻으로 알맞은 것은?", opts:["진실한","독특한","공식적인","전형적인"], a:0, exp:"genuine = 진짜의·진실한. unique(독특한)·typical(전형적인)과 구분."},
+  {band:3, q:"'anxious'와 뜻이 가장 비슷한 단어는?", opts:["curious","worried","cautious","jealous"], a:1, exp:"anxious ≈ worried (불안한). curious(궁금한)·cautious(조심스러운)와 구분."},
+  {band:3, q:"'temporary'와 뜻이 <u>반대</u>인 단어는?", opts:["brief","short-term","permanent","passing"], a:2, exp:"temporary ↔ permanent(영구적). brief·short-term·passing은 모두 '유의어' 함정."},
+  {band:3, q:"'emphasize'의 뜻으로 알맞은 것은?", opts:["요약하다","반복하다","설명하다","강조하다"], a:3, exp:"emphasize = 강조하다. summarize(요약)·repeat(반복)과 구분."},
+  // band4 (6001~8000)
+  {band:4, q:"'reluctant'의 뜻으로 알맞은 것은?", opts:["꺼리는","신중한","무관심한","소극적인"], a:0, exp:"reluctant = 꺼리는·마지못한. cautious(신중한)·passive(소극적인)와 구분."},
+  {band:4, q:"'abundant'와 뜻이 가장 비슷한 단어는?", opts:["frequent","plentiful","massive","various"], a:1, exp:"abundant ≈ plentiful (풍부한). frequent(잦은)·various(다양한)는 양과 무관."},
+  {band:4, q:"'deteriorate'와 뜻이 <u>반대</u>인 단어는?", opts:["worsen","decline","improve","collapse"], a:2, exp:"deteriorate ↔ improve(개선되다). worsen·decline은 '유의어' 함정."},
+  {band:4, q:"'ambiguous'의 뜻으로 알맞은 것은?", opts:["복잡한","추상적인","불완전한","애매모호한"], a:3, exp:"ambiguous = 애매모호한. complex(복잡한)·abstract(추상적인)와 구분."},
+  // band5 (8001~10000)
+  {band:5, q:"'ubiquitous'의 뜻으로 알맞은 것은?", opts:["어디에나 있는","흔치 않은","눈에 띄는","필수적인"], a:0, exp:"ubiquitous = 어디에나 있는·아주 흔한. uncommon(흔치 않은)과 반대."},
+  {band:5, q:"'meticulous'와 뜻이 가장 비슷한 단어는?", opts:["confident","careful","generous","patient"], a:1, exp:"meticulous ≈ careful (꼼꼼한). confident(자신감 있는)·patient(인내심 있는)와 구분."},
+  {band:5, q:"'ephemeral'과 뜻이 <u>반대</u>인 단어는?", opts:["brief","fleeting","lasting","temporary"], a:2, exp:"ephemeral ↔ lasting(오래가는). brief·fleeting·temporary는 모두 '유의어' 함정."},
+  {band:5, q:"'candid'의 뜻으로 알맞은 것은?", opts:["신중한","정중한","겸손한","솔직한"], a:3, exp:"candid = 솔직한·꾸밈없는. cautious(신중한)·humble(겸손한)과 구분."},
+];
+
+/* 문법: band1 현재·과거 / band2 기타시제·명사·관사 / band3 전치사·조동사·비교·수동·접속 / band4 가정법·관계사 */
+const TEST_GRAMMAR = [
+  {band:1, q:"She ___ to school every day.", kr:"그녀는 매일 학교에 간다.", opts:["go","goes","going","gone"], a:1, exp:"3인칭 단수 현재 → goes."},
+  {band:1, q:"They ___ very happy now.", kr:"그들은 지금 매우 행복하다.", opts:["is","am","are","be"], a:2, exp:"복수 주어 be동사 → are."},
+  {band:1, q:"I ___ a movie yesterday.", kr:"나는 어제 영화를 봤다.", opts:["watch","watched","watching","watches"], a:1, exp:"yesterday → 과거시제 watched."},
+  {band:1, q:"He ___ to Paris last year.", kr:"그는 작년에 파리에 갔다.", opts:["go","goes","went","gone"], a:2, exp:"last year → 과거 went."},
+  {band:1, q:"She ___ like coffee.", kr:"그녀는 커피를 좋아하지 않는다.", opts:["don't","doesn't","isn't","not"], a:1, exp:"3인칭 단수 현재 부정 → doesn't."},
+  {band:2, q:"I ___ here since 2019.", kr:"나는 2019년부터 여기 살았다.", opts:["live","lived","have lived","living"], a:2, exp:"since + 시점 → 현재완료 have lived."},
+  {band:2, q:"Look! The baby ___ right now.", kr:"봐! 아기가 지금 울고 있어.", opts:["cries","is crying","cried","cry"], a:1, exp:"right now → 현재진행 is crying."},
+  {band:2, q:"I ___ call you tomorrow.", kr:"내일 전화할게.", opts:["will","am","did","have"], a:0, exp:"미래 → will call."},
+  {band:2, q:"I saw ___ elephant at the zoo.", kr:"동물원에서 코끼리를 봤다.", opts:["a","an","the","(no article)"], a:1, exp:"모음 소리 앞 → an elephant."},
+  {band:2, q:"There are three ___ on the desk.", kr:"책상 위에 상자 세 개가 있다.", opts:["box","boxs","boxes","boxen"], a:2, exp:"-x로 끝나면 복수 -es → boxes."},
+  {band:3, q:"I'll finish the report ___ Friday.", kr:"금요일까지 보고서를 끝낼게.", opts:["until","by","at","in"], a:1, exp:"마감(늦어도 ~까지 완료) → by."},
+  {band:3, q:"You ___ see a doctor soon.", kr:"너는 곧 의사에게 가봐야 해.", opts:["should","can","may","will"], a:0, exp:"충고 → should."},
+  {band:3, q:"This bridge ___ in 1990.", kr:"이 다리는 1990년에 지어졌다.", opts:["built","was built","has built","builds"], a:1, exp:"과거 수동태 → was built."},
+  {band:3, q:"He is much ___ than his brother.", kr:"그는 형보다 훨씬 키가 크다.", opts:["tall","taller","tallest","more tall"], a:1, exp:"비교급 → taller."},
+  {band:3, q:"___ it was cold, we went swimming.", kr:"추웠지만 우리는 수영하러 갔다.", opts:["Because","Although","So","Unless"], a:1, exp:"양보 → Although."},
+  {band:4, q:"If I ___ rich, I would travel the world.", kr:"내가 부자라면 세계를 여행할 텐데.", opts:["am","was","were","will be"], a:2, exp:"가정법 과거 be → were."},
+  {band:4, q:"If I ___ harder, I would have passed.", kr:"더 열심히 했더라면 합격했을 텐데.", opts:["studied","had studied","study","have studied"], a:1, exp:"가정법 과거완료 if절 → had studied."},
+  {band:4, q:"This is the man ___ helped me.", kr:"이 사람이 나를 도와준 남자다.", opts:["which","who","whom","where"], a:1, exp:"사람 주격 관계대명사 → who."},
+  {band:4, q:"This is the house ___ I grew up.", kr:"이곳이 내가 자란 집이다.", opts:["which","who","where","that"], a:2, exp:"장소 관계부사 → where."},
+  {band:4, q:"___ I known, I would have told you.", kr:"내가 알았더라면 너에게 말했을 텐데.", opts:["If","Had","Have","Did"], a:1, exp:"가정법 과거완료 도치 → Had I known."},
+];
+
+/* 리스닝: 밴드별 문법이 든 문장을 듣고 → 그림(pic)·문장(sentence)·뜻(kr) 고르기 */
+const TEST_LISTEN = [
+  {band:1, audio:"I have a cat.", type:"pic", opts:["🐱","🐶","🐦","🐟"], a:0, exp:"I have a cat. → 고양이 🐱"},
+  {band:1, audio:"She is happy.", type:"kr", opts:["그녀는 행복하다.","그는 슬프다.","그녀는 피곤하다.","그들은 바쁘다."], a:0, exp:"She is happy. = 그녀는 행복하다."},
+  {band:1, audio:"They play soccer.", type:"sentence", opts:["They play soccer.","They played soccer.","They play baseball.","They pay soccer."], a:0, exp:"현재시제 play + soccer."},
+  {band:1, audio:"The sun is hot.", type:"pic", opts:["☀️","🌧️","❄️","🌙"], a:0, exp:"The sun is hot. → 해 ☀️"},
+  {band:2, audio:"I have finished my homework.", type:"sentence", opts:["I have finished my homework.","I finished my homework.","I will finish my homework.","I finish my homework."], a:0, exp:"현재완료 have finished."},
+  {band:2, audio:"She is reading a book.", type:"kr", opts:["그녀는 책을 읽고 있다.","그녀는 책을 샀다.","그는 편지를 쓰고 있다.","그녀는 책을 읽었다."], a:0, exp:"현재진행 is reading = 읽고 있다."},
+  {band:2, audio:"He is drinking water.", type:"pic", opts:["💧","☕","🍔","📖"], a:0, exp:"drinking water → 물 💧"},
+  {band:2, audio:"I will call you tomorrow.", type:"sentence", opts:["I will call you tomorrow.","I called you yesterday.","I call you every day.","I will email you tomorrow."], a:0, exp:"미래 will call + tomorrow."},
+  {band:3, audio:"You should see a doctor.", type:"kr", opts:["너는 의사에게 가봐야 해.","너는 의사를 봤다.","나는 의사가 되고 싶다.","그는 의사를 만날 것이다."], a:0, exp:"should = ~해야 한다(충고)."},
+  {band:3, audio:"The cake was eaten by the kids.", type:"sentence", opts:["The cake was eaten by the kids.","The kids ate the cake.","The cake is eaten by the kids.","The kids will eat the cake."], a:0, exp:"과거 수동태 was eaten."},
+  {band:3, audio:"He is taller than his brother.", type:"kr", opts:["그는 형보다 키가 크다.","그는 형보다 키가 작다.","그는 형만큼 키가 크다.","그는 형과 나이가 같다."], a:0, exp:"비교급 taller than = ~보다 크다."},
+  {band:3, audio:"Although it was raining, we went out.", type:"kr", opts:["비가 왔지만 우리는 나갔다.","비가 와서 집에 있었다.","비가 오면 나갈 것이다.","비가 오기 전에 나갔다."], a:0, exp:"Although = ~지만(양보)."},
+  {band:4, audio:"If I were rich, I would travel the world.", type:"kr", opts:["내가 부자라면 세계를 여행할 텐데.","나는 부자여서 여행한다.","내가 부자였다면 여행했을 텐데.","나는 부자가 되어 여행할 것이다."], a:0, exp:"가정법 과거 = 현재 사실 반대 가정."},
+  {band:4, audio:"This is the house where I grew up.", type:"sentence", opts:["This is the house where I grew up.","This is the house which I grew up.","This is the house when I grew up.","This is the house I grow up."], a:0, exp:"장소 관계부사 where."},
+  {band:4, audio:"Had I known, I would have told you.", type:"kr", opts:["내가 알았더라면 너에게 말했을 텐데.","내가 안다면 말할 텐데.","나는 알았고 말했다.","내가 알면 말할 것이다."], a:0, exp:"가정법 과거완료 도치."},
+  {band:4, audio:"The man who called you is my friend.", type:"sentence", opts:["The man who called you is my friend.","The man whom you called is my friend.","The man which called you is my friend.","The man called you my friend."], a:0, exp:"주격 관계대명사 who."},
+];
+
+const TESTS = {
+  grammar:{ name:"문법", icon:"📝", mode:"mcq",    bands:4, levels:LV4, items:TEST_GRAMMAR },
+  vocab:  { name:"어휘", icon:"📚", mode:"mcq",    bands:5, levels:LV5, items:TEST_VOCAB },
+  listen: { name:"리스닝", icon:"🎧", mode:"listen", bands:4, levels:LV4, items:TEST_LISTEN },
+};
+
+/* ---------- 루트 메뉴 (Quest / Test) ---------- */
+function renderRootHome(){ Sound.startBGM(); show("rootHome"); }
+$("rootCats").addEventListener("click",(e)=>{
+  const card=e.target.closest(".cat"); if(!card) return; Sound.ensure();
+  if(card.dataset.root==="quest") renderModeHome();
+  else if(card.dataset.root==="test") renderTestHome();
+  else if(card.dataset.root==="trainer") renderTrainerHome();
+});
+$("modeBack").onclick = ()=>{ resetStreak(); renderRootHome(); };
+$("testBack").onclick = ()=>{ resetStreak(); renderRootHome(); };
+
+/* ---------- 테스트 영역 선택 ---------- */
+function renderTestHome(){
+  Sound.startBGM();
+  const wrap=$("testCats"); wrap.className="cats"; wrap.innerHTML="";
+  const TPAL=[["#3b82f6","#1d4ed8"],["#f59e0b","#b45309"],["#8b5cf6","#6d28d9"]];
+  const order=["grammar","vocab","listen"];
+  order.forEach((dk,i)=>{
+    const t=TESTS[dk]; const col=TPAL[i%TPAL.length];
+    const el=document.createElement("button");
+    el.className="cat"; el.type="button"; el.dataset.test=dk;
+    el.style.setProperty("--c1",col[0]); el.style.setProperty("--c2",col[1]);
+    el.innerHTML=`<div class="ic">${t.icon}</div><div class="t">${t.name}</div>
+      <div class="d">${t.items.length}문항 · 레벨 진단</div><div class="best">테스트 시작 →</div>`;
+    wrap.appendChild(el);
+  });
+  // 말하기(준비 중)
+  const sp=document.createElement("button");
+  sp.className="cat"; sp.type="button"; sp.dataset.test="speak";
+  sp.style.setProperty("--c1","#94a3b8"); sp.style.setProperty("--c2","#64748b");
+  sp.style.opacity=".7";
+  sp.innerHTML=`<div class="ic">🎤</div><div class="t">말하기</div>
+    <div class="d">곧 준비됩니다</div><div class="best">준비 중</div>`;
+  wrap.appendChild(sp);
+  show("testHome");
+}
+$("testCats").addEventListener("click",(e)=>{
+  const card=e.target.closest(".cat"); if(!card||!card.dataset.test) return;
+  if(card.dataset.test==="speak"){ const b=card.querySelector(".best"); const p=b.textContent; b.textContent="🛠️ 준비 중이에요"; setTimeout(()=>b.textContent=p,1200); return; }
+  startTest(card.dataset.test);
+});
+
+/* ---------- 테스트 진행 ---------- */
+let testState = null;
+function startTest(domain){
+  const cfg=TESTS[domain];
+  testState={ domain, cfg, mode:cfg.mode, items:cfg.items.slice(), idx:0, answers:[] };
+  $("ttot").textContent=cfg.items.length;
+  $("testTag").textContent=`${cfg.icon} ${cfg.name} 테스트`;
+  if(domain==="listen") Sound.stopBGM(); else Sound.startBGM();
+  show("test");
+  loadTestQ();
+}
+function loadTestQ(){
+  const it=testState.items[testState.idx];
+  $("tcur").textContent=testState.idx+1;
+  $("tbar").style.width=(testState.idx/testState.items.length*100)+"%";
+  const listen=testState.mode==="listen";
+  $("taudiobox").classList.toggle("hide", !listen);
+  $("tprompt").classList.toggle("hide", !listen);
+  $("tsentence").classList.toggle("hide", listen);
+  $("tkr").classList.toggle("hide", listen || !it.kr);
+
+  if(listen){
+    testState.audioText=it.audio;
+    $("tprompt").textContent = it.type==="pic" ? "들은 문장에 맞는 그림을 고르세요"
+                              : it.type==="kr" ? "들은 문장의 뜻을 고르세요"
+                              : "들은 문장을 고르세요";
+    speakText(it.audio);
+  } else {
+    $("tsentence").innerHTML=escapeHtml(it.q).replace(/___/g,'<span class="blank">&nbsp;?&nbsp;</span>');
+    if(it.kr) $("tkr").textContent=it.kr;
+  }
+
+  const opts=$("toptions"); opts.className = "options" + (it.type==="pic" ? " pics" : ""); opts.innerHTML="";
+  const keys=["A","B","C","D"];
+  it.opts.forEach((text,i)=>{
+    const b=document.createElement("button");
+    b.className = "opt" + (it.type==="pic" ? " pic" : "");
+    b.type="button";
+    b.innerHTML = it.type==="pic" ? escapeHtml(text)
+                : `<span class="key">${keys[i]}</span><span>${escapeHtml(text)}</span>`;
+    b.onclick=()=>chooseTest(i);
+    opts.appendChild(b);
+  });
+}
+function chooseTest(i){
+  const it=testState.items[testState.idx];
+  [...$("toptions").children].forEach(b=>b.disabled=true);
+  testState.answers.push({ band:it.band, correct: i===it.a });
+  if(testState.idx >= testState.items.length-1){ setTimeout(finishTest,180); }
+  else { testState.idx++; setTimeout(loadTestQ,180); }
+}
+$("tplayBtn").onclick   = ()=> speakText(testState.audioText);
+$("treplayBtn").onclick = ()=> speakText(testState.audioText);
+$("testQuit").onclick   = ()=>{ renderTestHome(); };
+
+function finishTest(){
+  const cfg=testState.cfg, bands=cfg.bands;
+  const tot=Array(bands+1).fill(0), cor=Array(bands+1).fill(0);
+  testState.answers.forEach(a=>{ tot[a.band]++; if(a.correct) cor[a.band]++; });
+
+  // 사다리식: 쉬운 밴드부터, 통과(60%↑)가 끊기는 직전까지의 최고 밴드
+  let level=0;
+  for(let b=1;b<=bands;b++){
+    const need=Math.ceil(tot[b]*0.6);
+    if(tot[b]>0 && cor[b]>=need) level=b; else break;
+  }
+  const needsBasics = level===0;
+  const shownIdx = Math.max(1, level);
+  const lvName = cfg.levels[shownIdx-1];
+  const col = BANDCOL[shownIdx-1];
+  const totalCorrect = cor.reduce((a,b)=>a+b,0);
+
+  Sound.startBGM();
+  $("trEmoji").textContent = needsBasics ? "🌱" : (level>=bands ? "🏆" : "🎯");
+  $("trTitle").textContent = `${cfg.icon} ${cfg.name} 레벨 진단`;
+  $("trLevel").innerHTML = `<span class="lvbig" style="background:${col}">${lvName}</span>`;
+  let msg;
+  if(needsBasics) msg = `기초부터 차근차근 시작해요! 가장 쉬운 밴드부터 탄탄히 다져봐요.`;
+  else if(level>=bands) msg = `최고 레벨이에요! 모든 밴드를 통과했어요. 대단해요! 🎉`;
+  else msg = `<b>${lvName}</b> 수준이에요. <b>${cfg.levels[shownIdx]}</b> 밴드부터 정답률이 떨어졌어요. 이 레벨부터 채우면 빠르게 올라가요!`;
+  msg += `  <span style="color:#94a3b8">(총 ${totalCorrect}/${testState.items.length})</span>`;
+  $("trMsg").innerHTML = msg;
+
+  let html="";
+  for(let b=1;b<=bands;b++){
+    const pct = tot[b] ? Math.round(cor[b]/tot[b]*100) : 0;
+    const reached = b<=level;
+    html += `<div class="band ${reached?'reached':''}">
+      <div class="bn">${cfg.levels[b-1]}</div>
+      <div class="track"><div class="fill" style="width:${pct}%;background:${reached?'linear-gradient(90deg,#6366f1,#4338ca)':'#cbd5e1'}"></div></div>
+      <div class="sc">${cor[b]}/${tot[b]}</div></div>`;
+  }
+  $("trBands").innerHTML = html;
+  show("testResult");
+  if(!needsBasics){ Sound.fanfare(); Confetti.burst(level>=bands?220:120); }
+}
+$("trAgain").onclick = ()=> startTest(testState.domain);
+$("trBack").onclick  = ()=> renderTestHome();
+
+/* ---------- 시작 ---------- */
+renderRootHome();
+</script>
+</body>
+</html>
