@@ -70,6 +70,29 @@
   #rootCats{grid-template-columns:repeat(3,1fr)}
   @media(max-width:560px){ #rootCats{grid-template-columns:1fr} }
 
+  /* ===== 과정 선택 리스트 (Quest 과정) ===== */
+  .courselist{display:flex;flex-direction:column;gap:11px;margin-top:12px}
+  .course{
+    display:flex;align-items:center;gap:14px;width:100%;text-align:left;
+    border:1px solid var(--line);border-radius:16px;padding:15px 18px;cursor:pointer;
+    background:var(--soft);color:var(--ink);font-family:inherit;
+    transition:transform .15s ease, box-shadow .15s ease, border-color .15s ease, background .15s ease;
+    user-select:none;-webkit-user-select:none;
+  }
+  .course:hover{transform:translateY(-2px);box-shadow:0 14px 26px -16px rgba(2,6,23,.35);border-color:#c7d2fe;background:#fff}
+  .course:active{transform:translateY(0)}
+  .course .cic{
+    flex:none;font-size:24px;width:48px;height:48px;border-radius:13px;
+    display:flex;align-items:center;justify-content:center;color:#fff;
+    background:linear-gradient(155deg,var(--c1,#4f46e5),var(--c2,#4338ca));
+    box-shadow:0 8px 18px -10px rgba(2,6,23,.45);
+  }
+  .course .cbody{flex:1;min-width:0}
+  .course .cname{font-weight:700;font-size:15.5px;letter-spacing:-.2px;line-height:1.35}
+  .course .cinfo{font-size:12px;color:var(--muted);margin-top:2px;font-weight:500}
+  .course .go{flex:none;font-size:17px;color:#94a3b8;font-weight:700}
+  .course:hover .go{color:var(--blue)}
+
   /* ===== 언어 선택 (Language Game Center) ===== */
   .hero .globe{font-size:44px;margin-bottom:8px}
   .langs{display:grid;grid-template-columns:repeat(4,1fr);gap:13px;margin-top:14px}
@@ -332,6 +355,19 @@
     </div>
   </section>
 
+  <!-- ============ COURSE HOME (Quest 과정 선택) ============ -->
+  <section id="courseHome" class="card hide">
+    <div class="topbar">
+      <button class="iconbtn" id="courseBack" title="뒤로">←</button>
+      <div class="qtag" style="margin:0">🎮 Quest</div>
+    </div>
+    <div class="hero" style="margin-top:6px">
+      <h1>과정 선택</h1>
+      <p>학습할 과정을 선택하세요.</p>
+    </div>
+    <div class="courselist" id="courses"></div>
+  </section>
+
   <!-- ============ MODE HOME (Quest 상위 메뉴) ============ -->
   <section id="modeHome" class="card hide">
     <div class="topbar">
@@ -339,7 +375,7 @@
       <div class="qtag" style="margin:0">🎮 Quest</div>
     </div>
     <div class="hero" style="margin-top:6px">
-      <h1>퀘스트</h1>
+      <h1 id="modeCourseTitle">퀘스트</h1>
       <p>문법 · 어휘 · 듣기 · 말하기를 게임처럼 학습해요.</p>
     </div>
     <div class="cats" id="modes"></div>
@@ -1005,9 +1041,47 @@ const Confetti = (function(){
 })();
 
 /* =========================================================
+   과정 선택 (Quest 과정 리스트)
+   ========================================================= */
+const COURSES = [
+  { id:"richard-speak1", name:"리차드의 첫걸음 영어 스피킹 1탄",   teacher:"리차드", tag:"스피킹 · 왕초보", icon:"🗣️", c1:"#4f46e5", c2:"#4338ca" },
+  { id:"jenny-speak2",   name:"제니의 첫걸음 영어 스피킹 2탄",     teacher:"제니",   tag:"스피킹 · 초급",   icon:"💬", c1:"#0ea5e9", c2:"#0369a1" },
+  { id:"elva-free100",   name:"엘바의 100일만의 프리토킹",         teacher:"엘바",   tag:"프리토킹 · 중급", icon:"🎙️", c1:"#7c3aed", c2:"#6d28d9" },
+  { id:"richard-month",  name:"리차드의 한달살기",                 teacher:"리차드", tag:"여행·생활 영어",  icon:"🧳", c1:"#059669", c2:"#047857" },
+  { id:"richard-wh",     name:"리차드의 호주 워킹홀리데이 A to Z", teacher:"리차드", tag:"워킹홀리데이",    icon:"🇦🇺", c1:"#d97706", c2:"#b45309" },
+  { id:"erin-real1",     name:"에린의 잘들리는 리얼영어 1탄",      teacher:"에린",   tag:"리스닝 · 리얼영어", icon:"🎧", c1:"#e11d48", c2:"#be123c" },
+];
+let curCourse = COURSES[0];
+function renderCourseHome(){
+  const wrap = $("courses");
+  if(!wrap.childElementCount){
+    COURSES.forEach(c=>{
+      const el = document.createElement("button");
+      el.className = "course"; el.type = "button"; el.dataset.course = c.id;
+      el.style.setProperty("--c1", c.c1); el.style.setProperty("--c2", c.c2);
+      el.innerHTML = `
+        <div class="cic">${c.icon}</div>
+        <div class="cbody">
+          <div class="cname">${c.name}</div>
+          <div class="cinfo">${c.teacher} 선생님 · ${c.tag}</div>
+        </div>
+        <div class="go">→</div>`;
+      wrap.appendChild(el);
+    });
+  }
+  show("courseHome");
+}
+$("courses").addEventListener("click",(e)=>{
+  const btn = e.target.closest(".course"); if(!btn) return; Sound.ensure();
+  curCourse = COURSES.find(c=>c.id===btn.dataset.course) || COURSES[0];
+  renderModeHome();
+});
+
+/* =========================================================
    상위 모드(트랙) 홈
    ========================================================= */
 function renderModeHome(){
+  $("modeCourseTitle").textContent = curCourse ? curCourse.name : "퀘스트";
   const wrap = $("modes"); wrap.innerHTML = "";
   Object.keys(BANK).forEach((tk)=>{
     const t = BANK[tk];
@@ -1077,7 +1151,7 @@ function flashLocked(node){
 }
 
 function show(which){
-  ["langHome","rootHome","modeHome","testHome","test","catHome","quiz","speak","trainer","result","testResult"].forEach(s=>$(s).classList.toggle("hide", s!==which));
+  ["langHome","rootHome","courseHome","modeHome","testHome","test","catHome","quiz","speak","trainer","result","testResult"].forEach(s=>$(s).classList.toggle("hide", s!==which));
 }
 
 /* =========================================================
@@ -1919,12 +1993,13 @@ $("langs").addEventListener("click",(e)=>{
 function renderRootHome(){ Sound.startBGM(); setBrand("🚀","English Quest"); show("rootHome"); }
 $("rootCats").addEventListener("click",(e)=>{
   const card=e.target.closest(".cat"); if(!card) return; Sound.ensure();
-  if(card.dataset.root==="quest") renderModeHome();
+  if(card.dataset.root==="quest") renderCourseHome();
   else if(card.dataset.root==="test") renderTestHome();
   else if(card.dataset.root==="trainer") renderTrainerHome();
 });
 $("rootBack").onclick = ()=>{ resetStreak(); renderLangHome(); };
-$("modeBack").onclick = ()=>{ resetStreak(); renderRootHome(); };
+$("courseBack").onclick = ()=>{ resetStreak(); renderRootHome(); };
+$("modeBack").onclick = ()=>{ resetStreak(); renderCourseHome(); };
 $("testBack").onclick = ()=>{ resetStreak(); renderRootHome(); };
 
 /* ---------- 테스트 영역 선택 ---------- */
