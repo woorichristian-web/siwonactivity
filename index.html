@@ -154,6 +154,11 @@
   }
   .frgoal b{font-size:15px}
 
+  /* ===== 쉐도잉 드릴 문장 단어 색칠 ===== */
+  #shSen .w{font-size:inherit;font-weight:inherit}
+  #shSen .w.ok{color:#16a34a}
+  #shSen .w.miss{color:#ef4444;text-decoration:underline;text-decoration-style:dotted}
+
   /* ===== 어휘 스피드 퀴즈 ===== */
   .vqword{text-align:center;margin:16px 0 4px}
   .vqword .w{font-size:30px;font-weight:800;letter-spacing:-.4px}
@@ -526,17 +531,17 @@
     <div class="exlist" id="frExs"></div>
   </section>
 
-  <!-- ============ VOCAB HOME (어휘 암기 · 강 선택) ============ -->
-  <section id="vocabHome" class="card hide">
+  <!-- ============ LESSON HOME (강 선택 · 공용) ============ -->
+  <section id="lessonHome" class="card hide">
     <div class="topbar">
-      <button class="iconbtn" id="vocabHomeBack" title="뒤로">←</button>
-      <div class="qtag" style="margin:0">🧠 어휘 암기</div>
+      <button class="iconbtn" id="lessonHomeBack" title="뒤로">←</button>
+      <div class="qtag" id="lhTag" style="margin:0">🧠 어휘 암기</div>
     </div>
     <div class="hero" style="margin-top:6px">
-      <h1>어휘 암기</h1>
-      <p>강을 골라 단어 10개를 익히고, 마지막에 퀴즈로 확인해요.</p>
+      <h1 id="lhTitle">어휘 암기</h1>
+      <p id="lhDesc">강을 골라 시작하세요.</p>
     </div>
-    <div class="courselist" id="vocabRows"></div>
+    <div class="courselist" id="lessonRows"></div>
   </section>
 
   <!-- ============ VOCAB QUIZ (5초 스피드 퀴즈) ============ -->
@@ -548,6 +553,28 @@
     </div>
     <div class="tagrow"><span class="qtag" id="vqTag" style="margin:0">📝 어휘 퀴즈</span></div>
     <div id="vqBody"></div>
+  </section>
+
+  <!-- ============ SENTENCE QUIZ (문장 완성하기) ============ -->
+  <section id="squiz" class="card hide">
+    <div class="topbar">
+      <button class="iconbtn" id="sqBack" title="그만두기">←</button>
+      <div class="progress"><i id="sqBar"></i></div>
+      <div class="qcount"><span id="sqCur">1</span>/<span id="sqTot">10</span></div>
+    </div>
+    <div class="tagrow"><span class="qtag" id="sqTag" style="margin:0">✍️ 문장 완성하기</span></div>
+    <div id="sqBody"></div>
+  </section>
+
+  <!-- ============ SHADOW DRILL (문장 쉐도잉) ============ -->
+  <section id="shadowPr" class="card hide">
+    <div class="topbar">
+      <button class="iconbtn" id="shadowPrBack" title="그만두기">←</button>
+      <div class="progress"><i id="shBar"></i></div>
+      <div class="qcount"><span id="shCur">1</span>/<span id="shTot">10</span></div>
+    </div>
+    <div class="tagrow"><span class="qtag" id="shTag" style="margin:0">🎤 문장 쉐도잉</span></div>
+    <div id="shBody"></div>
   </section>
 
   <!-- ============ TEST HOME (영역 선택) ============ -->
@@ -1256,16 +1283,16 @@ $("courses").addEventListener("click",(e)=>{
    ========================================================= */
 const COURSE_ACTIVITIES = {
   "richard-speak1": [
-    { key:"sent",   name:"문장 완성하기", icon:"✍️", desc:"빈칸에 알맞은 말을 골라 문장을 완성해요",
-      c1:"#4f46e5", c2:"#4338ca", go:()=> renderTrackHome("grammar", {icon:"✍️", name:"문장 완성하기", desc:"빈칸에 알맞은 말 고르기 — 징검다리 10단계"}) },
     { key:"frame",  name:"프레임 익히기", icon:"🧩", desc:"프레임 30개 — 예문 10개씩 듣고 따라 말하기",
       c1:"#0ea5e9", c2:"#0369a1", go:()=> renderFrameHome() },
-    { key:"memo",   name:"어휘 암기", icon:"🧠", desc:"강별 단어 10개 암기 + 5초 스피드 퀴즈",
-      c1:"#059669", c2:"#047857", go:()=> renderVocabHome() },
-    { key:"vquiz",  name:"어휘 퀴즈", icon:"📚", desc:"암기한 단어를 퀴즈로 확인해요",
-      c1:"#d97706", c2:"#b45309", go:()=> renderTrackHome("vocab", {icon:"📚", name:"어휘 퀴즈", desc:"암기한 단어 확인 — 징검다리 10단계"}) },
-    { key:"shadow", name:"문장 쉐도잉", icon:"🎤", desc:"원어민 문장을 따라 말하며 발음 평가",
-      c1:"#e11d48", c2:"#be123c", go:()=> renderTrackHome("speak", {icon:"🎤", name:"문장 쉐도잉", desc:"따라 말하며 발음 평가 — 징검다리 10단계"}) },
+    { key:"sent",   name:"문장 완성하기", icon:"✍️", desc:"강별 예문 10개 — 빈칸에 알맞은 말 고르기",
+      c1:"#4f46e5", c2:"#4338ca", go:()=> renderLessonHome("sent") },
+    { key:"shadow", name:"문장 쉐도잉", icon:"🎤", desc:"강별 예문 10개 — 따라 말하며 발음 비교",
+      c1:"#e11d48", c2:"#be123c", go:()=> renderLessonHome("shadow") },
+    { key:"memo",   name:"어휘 암기", icon:"🧠", desc:"강별 단어 10개 플래시카드 암기",
+      c1:"#059669", c2:"#047857", go:()=> renderLessonHome("memo") },
+    { key:"vquiz",  name:"어휘 퀴즈", icon:"📚", desc:"강별 단어 10개 — 5초 스피드 퀴즈",
+      c1:"#d97706", c2:"#b45309", go:()=> renderLessonHome("quiz") },
   ],
 };
 
@@ -1507,29 +1534,43 @@ function frEval(i, alts){
    ========================================================= */
 const VOCAB_BANK = [{"no":1,"frame":"I'm a ~ person","words":[{"en":"dog","kr":"강아지","exEn":"I'm a dog person.","exKr":"나는 강아지를 더 좋아해."},{"en":"beer","kr":"맥주","exEn":"I'm a beer person.","exKr":"나는 맥주를 더 좋아해."},{"en":"city","kr":"도시","exEn":"I'm a city person.","exKr":"나는 도시에서 사는 게 좋아."},{"en":"beach","kr":"바닷가, 해변","exEn":"I'm a beach person.","exKr":"나는 (산보다) 바다가 좋아."},{"en":"people","kr":"사람들 (만나는 것)","exEn":"I'm a people person.","exKr":"나는 사람 만나는 걸 좋아하는 편이야."},{"en":"indoor","kr":"실내 (집에 있는 것)","exEn":"I'm an indoor person.","exKr":"나는 집순이/집돌이야."},{"en":"morning","kr":"아침 (아침형)","exEn":"I'm a morning person.","exKr":"나는 아침형 인간이야."},{"en":"numbers","kr":"숫자","exEn":"I'm a numbers person.","exKr":"나는 숫자에 강한 편이야."},{"en":"outdoor","kr":"야외 (밖에 나가는 것)","exEn":"I'm an outdoor person.","exKr":"나는 밖에 나가는 걸 좋아하는 편이야."},{"en":"big-picture","kr":"큰 그림 (전체를 보는)","exEn":"I'm a big-picture person.","exKr":"나는 큰 그림을 보는 타입이야."}]},{"no":2,"frame":"I work as a ~","words":[{"en":"chef","kr":"요리사, 셰프","exEn":"I work as a chef.","exKr":"나는 셰프로 일해."},{"en":"nurse","kr":"간호사","exEn":"I work as a nurse.","exKr":"나는 간호사로 일해."},{"en":"dancer","kr":"댄서, 무용수","exEn":"I work as a dancer.","exKr":"나는 댄서로 일해."},{"en":"intern","kr":"인턴","exEn":"I work as an intern.","exKr":"나는 인턴으로 일해."},{"en":"engineer","kr":"엔지니어, 기술자","exEn":"I work as an engineer.","exKr":"나는 엔지니어로 일해."},{"en":"translator","kr":"번역가","exEn":"I work as a translator.","exKr":"나는 번역가로 일해."},{"en":"team leader","kr":"팀장","exEn":"I work as a team leader.","exKr":"나는 팀장으로 일해."},{"en":"photographer","kr":"사진작가","exEn":"I work as a photographer.","exKr":"나는 사진작가로 일해."},{"en":"content creator","kr":"콘텐츠 크리에이터","exEn":"I work as a content creator.","exKr":"나는 콘텐츠 크리에이터로 일해."},{"en":"personal trainer","kr":"퍼스널 트레이너 (PT 강사)","exEn":"I work as a personal trainer.","exKr":"나는 개인 트레이너로 일해."}]},{"no":3,"frame":"I live in ~","words":[{"en":"Jeju","kr":"제주","exEn":"I live in Jeju.","exKr":"나는 제주에 살아."},{"en":"Korea","kr":"한국","exEn":"I live in Korea.","exKr":"나는 한국에 살아."},{"en":"Seoul","kr":"서울","exEn":"I live in Seoul.","exKr":"나는 서울에 살아."},{"en":"a house","kr":"주택 (단독 집)","exEn":"I live in a house.","exKr":"나는 주택에 살아."},{"en":"my hometown","kr":"내 고향","exEn":"I live in my hometown.","exKr":"나는 고향에 살아."},{"en":"the suburbs","kr":"교외 (도시 근교)","exEn":"I live in the suburbs.","exKr":"나는 외곽 지역에 살아."},{"en":"a small town","kr":"작은 동네, 소도시","exEn":"I live in a small town.","exKr":"나는 작은 도시에 살아."},{"en":"an apartment","kr":"아파트","exEn":"I live in an apartment.","exKr":"나는 아파트에 살아."},{"en":"the countryside","kr":"시골","exEn":"I live in the countryside.","exKr":"나는 시골에 살아."},{"en":"a quiet neighborhood","kr":"조용한 동네","exEn":"I live in a quiet neighborhood.","exKr":"나는 조용한 동네에 살아."}]},{"no":4,"frame":"I have ~","words":[{"en":"a car","kr":"자동차 (한 대)","exEn":"I have a car.","exKr":"나는 차가 있어."},{"en":"a puppy","kr":"강아지 (한 마리)","exEn":"I have a puppy.","exKr":"나 강아지 키워."},{"en":"a laptop","kr":"노트북 (한 대)","exEn":"I have a laptop.","exKr":"나는 노트북이 있어."},{"en":"some savings","kr":"약간의 저축, 모아둔 돈","exEn":"I have some savings.","exKr":"모아둔 돈이 좀 있어."},{"en":"a sweet tooth","kr":"단것을 좋아하는 입맛","exEn":"I have a sweet tooth.","exKr":"나 단 거 엄청 좋아해."},{"en":"plans tonight","kr":"오늘 밤 약속(계획)","exEn":"I have plans tonight.","exKr":"나 오늘 저녁에 약속 있어."},{"en":"too much work","kr":"너무 많은 일","exEn":"I have too much work.","exKr":"나 일이 너무 많아."},{"en":"an appointment","kr":"(병원 등) 예약, 약속","exEn":"I have an appointment.","exKr":"나 예약 있어."},{"en":"nothing to wear","kr":"입을 옷이 없음","exEn":"I have nothing to wear.","exKr":"입을 옷이 없어."},{"en":"a driver's license","kr":"운전면허증","exEn":"I have a driver's license.","exKr":"나는 운전면허가 있어."}]},{"no":5,"frame":"I can ~","words":[{"en":"cook","kr":"요리하다","exEn":"I can cook.","exKr":"나는 요리할 수 있어."},{"en":"swim","kr":"수영하다","exEn":"I can swim.","exKr":"나는 수영할 수 있어."},{"en":"dance","kr":"춤추다","exEn":"I can dance.","exKr":"나는 춤출 수 있어."},{"en":"use AI","kr":"AI를 사용하다","exEn":"I can use AI.","exKr":"나는 AI를 쓸 수 있어."},{"en":"type fast","kr":"타자를 빨리 치다","exEn":"I can type fast.","exKr":"나는 타자를 빨리 칠 수 있어."},{"en":"drink a lot","kr":"술을 많이 마시다 (술이 세다)","exEn":"I can drink a lot.","exKr":"나 술 잘 마셔."},{"en":"speak English","kr":"영어를 말하다","exEn":"I can speak English.","exKr":"나는 영어를 할 수 있어."},{"en":"wake up early","kr":"일찍 일어나다","exEn":"I can wake up early.","exKr":"나는 일찍 일어날 수 있어."},{"en":"eat spicy food","kr":"매운 음식을 먹다","exEn":"I can eat spicy food.","exKr":"나 매운 거 먹을 수 있어."},{"en":"play the piano","kr":"피아노를 치다","exEn":"I can play the piano.","exKr":"나는 피아노를 칠 수 있어."}]},{"no":6,"frame":"I'm ~ (상태)","words":[{"en":"busy","kr":"바쁜","exEn":"I'm busy.","exKr":"나는 바빠."},{"en":"free","kr":"한가한","exEn":"I'm free.","exKr":"나 시간 있어."},{"en":"bored","kr":"지루한","exEn":"I'm bored.","exKr":"나 심심해."},{"en":"broke","kr":"돈이 다 떨어진, 빈털터리인","exEn":"I'm broke.","exKr":"나 돈 없어."},{"en":"annoyed","kr":"짜증 난","exEn":"I'm annoyed.","exKr":"나 짜증나."},{"en":"excited","kr":"신난, 기대되는","exEn":"I'm excited.","exKr":"나는 신나."},{"en":"nervous","kr":"긴장한","exEn":"I'm nervous.","exKr":"나는 긴장돼."},{"en":"off today","kr":"오늘 쉬는 (휴무인)","exEn":"I'm off today.","exKr":"나는 오늘 쉬는 날이야."},{"en":"burned out","kr":"번아웃된, 완전히 지친","exEn":"I'm burned out.","exKr":"나 번아웃이야."},{"en":"stressed (out)","kr":"스트레스 받은","exEn":"I'm stressed (out).","exKr":"나 스트레스 완전 받았어."}]},{"no":7,"frame":"I'm ~ing","words":[{"en":"eating","kr":"먹는 중","exEn":"I'm eating.","exKr":"나 지금 밥 먹는 중이야."},{"en":"driving","kr":"운전하는 중","exEn":"I'm driving.","exKr":"나 지금 운전 중이야."},{"en":"working","kr":"일하는 중","exEn":"I'm working.","exKr":"나 지금 일하는 중이야."},{"en":"cleaning","kr":"청소하는 중","exEn":"I'm cleaning.","exKr":"나 지금 청소 중이야."},{"en":"working out","kr":"운동하는 중","exEn":"I'm working out.","exKr":"나 지금 운동 중이야."},{"en":"getting ready","kr":"준비하는 중","exEn":"I'm getting ready.","exKr":"나 지금 나갈 준비하는 중이야."},{"en":"taking a break","kr":"잠깐 쉬는 중","exEn":"I'm taking a break.","exKr":"나 지금 잠깐 쉬는 중이야."},{"en":"answering emails","kr":"이메일 답장하는 중","exEn":"I'm answering emails.","exKr":"나 지금 이메일 답장하는 중이야."},{"en":"getting off work","kr":"퇴근하는 중","exEn":"I'm getting off work.","exKr":"나 지금 퇴근하는 중이야."},{"en":"waiting for my friend","kr":"친구를 기다리는 중","exEn":"I'm waiting for my friend.","exKr":"나 지금 친구 기다리는 중이야."}]},{"no":8,"frame":"I want ~","words":[{"en":"a nap","kr":"낮잠","exEn":"I want a nap.","exKr":"나 낮잠 자고 싶어."},{"en":"a break","kr":"휴식","exEn":"I want a break.","exKr":"나 좀 쉬고 싶어."},{"en":"a day off","kr":"하루 휴가 (쉬는 날)","exEn":"I want a day off.","exKr":"나 하루 쉬고 싶어."},{"en":"a new job","kr":"새 직장","exEn":"I want a new job.","exKr":"나 새 직장 구하고 싶어."},{"en":"a vacation","kr":"휴가","exEn":"I want a vacation.","exKr":"나 휴가 가고 싶어."},{"en":"more money","kr":"더 많은 돈","exEn":"I want more money.","exKr":"나 돈 좀 더 있으면 좋겠어."},{"en":"more sleep","kr":"더 많은 잠","exEn":"I want more sleep.","exKr":"나 좀 더 자고 싶어."},{"en":"some water","kr":"물 (조금)","exEn":"I want some water.","exKr":"나 물 좀 마시고 싶어."},{"en":"some coffee","kr":"커피 (조금)","exEn":"I want some coffee.","exKr":"나 커피 좀 마시고 싶어."},{"en":"some time alone","kr":"혼자만의 시간","exEn":"I want some time alone.","exKr":"나 좀 혼자 있고 싶어."}]},{"no":9,"frame":"I usually ~","words":[{"en":"wake up early","kr":"일찍 일어나다","exEn":"I usually wake up early.","exKr":"나는 보통 일찍 일어나."},{"en":"exercise in the morning","kr":"아침에 운동하다","exEn":"I usually exercise in the morning.","exKr":"나는 보통 아침에 운동해."},{"en":"skip breakfast","kr":"아침을 거르다","exEn":"I usually skip breakfast.","exKr":"나는 보통 아침 안 먹어."},{"en":"go to work at 8","kr":"8시에 출근하다","exEn":"I usually go to work at 8.","exKr":"나는 보통 8시에 출근해."},{"en":"take the subway to work","kr":"지하철로 출근하다","exEn":"I usually take the subway to work.","exKr":"나는 보통 지하철 타고 출근해."},{"en":"work from home","kr":"재택근무하다","exEn":"I usually work from home.","exKr":"나는 보통 재택근무해."},{"en":"check my email","kr":"이메일을 확인하다","exEn":"I usually check my email.","exKr":"나는 보통 이메일을 확인해."},{"en":"cook dinner","kr":"저녁을 요리하다","exEn":"I usually cook dinner.","exKr":"나는 보통 저녁을 만들어."},{"en":"stretch before bed","kr":"자기 전에 스트레칭하다","exEn":"I usually stretch before bed.","exKr":"나는 보통 자기 전에 스트레칭해."},{"en":"go to bed early","kr":"일찍 자다","exEn":"I usually go to bed early.","exKr":"나는 보통 일찍 자."}]},{"no":10,"frame":"I never ~","words":[{"en":"cry","kr":"울다","exEn":"I never cry (in public).","exKr":"나는 절대 (사람들 앞에서) 안 울어."},{"en":"lie","kr":"거짓말하다","exEn":"I never lie.","exKr":"나는 절대 거짓말 안 해."},{"en":"drink","kr":"술을 마시다","exEn":"I never drink.","exKr":"나는 술을 절대 안 마셔."},{"en":"complain","kr":"불평하다","exEn":"I never complain.","exKr":"나는 절대 불평 안 해."},{"en":"eat alone","kr":"혼자 먹다, 혼밥하다","exEn":"I never eat alone.","exKr":"나 혼밥 절대 안 해."},{"en":"lend money","kr":"돈을 빌려주다","exEn":"I never lend money.","exKr":"나는 돈은 절대 안 빌려줘."},{"en":"borrow money","kr":"돈을 빌리다","exEn":"I never borrow money.","exKr":"나는 절대 돈을 안 빌려."},{"en":"stay up late","kr":"늦게까지 안 자다","exEn":"I never stay up late.","exKr":"나는 절대 늦게까지 안 깨어 있어."},{"en":"drive fast","kr":"(차를) 빨리 몰다","exEn":"I never drive fast.","exKr":"나는 절대 빨리 운전하지 않아."},{"en":"take selfies","kr":"셀카를 찍다","exEn":"I never take selfies.","exKr":"나는 셀카는 절대 안 찍어."}]},{"no":11,"frame":"I ~ (과거동사)","words":[{"en":"called my mom","kr":"엄마에게 전화했다","exEn":"I called my mom.","exKr":"나는 엄마한테 전화했어."},{"en":"cooked dinner","kr":"저녁을 요리했다","exEn":"I cooked dinner.","exKr":"나는 저녁을 만들었어."},{"en":"cleaned my room","kr":"방을 청소했다","exEn":"I cleaned my room.","exKr":"나는 방을 청소했어."},{"en":"watched a movie","kr":"영화를 봤다","exEn":"I watched a movie.","exKr":"나는 영화를 봤어."},{"en":"finished my work","kr":"일을 끝냈다","exEn":"I finished my work.","exKr":"나는 일을 끝냈어."},{"en":"got a haircut","kr":"머리를 잘랐다","exEn":"I got a haircut.","exKr":"나는 머리를 잘랐어."},{"en":"met a friend","kr":"친구를 만났다","exEn":"I met a friend.","exKr":"나는 친구를 만났어."},{"en":"did my laundry","kr":"빨래를 했다","exEn":"I did my laundry.","exKr":"나는 빨래했어."},{"en":"went on a trip","kr":"여행을 갔다","exEn":"I went on a trip.","exKr":"나는 여행 갔어."},{"en":"bought new shoes","kr":"새 신발을 샀다","exEn":"I bought new shoes.","exKr":"나는 새 신발을 샀어."}]},{"no":12,"frame":"I was ~","words":[{"en":"wrong","kr":"틀린, 잘못 안","exEn":"I was wrong.","exKr":"내가 틀렸어."},{"en":"on vacation","kr":"휴가 중인","exEn":"I was on vacation.","exKr":"나는 휴가 중이었어."},{"en":"tired all day","kr":"하루 종일 피곤한","exEn":"I was tired all day.","exKr":"나는 하루 종일 피곤했어."},{"en":"sick last week","kr":"지난주에 아팠던","exEn":"I was sick last week.","exKr":"나 지난주에 아팠어."},{"en":"stuck in traffic","kr":"차가 막혀 갇힌","exEn":"I was stuck in traffic.","exKr":"나는 차가 막혀서 못 움직였어."},{"en":"hungry after work","kr":"퇴근 후 배고픈","exEn":"I was hungry after work.","exKr":"나는 퇴근 후에 배고팠어."},{"en":"late this morning","kr":"오늘 아침에 늦은","exEn":"I was late this morning.","exKr":"나는 오늘 아침에 늦었어."},{"en":"surprised to see you","kr":"너를 봐서 놀란","exEn":"I was surprised to see you.","exKr":"나 너 보고 깜짝 놀랐어."},{"en":"in high school back then","kr":"그때 고등학생이던","exEn":"I was in high school back then.","exKr":"나는 그때 고등학생이었어."},{"en":"nervous before the presentation","kr":"발표 전에 긴장한","exEn":"I was nervous before the presentation.","exKr":"나는 발표 전에 긴장했었어."}]},{"no":13,"frame":"I used to ~","words":[{"en":"be shy","kr":"수줍음이 많다","exEn":"I used to be shy.","exKr":"나는 예전엔 내성적이었어."},{"en":"study French","kr":"프랑스어를 공부하다","exEn":"I used to study French.","exKr":"나는 예전엔 프랑스어를 공부했어."},{"en":"bite my nails","kr":"손톱을 물어뜯다","exEn":"I used to bite my nails.","exKr":"나는 예전엔 손톱을 물어뜯었어."},{"en":"live in Busan","kr":"부산에 살다","exEn":"I used to live in Busan.","exKr":"나는 예전엔 부산에 살았어."},{"en":"be a night owl","kr":"올빼미형(밤형) 인간이다","exEn":"I used to be a night owl.","exKr":"나 예전엔 완전 올빼미형이었어."},{"en":"have long hair","kr":"머리가 길다","exEn":"I used to have long hair.","exKr":"나는 예전엔 머리가 길었어."},{"en":"work at a bank","kr":"은행에서 일하다","exEn":"I used to work at a bank.","exKr":"나는 예전엔 은행에서 일했어."},{"en":"hate vegetables","kr":"채소를 싫어하다","exEn":"I used to hate vegetables.","exKr":"나는 예전엔 채소를 싫어했어."},{"en":"be afraid of dogs","kr":"개를 무서워하다","exEn":"I used to be afraid of dogs.","exKr":"나는 예전엔 개를 무서워했어."},{"en":"go there all the time","kr":"거기에 늘 가다","exEn":"I used to go there all the time.","exKr":"나 예전엔 거기 진짜 자주 갔어."}]},{"no":14,"frame":"I've been to ~","words":[{"en":"Jeju","kr":"제주","exEn":"I've been to Jeju.","exKr":"나는 제주에 가본 적 있어."},{"en":"Busan","kr":"부산","exEn":"I've been to Busan.","exKr":"나는 부산에 가본 적 있어."},{"en":"China","kr":"중국","exEn":"I've been to China.","exKr":"나는 중국에 가본 적 있어."},{"en":"Paris","kr":"파리","exEn":"I've been to Paris.","exKr":"나는 파리에 가본 적 있어."},{"en":"a concert","kr":"콘서트","exEn":"I've been to a concert.","exKr":"나는 콘서트에 가본 적 있어."},{"en":"the beach","kr":"바닷가","exEn":"I've been to the beach.","exKr":"나는 바다에 가본 적 있어."},{"en":"the hospital","kr":"병원","exEn":"I've been to the hospital.","exKr":"나 그 병원에 가봤어."},{"en":"an exhibition","kr":"전시회","exEn":"I've been to an exhibition.","exKr":"나는 전시회에 가본 적 있어."},{"en":"that new café","kr":"그 새로 생긴 카페","exEn":"I've been to that new café.","exKr":"나는 그 새 카페에 가본 적 있어."},{"en":"a baseball stadium","kr":"야구장","exEn":"I've been to a baseball stadium.","exKr":"나 야구장 가봤어."}]},{"no":15,"frame":"I just started ~ing","words":[{"en":"dieting","kr":"다이어트 (하는 중)","exEn":"I just started dieting.","exKr":"나 얼마 전에 다이어트 시작했어."},{"en":"doing yoga","kr":"요가 하기","exEn":"I just started doing yoga.","exKr":"나 얼마 전에 요가 시작했어."},{"en":"meditating","kr":"명상하기","exEn":"I just started meditating.","exKr":"나 얼마 전에 명상 시작했어."},{"en":"cooking","kr":"요리 (하기)","exEn":"I just started cooking.","exKr":"나 얼마 전에 요리 시작했어."},{"en":"eating healthier","kr":"더 건강하게 먹기","exEn":"I just started eating healthier.","exKr":"나 얼마 전에 건강하게 먹기 시작했어."},{"en":"saving money","kr":"돈 모으기","exEn":"I just started saving money.","exKr":"나 얼마 전에 저축 시작했어."},{"en":"learning Spanish","kr":"스페인어 배우기","exEn":"I just started learning Spanish.","exKr":"나 얼마 전에 스페인어 시작했어."},{"en":"watching this show","kr":"이 프로그램 보기","exEn":"I just started watching this show.","exKr":"나 얼마 전에 이 드라마 보기 시작했어."},{"en":"dating someone","kr":"연애하기 (만나는 중)","exEn":"I just started dating someone.","exKr":"나 얼마 전에 누구 만나기 시작했어."},{"en":"looking for a new job","kr":"새 일자리 구하기","exEn":"I just started looking for a new job.","exKr":"나 얼마 전에 새 직장 알아보기 시작했어."}]},{"no":16,"frame":"I'm into ~","words":[{"en":"baking","kr":"베이킹","exEn":"I'm into baking.","exKr":"나 베이킹에 빠졌어."},{"en":"gaming","kr":"게임","exEn":"I'm into gaming.","exKr":"나 게임에 빠졌어."},{"en":"hiking","kr":"등산","exEn":"I'm into hiking.","exKr":"나 등산에 빠졌어."},{"en":"camping","kr":"캠핑","exEn":"I'm into camping.","exKr":"나 캠핑에 빠졌어."},{"en":"fashion","kr":"패션","exEn":"I'm into fashion.","exKr":"나 패션에 빠졌어."},{"en":"running","kr":"달리기","exEn":"I'm into running.","exKr":"나 러닝에 빠졌어."},{"en":"gardening","kr":"정원 가꾸기","exEn":"I'm into gardening.","exKr":"나 식물 키우기에 빠졌어."},{"en":"traveling","kr":"여행","exEn":"I'm into traveling.","exKr":"나 여행에 빠졌어."},{"en":"photography","kr":"사진 (찍기)","exEn":"I'm into photography.","exKr":"나 사진에 빠졌어."},{"en":"weight training","kr":"웨이트 트레이닝, 근력 운동","exEn":"I'm into weight training.","exKr":"나 요즘 웨이트에 빠졌어."}]},{"no":17,"frame":"My go-to ~ is ~","words":[{"en":"food → salad","kr":"음식 → 샐러드","exEn":"My go-to food is salad.","exKr":"내가 늘 먹는 음식은 샐러드야."},{"en":"color → black","kr":"색 → 검정","exEn":"My go-to color is black.","exKr":"내가 늘 고르는 색은 검정이야."},{"en":"outfit → jeans","kr":"옷차림 → 청바지","exEn":"My go-to outfit is jeans.","exKr":"나 옷은 무조건 청바지야."},{"en":"snack → popcorn","kr":"간식 → 팝콘","exEn":"My go-to snack is popcorn.","exKr":"내가 늘 먹는 간식은 팝콘이야."},{"en":"place → the park","kr":"장소 → 공원","exEn":"My go-to place is the park.","exKr":"내가 늘 가는 곳은 그 공원이야."},{"en":"shoes → sneakers","kr":"신발 → 운동화","exEn":"My go-to shoes are sneakers.","exKr":"내가 늘 신는 신발은 운동화야."},{"en":"dessert → ice cream","kr":"디저트 → 아이스크림","exEn":"My go-to dessert is ice cream.","exKr":"디저트는 무조건 아이스크림이야."},{"en":"order → an iced latte","kr":"주문 메뉴 → 아이스 라떼","exEn":"My go-to order is an iced latte.","exKr":"내가 늘 시키는 메뉴는 아이스 라떼야."},{"en":"breakfast → a sandwich","kr":"아침 → 샌드위치","exEn":"My go-to breakfast is a sandwich.","exKr":"내가 늘 먹는 아침은 샌드위치야."},{"en":"coffee → an iced Americano","kr":"커피 → 아이스 아메리카노","exEn":"My go-to coffee is an iced Americano.","exKr":"내가 늘 마시는 커피는 아이스 아메리카노야."}]},{"no":18,"frame":"I can't live without ~","words":[{"en":"music","kr":"음악","exEn":"I can't live without music.","exKr":"나는 음악 없이는 못 살아."},{"en":"my car","kr":"내 차","exEn":"I can't live without my car.","exKr":"나는 차 없이는 못 살아."},{"en":"my dog","kr":"내 강아지","exEn":"I can't live without my dog.","exKr":"나는 우리 강아지 없이는 못 살아."},{"en":"alone time","kr":"혼자만의 시간","exEn":"I can't live without alone time.","exKr":"나 혼자 있는 시간 없이는 못 살아."},{"en":"my charger","kr":"내 충전기","exEn":"I can't live without my charger.","exKr":"나 충전기 없으면 못 살아."},{"en":"my glasses","kr":"내 안경","exEn":"I can't live without my glasses.","exKr":"나는 안경 없이는 못 살아."},{"en":"my earphones","kr":"내 이어폰","exEn":"I can't live without my earphones.","exKr":"나는 이어폰 없이는 못 살아."},{"en":"the internet","kr":"인터넷","exEn":"I can't live without the internet.","exKr":"나는 인터넷 없이는 못 살아."},{"en":"my Sunday reset","kr":"일요일 재충전 루틴","exEn":"I can't live without my Sunday reset.","exKr":"나 일요일에 재충전하는 시간 없으면 못 살아."},{"en":"air conditioning","kr":"에어컨","exEn":"I can't live without air conditioning.","exKr":"나는 에어컨 없이는 못 살아."}]},{"no":19,"frame":"I don't like ~","words":[{"en":"rain","kr":"비","exEn":"I don't like rain.","exKr":"나는 비를 안 좋아해."},{"en":"crowds","kr":"인파, 사람 많은 곳","exEn":"I don't like crowds.","exKr":"나는 사람 많은 곳을 안 좋아해."},{"en":"winter","kr":"겨울","exEn":"I don't like winter.","exKr":"나는 겨울을 안 좋아해."},{"en":"waiting","kr":"기다리는 것","exEn":"I don't like waiting.","exKr":"나는 기다리는 걸 안 좋아해."},{"en":"mornings","kr":"아침 (시간대)","exEn":"I don't like mornings.","exKr":"나는 아침을 안 좋아해."},{"en":"loud music","kr":"시끄러운 음악","exEn":"I don't like loud music.","exKr":"나는 시끄러운 음악을 안 좋아해."},{"en":"small talk","kr":"스몰토크, 가벼운 잡담","exEn":"I don't like small talk.","exKr":"나는 스몰토크를 안 좋아해."},{"en":"spicy food","kr":"매운 음식","exEn":"I don't like spicy food.","exKr":"나는 매운 음식을 안 좋아해."},{"en":"phone calls","kr":"전화 통화","exEn":"I don't like phone calls.","exKr":"나는 전화 통화를 안 좋아해."},{"en":"working overtime","kr":"야근","exEn":"I don't like working overtime.","exKr":"나는 야근하는 걸 안 좋아해."}]},{"no":20,"frame":"I don't care about ~","words":[{"en":"looks","kr":"외모","exEn":"I don't care about looks.","exKr":"나는 겉모습에 신경 안 써."},{"en":"money","kr":"돈","exEn":"I don't care about money.","exKr":"난 돈에 연연하지 않아."},{"en":"brands","kr":"브랜드","exEn":"I don't care about brands.","exKr":"나는 브랜드에 신경 안 써."},{"en":"my age","kr":"내 나이","exEn":"I don't care about my age.","exKr":"나는 내 나이에 신경 안 써."},{"en":"rumors","kr":"소문","exEn":"I don't care about rumors.","exKr":"나는 소문에 신경 안 써."},{"en":"trends","kr":"유행, 트렌드","exEn":"I don't care about trends.","exKr":"나는 유행에 신경 안 써."},{"en":"fashion","kr":"패션","exEn":"I don't care about fashion.","exKr":"나는 패션에 신경 안 써."},{"en":"the details","kr":"세부 사항","exEn":"I don't care about the details.","exKr":"난 세부적인 건 신경 안 써."},{"en":"the weather","kr":"날씨","exEn":"I don't care about the weather.","exKr":"난 날씨는 상관없어."},{"en":"what people think","kr":"남들이 어떻게 생각하는지","exEn":"I don't care (about) what people think.","exKr":"나는 남들이 어떻게 생각하는지 신경 안 써."}]},{"no":21,"frame":"I'm good at ~","words":[{"en":"driving","kr":"운전","exEn":"I'm good at driving.","exKr":"나는 운전을 잘해."},{"en":"parking","kr":"주차","exEn":"I'm good at parking.","exKr":"나 주차 잘해."},{"en":"writing","kr":"글쓰기","exEn":"I'm good at writing.","exKr":"나는 글을 잘 써."},{"en":"cleaning","kr":"청소","exEn":"I'm good at cleaning.","exKr":"나는 청소를 잘해."},{"en":"listening","kr":"(남의 말) 잘 들어주기","exEn":"I'm good at listening.","exKr":"나는 잘 들어줘."},{"en":"making friends","kr":"친구 사귀기","exEn":"I'm good at making friends.","exKr":"나는 친구를 잘 사귀어."},{"en":"taking pictures","kr":"사진 찍기","exEn":"I'm good at taking pictures.","exKr":"나 사진 잘 찍어."},{"en":"solving problems","kr":"문제 해결하기","exEn":"I'm good at solving problems.","exKr":"나는 문제 해결을 잘해."},{"en":"explaining things","kr":"설명하기","exEn":"I'm good at explaining things.","exKr":"나는 설명을 잘해."},{"en":"finding good restaurants","kr":"맛집 찾기","exEn":"I'm good at finding good restaurants.","exKr":"나 맛집 잘 찾아."}]},{"no":22,"frame":"I know how to ~","words":[{"en":"say no","kr":"거절하다 (No라고 말하다)","exEn":"I know how to say no.","exKr":"나는 거절하는 법을 알아."},{"en":"get there","kr":"거기까지 가다 (길 찾기)","exEn":"I know how to get there.","exKr":"나 거기 가는 길 알아."},{"en":"pack light","kr":"짐을 가볍게 싸다","exEn":"I know how to pack light.","exKr":"나는 짐 가볍게 싸는 법을 알아."},{"en":"save money","kr":"돈을 아끼다","exEn":"I know how to save money.","exKr":"나는 돈 모으는 법을 알아."},{"en":"do my taxes","kr":"세금 신고를 하다","exEn":"I know how to do my taxes.","exKr":"나는 세금 신고하는 법을 알아."},{"en":"get a good deal","kr":"싸게 잘 사다","exEn":"I know how to get a good deal.","exKr":"나 싸게 잘 사는 법 알아."},{"en":"lose weight fast","kr":"살을 빨리 빼다","exEn":"I know how to lose weight fast.","exKr":"나 빨리 살 빼는 법 알아."},{"en":"use this machine","kr":"이 기계를 사용하다","exEn":"I know how to use this machine.","exKr":"나 이 기계 쓰는 법 알아."},{"en":"look good in pictures","kr":"사진이 잘 나오게 찍히다","exEn":"I know how to look good in pictures.","exKr":"나는 사진 잘 나오는 법을 알아."},{"en":"deal with difficult people","kr":"까다로운 사람을 상대하다","exEn":"I know how to deal with difficult people.","exKr":"나는 까다로운 사람 대하는 법을 알아."}]},{"no":23,"frame":"I'm working on ~","words":[{"en":"a report","kr":"보고서","exEn":"I'm working on a report.","exKr":"나 보고서 작성 중이야."},{"en":"a project","kr":"프로젝트","exEn":"I'm working on a project.","exKr":"나 프로젝트 작업 중이야."},{"en":"my resume","kr":"이력서","exEn":"I'm working on my resume.","exKr":"나 이력서 작성 중이야."},{"en":"a new idea","kr":"새 아이디어","exEn":"I'm working on a new idea.","exKr":"나 새로운 아이디어를 구상하고 있어."},{"en":"a new plan","kr":"새 계획","exEn":"I'm working on a new plan.","exKr":"나 새로운 계획을 세우고 있어."},{"en":"my schedule","kr":"일정, 스케줄","exEn":"I'm working on my schedule.","exKr":"나 일정 정리하고 있어."},{"en":"a new design","kr":"새 디자인","exEn":"I'm working on a new design.","exKr":"나 새로운 디자인 작업 중이야."},{"en":"getting in shape","kr":"몸 만들기","exEn":"I'm working on getting in shape.","exKr":"나 요즘 몸 만들고 있어."},{"en":"staying positive","kr":"긍정적으로 지내기","exEn":"I'm working on staying positive.","exKr":"나 긍정적으로 지내려고 노력 중이야."},{"en":"cutting down on coffee","kr":"커피 줄이기","exEn":"I'm working on cutting down on coffee.","exKr":"나 커피 줄이는 중이야."}]},{"no":24,"frame":"I'm learning to ~","words":[{"en":"cook","kr":"요리하다","exEn":"I'm learning to cook.","exKr":"나 요리 배우는 중이야."},{"en":"swim","kr":"수영하다","exEn":"I'm learning to swim.","exKr":"나는 수영을 배우고 있어."},{"en":"paint","kr":"그림을 그리다","exEn":"I'm learning to paint.","exKr":"나는 그림을 배우고 있어."},{"en":"invest","kr":"투자하다","exEn":"I'm learning to invest.","exKr":"나는 투자를 배우고 있어."},{"en":"play golf","kr":"골프를 치다","exEn":"I'm learning to play golf.","exKr":"나는 골프를 배우고 있어."},{"en":"edit videos","kr":"영상을 편집하다","exEn":"I'm learning to edit videos.","exKr":"나는 영상 편집을 배우고 있어."},{"en":"let things go","kr":"(마음에서) 내려놓다, 흘려보내다","exEn":"I'm learning to let things go.","exKr":"나 그냥 넘기는 법을 배우고 있어."},{"en":"speak Spanish","kr":"스페인어를 말하다","exEn":"I'm learning to speak Spanish.","exKr":"나는 스페인어를 배우고 있어."},{"en":"be more patient","kr":"더 인내심 있게 굴다","exEn":"I'm learning to be more patient.","exKr":"나 좀 더 참고 기다리는 법을 배우고 있어."},{"en":"speak up for myself","kr":"내 의견을 당당히 말하다","exEn":"I'm learning to speak up for myself.","exKr":"나 내 의견 당당하게 말하는 법을 배우고 있어."}]},{"no":25,"frame":"I'm thinking about ~ing","words":[{"en":"moving","kr":"이사하기","exEn":"I'm thinking about moving.","exKr":"나 이사할까 생각 중이야."},{"en":"buying a car","kr":"차 사기","exEn":"I'm thinking about buying a car.","exKr":"나 차 살까 생각 중이야."},{"en":"taking a break","kr":"잠깐 쉬기","exEn":"I'm thinking about taking a break.","exKr":"나 좀 쉴까 생각 중이야."},{"en":"cutting my hair","kr":"머리 자르기","exEn":"I'm thinking about cutting my hair.","exKr":"나 머리 자를까 생각 중이야."},{"en":"getting a puppy","kr":"강아지 들이기","exEn":"I'm thinking about getting a puppy.","exKr":"나 강아지 키울까 생각 중이야."},{"en":"quitting my job","kr":"퇴사하기","exEn":"I'm thinking about quitting my job.","exKr":"나 퇴사할까 생각 중이야."},{"en":"traveling alone","kr":"혼자 여행하기","exEn":"I'm thinking about traveling alone.","exKr":"나 혼자 여행 갈까 생각 중이야."},{"en":"learning Spanish","kr":"스페인어 배우기","exEn":"I'm thinking about learning Spanish.","exKr":"나 스페인어 배울까 생각 중이야."},{"en":"deleting social media","kr":"SNS 지우기","exEn":"I'm thinking about deleting social media.","exKr":"나 SNS 지울까 생각 중이야."},{"en":"signing up for the gym","kr":"헬스장 등록하기","exEn":"I'm thinking about signing up for the gym.","exKr":"나 헬스장 등록할까 생각 중이야."}]},{"no":26,"frame":"I can't wait to ~","words":[{"en":"sleep","kr":"자다","exEn":"I can't wait to sleep.","exKr":"빨리 자고 싶어."},{"en":"go home","kr":"집에 가다","exEn":"I can't wait to go home.","exKr":"빨리 집에 가고 싶어."},{"en":"catch up","kr":"밀린 이야기를 나누다","exEn":"I can't wait to catch up.","exKr":"빨리 만나서 얘기하고 싶어."},{"en":"get paid","kr":"월급을 받다","exEn":"I can't wait to get paid.","exKr":"빨리 월급 받고 싶어."},{"en":"finish work","kr":"일을 끝내다","exEn":"I can't wait to finish work.","exKr":"빨리 퇴근하고 싶어."},{"en":"see the movie","kr":"그 영화를 보다","exEn":"I can't wait to see the movie.","exKr":"빨리 그 영화 보고 싶어."},{"en":"go on vacation","kr":"휴가를 가다","exEn":"I can't wait to go on vacation.","exKr":"빨리 휴가 가고 싶어."},{"en":"hear the results","kr":"결과를 듣다","exEn":"I can't wait to hear the results.","exKr":"빨리 결과 듣고 싶어."},{"en":"hang out this weekend","kr":"이번 주말에 놀다","exEn":"I can't wait to hang out this weekend.","exKr":"빨리 주말에 놀고 싶어."},{"en":"watch the next episode","kr":"다음 화를 보다","exEn":"I can't wait to watch the next episode.","exKr":"빨리 다음 회 보고 싶어."}]},{"no":27,"frame":"I want to ~","words":[{"en":"move","kr":"이사하다","exEn":"I want to move.","exKr":"나는 이사하고 싶어."},{"en":"sleep in","kr":"늦잠 자다","exEn":"I want to sleep in.","exKr":"나는 늦잠 자고 싶어."},{"en":"buy a car","kr":"차를 사다","exEn":"I want to buy a car.","exKr":"나는 차를 사고 싶어."},{"en":"save money","kr":"돈을 모으다","exEn":"I want to save money.","exKr":"나는 돈을 모으고 싶어."},{"en":"travel abroad","kr":"해외여행을 하다","exEn":"I want to travel abroad.","exKr":"나 해외여행 가고 싶어."},{"en":"clear my head","kr":"머리를 식히다","exEn":"I want to clear my head.","exKr":"머리 좀 식히고 싶어."},{"en":"take a day off","kr":"하루 쉬다","exEn":"I want to take a day off.","exKr":"나는 하루 쉬고 싶어."},{"en":"stay out of this","kr":"이 일에 끼지 않다","exEn":"I want to stay out of this.","exKr":"난 이 일에서 빠지고 싶어."},{"en":"start a YouTube channel","kr":"유튜브 채널을 시작하다","exEn":"I want to start a YouTube channel.","exKr":"나는 유튜브 채널을 시작하고 싶어."},{"en":"take a rain check on that","kr":"그건 다음 기회로 미루다","exEn":"I want to take a rain check on that.","exKr":"그건 다음 기회로 미루고 싶어."}]},{"no":28,"frame":"My goal is to ~","words":[{"en":"open my own café","kr":"내 카페를 열다","exEn":"My goal is to open my own café.","exKr":"내 목표는 내 카페 여는 거야."},{"en":"become financially independent","kr":"경제적으로 자립하다","exEn":"My goal is to become financially independent.","exKr":"내 목표는 경제적 자유 이루는 거야."},{"en":"live by the sea","kr":"바닷가에 살다","exEn":"My goal is to live by the sea.","exKr":"내 목표는 바닷가에 사는 거야."},{"en":"own a house","kr":"집을 소유하다","exEn":"My goal is to own a house.","exKr":"내 목표는 내 집 갖는 거야."},{"en":"own a farm","kr":"농장을 소유하다","exEn":"My goal is to own a farm.","exKr":"내 목표는 농장(전원주택) 갖는 거야."},{"en":"build a well-known brand","kr":"유명한 브랜드를 만들다","exEn":"My goal is to build a well-known brand.","exKr":"내 목표는 유명한 브랜드 만드는 거야."},{"en":"publish my own book","kr":"내 책을 출판하다","exEn":"My goal is to publish my own book.","exKr":"내 목표는 내 책 출판하는 거야."},{"en":"retire early and enjoy life","kr":"일찍 은퇴해 삶을 즐기다","exEn":"My goal is to retire early and enjoy life.","exKr":"내 목표는 일찍 은퇴해서 인생 즐기는 거야."},{"en":"help people in need","kr":"어려운 사람들을 돕다","exEn":"My goal is to help people in need.","exKr":"내 목표는 도움이 필요한 사람들 돕는 거야."},{"en":"buy my parents a car","kr":"부모님께 차를 사드리다","exEn":"My goal is to buy my parents a car.","exKr":"내 목표는 부모님께 차 사드리는 거야."}]},{"no":29,"frame":"I'm going to ~","words":[{"en":"sleep early tonight","kr":"오늘 밤 일찍 자다","exEn":"I'm going to sleep early tonight.","exKr":"나 오늘 일찍 잘 거야."},{"en":"switch jobs","kr":"이직하다","exEn":"I'm going to switch jobs.","exKr":"나 이직할 거야."},{"en":"stay home tonight","kr":"오늘 밤 집에 있다","exEn":"I'm going to stay home tonight.","exKr":"나 오늘 집에 있을 거야."},{"en":"cook dinner","kr":"저녁을 요리하다","exEn":"I'm going to cook dinner.","exKr":"나 저녁 만들 거야."},{"en":"take a walk","kr":"산책하다","exEn":"I'm going to take a walk.","exKr":"나 산책할 거야."},{"en":"call my mom","kr":"엄마에게 전화하다","exEn":"I'm going to call my mom.","exKr":"나 엄마한테 전화할 거야."},{"en":"exercise tomorrow","kr":"내일 운동하다","exEn":"I'm going to exercise tomorrow.","exKr":"나 내일 운동할 거야."},{"en":"visit my parents","kr":"부모님을 뵈러 가다","exEn":"I'm going to visit my parents.","exKr":"나 부모님 뵈러 갈 거야."},{"en":"give it a try","kr":"한번 해보다","exEn":"I'm going to give it a try.","exKr":"나 한번 해볼 거야."},{"en":"quit smoking","kr":"담배를 끊다","exEn":"I'm going to quit smoking.","exKr":"나 담배 끊을 거야."}]},{"no":30,"frame":"I'll ~","words":[{"en":"send it","kr":"그것을 보내다","exEn":"I'll send it.","exKr":"내가 보낼게."},{"en":"ask him","kr":"그에게 물어보다","exEn":"I'll ask him.","exKr":"내가 그에게 물어볼게."},{"en":"call you","kr":"너에게 전화하다","exEn":"I'll call you.","exKr":"내가 전화할게."},{"en":"help you","kr":"너를 돕다","exEn":"I'll help you.","exKr":"내가 도와줄게."},{"en":"check it","kr":"그것을 확인하다","exEn":"I'll check it.","exKr":"내가 확인해볼게."},{"en":"wait here","kr":"여기서 기다리다","exEn":"I'll wait here.","exKr":"내가 여기서 기다릴게."},{"en":"let you know","kr":"알려주다","exEn":"I'll let you know.","exKr":"내가 알려줄게."},{"en":"have the same","kr":"같은 걸로 하다","exEn":"I'll have the same.","exKr":"나도 같은 거 할게."},{"en":"take care of it","kr":"(그 일을) 처리하다","exEn":"I'll take care of it.","exKr":"내가 처리할게."},{"en":"be there in a minute","kr":"금방 가다, 1분 안에 도착하다","exEn":"I'll be there in a minute.","exKr":"금방 갈게."}]}];
 
-function renderVocabHome(){
-  const wrap = $("vocabRows");
-  if(!wrap.childElementCount){
-    VOCAB_BANK.forEach(L=>{
-      const el = document.createElement("button");
-      el.className = "course"; el.type = "button"; el.dataset.lesson = L.no;
-      el.innerHTML = `
-        <div class="frnum" style="background:linear-gradient(155deg,#059669,#047857)">${L.no}강</div>
-        <div class="cbody">
-          <div class="cname">${escapeHtml(L.frame)}</div>
-          <div class="cinfo">단어 10개 암기 → 5초 스피드 퀴즈</div>
-        </div>
-        <div class="go">→</div>`;
-      wrap.appendChild(el);
-    });
-  }
-  show("vocabHome");
+const LESSON_MODES = {
+  sent:  { tag:"✍️ 문장 완성하기", title:"문장 완성하기", desc:"강을 골라 예문 10개의 빈칸을 채워보세요.",
+           info:"예문 10개 · 빈칸 채우기", color:["#4f46e5","#4338ca"], pick:(n)=> startSQuiz(n) },
+  shadow:{ tag:"🎤 문장 쉐도잉", title:"문장 쉐도잉", desc:"강을 골라 예문 10개를 원어민처럼 따라 말해보세요.",
+           info:"예문 10개 · 발음 비교", color:["#e11d48","#be123c"], pick:(n)=> startShadow(n) },
+  memo:  { tag:"🧠 어휘 암기", title:"어휘 암기", desc:"강을 골라 단어 10개를 익히고, 마지막에 퀴즈로 확인해요.",
+           info:"단어 10개 암기 → 5초 스피드 퀴즈", color:["#059669","#047857"], pick:(n)=> startVocabLesson(n) },
+  quiz:  { tag:"📚 어휘 퀴즈", title:"어휘 퀴즈", desc:"강을 골라 단어 10개를 5초 스피드 퀴즈로 확인해요.",
+           info:"단어 10개 · 5초 스피드 퀴즈", color:["#d97706","#b45309"], pick:(n)=> startVQuiz(n) },
+};
+let lessonMode = "memo";
+function renderLessonHome(mode){
+  if(mode) lessonMode = mode;
+  const cfg = LESSON_MODES[lessonMode];
+  $("lhTag").textContent = cfg.tag;
+  $("lhTitle").textContent = cfg.title;
+  $("lhDesc").textContent = cfg.desc;
+  const wrap = $("lessonRows"); wrap.innerHTML = "";
+  VOCAB_BANK.forEach(L=>{
+    const el = document.createElement("button");
+    el.className = "course"; el.type = "button"; el.dataset.lesson = L.no;
+    el.innerHTML = `
+      <div class="frnum" style="background:linear-gradient(155deg,${cfg.color[0]},${cfg.color[1]})">${L.no}강</div>
+      <div class="cbody">
+        <div class="cname">${escapeHtml(L.frame)}</div>
+        <div class="cinfo">${cfg.info}</div>
+      </div>
+      <div class="go">→</div>`;
+    wrap.appendChild(el);
+  });
+  show("lessonHome");
 }
-$("vocabRows").addEventListener("click",(e)=>{
+$("lessonRows").addEventListener("click",(e)=>{
   const btn = e.target.closest(".course"); if(!btn) return; Sound.ensure();
-  startVocabLesson(parseInt(btn.dataset.lesson,10));
+  LESSON_MODES[lessonMode].pick(parseInt(btn.dataset.lesson,10));
 });
-$("vocabHomeBack").onclick = ()=> renderModeHome();
+$("lessonHomeBack").onclick = ()=> renderModeHome();
 
 function startVocabLesson(no){
   const L = VOCAB_BANK[no-1];
@@ -1540,7 +1581,7 @@ function startVocabLesson(no){
     items: L.words.map(w=>({en:w.en, kr:w.kr, ex:[[w.exEn, w.exKr]]})),
     doneLabel:"퀴즈 풀기 📝",
     onDone: ()=> startVQuiz(no),
-    onBack: ()=> renderVocabHome(),
+    onBack: ()=> renderLessonHome("memo"),
   });
 }
 
@@ -1641,9 +1682,224 @@ function vqFinish(){
     </div>`;
   $("vqAgain").onclick  = ()=> startVQuiz(vq.no);
   $("vqReview").onclick = ()=> startVocabLesson(vq.no);
-  $("vqList").onclick   = ()=> renderVocabHome();
+  $("vqList").onclick   = ()=> renderLessonHome();
 }
-$("vqBack").onclick = ()=>{ vqStopTimer(); renderVocabHome(); };
+$("vqBack").onclick = ()=>{ vqStopTimer(); renderLessonHome(); };
+
+/* =========================================================
+   문장 완성하기 — 엑셀 예문 빈칸 채우기 (강별 10문제)
+   ========================================================= */
+const SENT_BANK = [{"no":1,"items":[{"q":"I'm a _____ person.","a":"dog","kr":"나는 강아지를 더 좋아해.","en":"I'm a dog person."},{"q":"I'm a _____ person.","a":"beer","kr":"나는 맥주를 더 좋아해.","en":"I'm a beer person."},{"q":"I'm a _____ person.","a":"city","kr":"나는 도시에서 사는 게 좋아.","en":"I'm a city person."},{"q":"I'm a _____ person.","a":"beach","kr":"나는 (산보다) 바다가 좋아.","en":"I'm a beach person."},{"q":"I'm a _____ person.","a":"people","kr":"나는 사람 만나는 걸 좋아하는 편이야.","en":"I'm a people person."},{"q":"I'm an _____ person.","a":"indoor","kr":"나는 집순이/집돌이야.","en":"I'm an indoor person."},{"q":"I'm a _____ person.","a":"morning","kr":"나는 아침형 인간이야.","en":"I'm a morning person."},{"q":"I'm a _____ person.","a":"numbers","kr":"나는 숫자에 강한 편이야.","en":"I'm a numbers person."},{"q":"I'm an _____ person.","a":"outdoor","kr":"나는 밖에 나가는 걸 좋아하는 편이야.","en":"I'm an outdoor person."},{"q":"I'm a _____ person.","a":"big-picture","kr":"나는 큰 그림을 보는 타입이야.","en":"I'm a big-picture person."}],"frame":"I'm a ~ person"},{"no":2,"items":[{"q":"I work as a _____.","a":"chef","kr":"나는 셰프로 일해.","en":"I work as a chef."},{"q":"I work as a _____.","a":"nurse","kr":"나는 간호사로 일해.","en":"I work as a nurse."},{"q":"I work as a _____.","a":"dancer","kr":"나는 댄서로 일해.","en":"I work as a dancer."},{"q":"I work as an _____.","a":"intern","kr":"나는 인턴으로 일해.","en":"I work as an intern."},{"q":"I work as an _____.","a":"engineer","kr":"나는 엔지니어로 일해.","en":"I work as an engineer."},{"q":"I work as a _____.","a":"translator","kr":"나는 번역가로 일해.","en":"I work as a translator."},{"q":"I work as a _____.","a":"team leader","kr":"나는 팀장으로 일해.","en":"I work as a team leader."},{"q":"I work as a _____.","a":"photographer","kr":"나는 사진작가로 일해.","en":"I work as a photographer."},{"q":"I work as a _____.","a":"content creator","kr":"나는 콘텐츠 크리에이터로 일해.","en":"I work as a content creator."},{"q":"I work as a _____.","a":"personal trainer","kr":"나는 개인 트레이너로 일해.","en":"I work as a personal trainer."}],"frame":"I work as a ~"},{"no":3,"items":[{"q":"I live in _____.","a":"Jeju","kr":"나는 제주에 살아.","en":"I live in Jeju."},{"q":"I live in _____.","a":"Korea","kr":"나는 한국에 살아.","en":"I live in Korea."},{"q":"I live in _____.","a":"Seoul","kr":"나는 서울에 살아.","en":"I live in Seoul."},{"q":"I live in _____.","a":"a house","kr":"나는 주택에 살아.","en":"I live in a house."},{"q":"I live in _____.","a":"my hometown","kr":"나는 고향에 살아.","en":"I live in my hometown."},{"q":"I live in _____.","a":"the suburbs","kr":"나는 외곽 지역에 살아.","en":"I live in the suburbs."},{"q":"I live in _____.","a":"a small town","kr":"나는 작은 도시에 살아.","en":"I live in a small town."},{"q":"I live in _____.","a":"an apartment","kr":"나는 아파트에 살아.","en":"I live in an apartment."},{"q":"I live in _____.","a":"the countryside","kr":"나는 시골에 살아.","en":"I live in the countryside."},{"q":"I live in _____.","a":"a quiet neighborhood","kr":"나는 조용한 동네에 살아.","en":"I live in a quiet neighborhood."}],"frame":"I live in ~"},{"no":4,"items":[{"q":"I have _____.","a":"a car","kr":"나는 차가 있어.","en":"I have a car."},{"q":"I have _____.","a":"a puppy","kr":"나 강아지 키워.","en":"I have a puppy."},{"q":"I have _____.","a":"a laptop","kr":"나는 노트북이 있어.","en":"I have a laptop."},{"q":"I have _____.","a":"some savings","kr":"모아둔 돈이 좀 있어.","en":"I have some savings."},{"q":"I have _____.","a":"a sweet tooth","kr":"나 단 거 엄청 좋아해.","en":"I have a sweet tooth."},{"q":"I have _____.","a":"plans tonight","kr":"나 오늘 저녁에 약속 있어.","en":"I have plans tonight."},{"q":"I have _____.","a":"too much work","kr":"나 일이 너무 많아.","en":"I have too much work."},{"q":"I have _____.","a":"an appointment","kr":"나 예약 있어.","en":"I have an appointment."},{"q":"I have _____.","a":"nothing to wear","kr":"입을 옷이 없어.","en":"I have nothing to wear."},{"q":"I have _____.","a":"a driver's license","kr":"나는 운전면허가 있어.","en":"I have a driver's license."}],"frame":"I have ~"},{"no":5,"items":[{"q":"I can _____.","a":"cook","kr":"나는 요리할 수 있어.","en":"I can cook."},{"q":"I can _____.","a":"swim","kr":"나는 수영할 수 있어.","en":"I can swim."},{"q":"I can _____.","a":"dance","kr":"나는 춤출 수 있어.","en":"I can dance."},{"q":"I can _____.","a":"use AI","kr":"나는 AI를 쓸 수 있어.","en":"I can use AI."},{"q":"I can _____.","a":"type fast","kr":"나는 타자를 빨리 칠 수 있어.","en":"I can type fast."},{"q":"I can _____.","a":"drink a lot","kr":"나 술 잘 마셔.","en":"I can drink a lot."},{"q":"I can _____.","a":"speak English","kr":"나는 영어를 할 수 있어.","en":"I can speak English."},{"q":"I can _____.","a":"wake up early","kr":"나는 일찍 일어날 수 있어.","en":"I can wake up early."},{"q":"I can _____.","a":"eat spicy food","kr":"나 매운 거 먹을 수 있어.","en":"I can eat spicy food."},{"q":"I can _____.","a":"play the piano","kr":"나는 피아노를 칠 수 있어.","en":"I can play the piano."}],"frame":"I can ~"},{"no":6,"items":[{"q":"I'm _____.","a":"busy","kr":"나는 바빠.","en":"I'm busy."},{"q":"I'm _____.","a":"free","kr":"나 시간 있어.","en":"I'm free."},{"q":"I'm _____.","a":"bored","kr":"나 심심해.","en":"I'm bored."},{"q":"I'm _____.","a":"broke","kr":"나 돈 없어.","en":"I'm broke."},{"q":"I'm _____.","a":"annoyed","kr":"나 짜증나.","en":"I'm annoyed."},{"q":"I'm _____.","a":"excited","kr":"나는 신나.","en":"I'm excited."},{"q":"I'm _____.","a":"nervous","kr":"나는 긴장돼.","en":"I'm nervous."},{"q":"I'm _____.","a":"off today","kr":"나는 오늘 쉬는 날이야.","en":"I'm off today."},{"q":"I'm _____.","a":"burned out","kr":"나 번아웃이야.","en":"I'm burned out."},{"q":"I'm _____.","a":"stressed (out)","kr":"나 스트레스 완전 받았어.","en":"I'm stressed (out)."}],"frame":"I'm ~ (상태)"},{"no":7,"items":[{"q":"I'm _____.","a":"eating","kr":"나 지금 밥 먹는 중이야.","en":"I'm eating."},{"q":"I'm _____.","a":"driving","kr":"나 지금 운전 중이야.","en":"I'm driving."},{"q":"I'm _____.","a":"working","kr":"나 지금 일하는 중이야.","en":"I'm working."},{"q":"I'm _____.","a":"cleaning","kr":"나 지금 청소 중이야.","en":"I'm cleaning."},{"q":"I'm _____.","a":"working out","kr":"나 지금 운동 중이야.","en":"I'm working out."},{"q":"I'm _____.","a":"getting ready","kr":"나 지금 나갈 준비하는 중이야.","en":"I'm getting ready."},{"q":"I'm _____.","a":"taking a break","kr":"나 지금 잠깐 쉬는 중이야.","en":"I'm taking a break."},{"q":"I'm _____.","a":"answering emails","kr":"나 지금 이메일 답장하는 중이야.","en":"I'm answering emails."},{"q":"I'm _____.","a":"getting off work","kr":"나 지금 퇴근하는 중이야.","en":"I'm getting off work."},{"q":"I'm _____.","a":"waiting for my friend","kr":"나 지금 친구 기다리는 중이야.","en":"I'm waiting for my friend."}],"frame":"I'm ~ing"},{"no":8,"items":[{"q":"I want _____.","a":"a nap","kr":"나 낮잠 자고 싶어.","en":"I want a nap."},{"q":"I want _____.","a":"a break","kr":"나 좀 쉬고 싶어.","en":"I want a break."},{"q":"I want _____.","a":"a day off","kr":"나 하루 쉬고 싶어.","en":"I want a day off."},{"q":"I want _____.","a":"a new job","kr":"나 새 직장 구하고 싶어.","en":"I want a new job."},{"q":"I want _____.","a":"a vacation","kr":"나 휴가 가고 싶어.","en":"I want a vacation."},{"q":"I want _____.","a":"more money","kr":"나 돈 좀 더 있으면 좋겠어.","en":"I want more money."},{"q":"I want _____.","a":"more sleep","kr":"나 좀 더 자고 싶어.","en":"I want more sleep."},{"q":"I want _____.","a":"some water","kr":"나 물 좀 마시고 싶어.","en":"I want some water."},{"q":"I want _____.","a":"some coffee","kr":"나 커피 좀 마시고 싶어.","en":"I want some coffee."},{"q":"I want _____.","a":"some time alone","kr":"나 좀 혼자 있고 싶어.","en":"I want some time alone."}],"frame":"I want ~"},{"no":9,"items":[{"q":"I usually _____.","a":"wake up early","kr":"나는 보통 일찍 일어나.","en":"I usually wake up early."},{"q":"I usually _____.","a":"exercise in the morning","kr":"나는 보통 아침에 운동해.","en":"I usually exercise in the morning."},{"q":"I usually _____.","a":"skip breakfast","kr":"나는 보통 아침 안 먹어.","en":"I usually skip breakfast."},{"q":"I usually _____.","a":"go to work at 8","kr":"나는 보통 8시에 출근해.","en":"I usually go to work at 8."},{"q":"I usually _____.","a":"take the subway to work","kr":"나는 보통 지하철 타고 출근해.","en":"I usually take the subway to work."},{"q":"I usually _____.","a":"work from home","kr":"나는 보통 재택근무해.","en":"I usually work from home."},{"q":"I usually _____.","a":"check my email","kr":"나는 보통 이메일을 확인해.","en":"I usually check my email."},{"q":"I usually _____.","a":"cook dinner","kr":"나는 보통 저녁을 만들어.","en":"I usually cook dinner."},{"q":"I usually _____.","a":"stretch before bed","kr":"나는 보통 자기 전에 스트레칭해.","en":"I usually stretch before bed."},{"q":"I usually _____.","a":"go to bed early","kr":"나는 보통 일찍 자.","en":"I usually go to bed early."}],"frame":"I usually ~"},{"no":10,"items":[{"q":"I never _____ (in public).","a":"cry","kr":"나는 절대 (사람들 앞에서) 안 울어.","en":"I never cry (in public)."},{"q":"I never _____.","a":"lie","kr":"나는 절대 거짓말 안 해.","en":"I never lie."},{"q":"I never _____.","a":"drink","kr":"나는 술을 절대 안 마셔.","en":"I never drink."},{"q":"I never _____.","a":"complain","kr":"나는 절대 불평 안 해.","en":"I never complain."},{"q":"I never _____.","a":"eat alone","kr":"나 혼밥 절대 안 해.","en":"I never eat alone."},{"q":"I never _____.","a":"lend money","kr":"나는 돈은 절대 안 빌려줘.","en":"I never lend money."},{"q":"I never _____.","a":"borrow money","kr":"나는 절대 돈을 안 빌려.","en":"I never borrow money."},{"q":"I never _____.","a":"stay up late","kr":"나는 절대 늦게까지 안 깨어 있어.","en":"I never stay up late."},{"q":"I never _____.","a":"drive fast","kr":"나는 절대 빨리 운전하지 않아.","en":"I never drive fast."},{"q":"I never _____.","a":"take selfies","kr":"나는 셀카는 절대 안 찍어.","en":"I never take selfies."}],"frame":"I never ~"},{"no":11,"items":[{"q":"I _____.","a":"called my mom","kr":"나는 엄마한테 전화했어.","en":"I called my mom."},{"q":"I _____.","a":"cooked dinner","kr":"나는 저녁을 만들었어.","en":"I cooked dinner."},{"q":"I _____.","a":"cleaned my room","kr":"나는 방을 청소했어.","en":"I cleaned my room."},{"q":"I _____.","a":"watched a movie","kr":"나는 영화를 봤어.","en":"I watched a movie."},{"q":"I _____.","a":"finished my work","kr":"나는 일을 끝냈어.","en":"I finished my work."},{"q":"I _____.","a":"got a haircut","kr":"나는 머리를 잘랐어.","en":"I got a haircut."},{"q":"I _____.","a":"met a friend","kr":"나는 친구를 만났어.","en":"I met a friend."},{"q":"I _____.","a":"did my laundry","kr":"나는 빨래했어.","en":"I did my laundry."},{"q":"I _____.","a":"went on a trip","kr":"나는 여행 갔어.","en":"I went on a trip."},{"q":"I _____.","a":"bought new shoes","kr":"나는 새 신발을 샀어.","en":"I bought new shoes."}],"frame":"I ~ (과거동사)"},{"no":12,"items":[{"q":"I was _____.","a":"wrong","kr":"내가 틀렸어.","en":"I was wrong."},{"q":"I was _____.","a":"on vacation","kr":"나는 휴가 중이었어.","en":"I was on vacation."},{"q":"I was _____.","a":"tired all day","kr":"나는 하루 종일 피곤했어.","en":"I was tired all day."},{"q":"I was _____.","a":"sick last week","kr":"나 지난주에 아팠어.","en":"I was sick last week."},{"q":"I was _____.","a":"stuck in traffic","kr":"나는 차가 막혀서 못 움직였어.","en":"I was stuck in traffic."},{"q":"I was _____.","a":"hungry after work","kr":"나는 퇴근 후에 배고팠어.","en":"I was hungry after work."},{"q":"I was _____.","a":"late this morning","kr":"나는 오늘 아침에 늦었어.","en":"I was late this morning."},{"q":"I was _____.","a":"surprised to see you","kr":"나 너 보고 깜짝 놀랐어.","en":"I was surprised to see you."},{"q":"I was _____.","a":"in high school back then","kr":"나는 그때 고등학생이었어.","en":"I was in high school back then."},{"q":"I was _____.","a":"nervous before the presentation","kr":"나는 발표 전에 긴장했었어.","en":"I was nervous before the presentation."}],"frame":"I was ~"},{"no":13,"items":[{"q":"I used to _____.","a":"be shy","kr":"나는 예전엔 내성적이었어.","en":"I used to be shy."},{"q":"I used to _____.","a":"study French","kr":"나는 예전엔 프랑스어를 공부했어.","en":"I used to study French."},{"q":"I used to _____.","a":"bite my nails","kr":"나는 예전엔 손톱을 물어뜯었어.","en":"I used to bite my nails."},{"q":"I used to _____.","a":"live in Busan","kr":"나는 예전엔 부산에 살았어.","en":"I used to live in Busan."},{"q":"I used to _____.","a":"be a night owl","kr":"나 예전엔 완전 올빼미형이었어.","en":"I used to be a night owl."},{"q":"I used to _____.","a":"have long hair","kr":"나는 예전엔 머리가 길었어.","en":"I used to have long hair."},{"q":"I used to _____.","a":"work at a bank","kr":"나는 예전엔 은행에서 일했어.","en":"I used to work at a bank."},{"q":"I used to _____.","a":"hate vegetables","kr":"나는 예전엔 채소를 싫어했어.","en":"I used to hate vegetables."},{"q":"I used to _____.","a":"be afraid of dogs","kr":"나는 예전엔 개를 무서워했어.","en":"I used to be afraid of dogs."},{"q":"I used to _____.","a":"go there all the time","kr":"나 예전엔 거기 진짜 자주 갔어.","en":"I used to go there all the time."}],"frame":"I used to ~"},{"no":14,"items":[{"q":"I've been to _____.","a":"Jeju","kr":"나는 제주에 가본 적 있어.","en":"I've been to Jeju."},{"q":"I've been to _____.","a":"Busan","kr":"나는 부산에 가본 적 있어.","en":"I've been to Busan."},{"q":"I've been to _____.","a":"China","kr":"나는 중국에 가본 적 있어.","en":"I've been to China."},{"q":"I've been to _____.","a":"Paris","kr":"나는 파리에 가본 적 있어.","en":"I've been to Paris."},{"q":"I've been to _____.","a":"a concert","kr":"나는 콘서트에 가본 적 있어.","en":"I've been to a concert."},{"q":"I've been to _____.","a":"the beach","kr":"나는 바다에 가본 적 있어.","en":"I've been to the beach."},{"q":"I've been to _____.","a":"the hospital","kr":"나 그 병원에 가봤어.","en":"I've been to the hospital."},{"q":"I've been to _____.","a":"an exhibition","kr":"나는 전시회에 가본 적 있어.","en":"I've been to an exhibition."},{"q":"I've been to _____.","a":"that new café","kr":"나는 그 새 카페에 가본 적 있어.","en":"I've been to that new café."},{"q":"I've been to _____.","a":"a baseball stadium","kr":"나 야구장 가봤어.","en":"I've been to a baseball stadium."}],"frame":"I've been to ~"},{"no":15,"items":[{"q":"I just started _____.","a":"dieting","kr":"나 얼마 전에 다이어트 시작했어.","en":"I just started dieting."},{"q":"I just started _____.","a":"doing yoga","kr":"나 얼마 전에 요가 시작했어.","en":"I just started doing yoga."},{"q":"I just started _____.","a":"meditating","kr":"나 얼마 전에 명상 시작했어.","en":"I just started meditating."},{"q":"I just started _____.","a":"cooking","kr":"나 얼마 전에 요리 시작했어.","en":"I just started cooking."},{"q":"I just started _____.","a":"eating healthier","kr":"나 얼마 전에 건강하게 먹기 시작했어.","en":"I just started eating healthier."},{"q":"I just started _____.","a":"saving money","kr":"나 얼마 전에 저축 시작했어.","en":"I just started saving money."},{"q":"I just started _____.","a":"learning Spanish","kr":"나 얼마 전에 스페인어 시작했어.","en":"I just started learning Spanish."},{"q":"I just started _____.","a":"watching this show","kr":"나 얼마 전에 이 드라마 보기 시작했어.","en":"I just started watching this show."},{"q":"I just started _____.","a":"dating someone","kr":"나 얼마 전에 누구 만나기 시작했어.","en":"I just started dating someone."},{"q":"I just started _____.","a":"looking for a new job","kr":"나 얼마 전에 새 직장 알아보기 시작했어.","en":"I just started looking for a new job."}],"frame":"I just started ~ing"},{"no":16,"items":[{"q":"I'm into _____.","a":"baking","kr":"나 베이킹에 빠졌어.","en":"I'm into baking."},{"q":"I'm into _____.","a":"gaming","kr":"나 게임에 빠졌어.","en":"I'm into gaming."},{"q":"I'm into _____.","a":"hiking","kr":"나 등산에 빠졌어.","en":"I'm into hiking."},{"q":"I'm into _____.","a":"camping","kr":"나 캠핑에 빠졌어.","en":"I'm into camping."},{"q":"I'm into _____.","a":"fashion","kr":"나 패션에 빠졌어.","en":"I'm into fashion."},{"q":"I'm into _____.","a":"running","kr":"나 러닝에 빠졌어.","en":"I'm into running."},{"q":"I'm into _____.","a":"gardening","kr":"나 식물 키우기에 빠졌어.","en":"I'm into gardening."},{"q":"I'm into _____.","a":"traveling","kr":"나 여행에 빠졌어.","en":"I'm into traveling."},{"q":"I'm into _____.","a":"photography","kr":"나 사진에 빠졌어.","en":"I'm into photography."},{"q":"I'm into _____.","a":"weight training","kr":"나 요즘 웨이트에 빠졌어.","en":"I'm into weight training."}],"frame":"I'm into ~"},{"no":17,"items":[{"q":"My go-to food is _____.","a":"salad","kr":"내가 늘 먹는 음식은 샐러드야.","en":"My go-to food is salad."},{"q":"My go-to color is _____.","a":"black","kr":"내가 늘 고르는 색은 검정이야.","en":"My go-to color is black."},{"q":"My go-to outfit is _____.","a":"jeans","kr":"나 옷은 무조건 청바지야.","en":"My go-to outfit is jeans."},{"q":"My go-to snack is _____.","a":"popcorn","kr":"내가 늘 먹는 간식은 팝콘이야.","en":"My go-to snack is popcorn."},{"q":"My go-to place is _____.","a":"the park","kr":"내가 늘 가는 곳은 그 공원이야.","en":"My go-to place is the park."},{"q":"My go-to shoes are _____.","a":"sneakers","kr":"내가 늘 신는 신발은 운동화야.","en":"My go-to shoes are sneakers."},{"q":"My go-to dessert is _____.","a":"ice cream","kr":"디저트는 무조건 아이스크림이야.","en":"My go-to dessert is ice cream."},{"q":"My go-to order is _____.","a":"an iced latte","kr":"내가 늘 시키는 메뉴는 아이스 라떼야.","en":"My go-to order is an iced latte."},{"q":"My go-to breakfast is _____.","a":"a sandwich","kr":"내가 늘 먹는 아침은 샌드위치야.","en":"My go-to breakfast is a sandwich."},{"q":"My go-to coffee is _____.","a":"an iced Americano","kr":"내가 늘 마시는 커피는 아이스 아메리카노야.","en":"My go-to coffee is an iced Americano."}],"frame":"My go-to ~ is ~"},{"no":18,"items":[{"q":"I can't live without _____.","a":"music","kr":"나는 음악 없이는 못 살아.","en":"I can't live without music."},{"q":"I can't live without _____.","a":"my car","kr":"나는 차 없이는 못 살아.","en":"I can't live without my car."},{"q":"I can't live without _____.","a":"my dog","kr":"나는 우리 강아지 없이는 못 살아.","en":"I can't live without my dog."},{"q":"I can't live without _____.","a":"alone time","kr":"나 혼자 있는 시간 없이는 못 살아.","en":"I can't live without alone time."},{"q":"I can't live without _____.","a":"my charger","kr":"나 충전기 없으면 못 살아.","en":"I can't live without my charger."},{"q":"I can't live without _____.","a":"my glasses","kr":"나는 안경 없이는 못 살아.","en":"I can't live without my glasses."},{"q":"I can't live without _____.","a":"my earphones","kr":"나는 이어폰 없이는 못 살아.","en":"I can't live without my earphones."},{"q":"I can't live without _____.","a":"the internet","kr":"나는 인터넷 없이는 못 살아.","en":"I can't live without the internet."},{"q":"I can't live without _____.","a":"my Sunday reset","kr":"나 일요일에 재충전하는 시간 없으면 못 살아.","en":"I can't live without my Sunday reset."},{"q":"I can't live without _____.","a":"air conditioning","kr":"나는 에어컨 없이는 못 살아.","en":"I can't live without air conditioning."}],"frame":"I can't live without ~"},{"no":19,"items":[{"q":"I don't like _____.","a":"rain","kr":"나는 비를 안 좋아해.","en":"I don't like rain."},{"q":"I don't like _____.","a":"crowds","kr":"나는 사람 많은 곳을 안 좋아해.","en":"I don't like crowds."},{"q":"I don't like _____.","a":"winter","kr":"나는 겨울을 안 좋아해.","en":"I don't like winter."},{"q":"I don't like _____.","a":"waiting","kr":"나는 기다리는 걸 안 좋아해.","en":"I don't like waiting."},{"q":"I don't like _____.","a":"mornings","kr":"나는 아침을 안 좋아해.","en":"I don't like mornings."},{"q":"I don't like _____.","a":"loud music","kr":"나는 시끄러운 음악을 안 좋아해.","en":"I don't like loud music."},{"q":"I don't like _____.","a":"small talk","kr":"나는 스몰토크를 안 좋아해.","en":"I don't like small talk."},{"q":"I don't like _____.","a":"spicy food","kr":"나는 매운 음식을 안 좋아해.","en":"I don't like spicy food."},{"q":"I don't like _____.","a":"phone calls","kr":"나는 전화 통화를 안 좋아해.","en":"I don't like phone calls."},{"q":"I don't like _____.","a":"working overtime","kr":"나는 야근하는 걸 안 좋아해.","en":"I don't like working overtime."}],"frame":"I don't like ~"},{"no":20,"items":[{"q":"I don't care about _____.","a":"looks","kr":"나는 겉모습에 신경 안 써.","en":"I don't care about looks."},{"q":"I don't care about _____.","a":"money","kr":"난 돈에 연연하지 않아.","en":"I don't care about money."},{"q":"I don't care about _____.","a":"brands","kr":"나는 브랜드에 신경 안 써.","en":"I don't care about brands."},{"q":"I don't care about _____.","a":"my age","kr":"나는 내 나이에 신경 안 써.","en":"I don't care about my age."},{"q":"I don't care about _____.","a":"rumors","kr":"나는 소문에 신경 안 써.","en":"I don't care about rumors."},{"q":"I don't care about _____.","a":"trends","kr":"나는 유행에 신경 안 써.","en":"I don't care about trends."},{"q":"I don't care about _____.","a":"fashion","kr":"나는 패션에 신경 안 써.","en":"I don't care about fashion."},{"q":"I don't care about _____.","a":"the details","kr":"난 세부적인 건 신경 안 써.","en":"I don't care about the details."},{"q":"I don't care about _____.","a":"the weather","kr":"난 날씨는 상관없어.","en":"I don't care about the weather."},{"q":"I don't care (about) _____.","a":"what people think","kr":"나는 남들이 어떻게 생각하는지 신경 안 써.","en":"I don't care (about) what people think."}],"frame":"I don't care about ~"},{"no":21,"items":[{"q":"I'm good at _____.","a":"driving","kr":"나는 운전을 잘해.","en":"I'm good at driving."},{"q":"I'm good at _____.","a":"parking","kr":"나 주차 잘해.","en":"I'm good at parking."},{"q":"I'm good at _____.","a":"writing","kr":"나는 글을 잘 써.","en":"I'm good at writing."},{"q":"I'm good at _____.","a":"cleaning","kr":"나는 청소를 잘해.","en":"I'm good at cleaning."},{"q":"I'm good at _____.","a":"listening","kr":"나는 잘 들어줘.","en":"I'm good at listening."},{"q":"I'm good at _____.","a":"making friends","kr":"나는 친구를 잘 사귀어.","en":"I'm good at making friends."},{"q":"I'm good at _____.","a":"taking pictures","kr":"나 사진 잘 찍어.","en":"I'm good at taking pictures."},{"q":"I'm good at _____.","a":"solving problems","kr":"나는 문제 해결을 잘해.","en":"I'm good at solving problems."},{"q":"I'm good at _____.","a":"explaining things","kr":"나는 설명을 잘해.","en":"I'm good at explaining things."},{"q":"I'm good at _____.","a":"finding good restaurants","kr":"나 맛집 잘 찾아.","en":"I'm good at finding good restaurants."}],"frame":"I'm good at ~"},{"no":22,"items":[{"q":"I know how to _____.","a":"say no","kr":"나는 거절하는 법을 알아.","en":"I know how to say no."},{"q":"I know how to _____.","a":"get there","kr":"나 거기 가는 길 알아.","en":"I know how to get there."},{"q":"I know how to _____.","a":"pack light","kr":"나는 짐 가볍게 싸는 법을 알아.","en":"I know how to pack light."},{"q":"I know how to _____.","a":"save money","kr":"나는 돈 모으는 법을 알아.","en":"I know how to save money."},{"q":"I know how to _____.","a":"do my taxes","kr":"나는 세금 신고하는 법을 알아.","en":"I know how to do my taxes."},{"q":"I know how to _____.","a":"get a good deal","kr":"나 싸게 잘 사는 법 알아.","en":"I know how to get a good deal."},{"q":"I know how to _____.","a":"lose weight fast","kr":"나 빨리 살 빼는 법 알아.","en":"I know how to lose weight fast."},{"q":"I know how to _____.","a":"use this machine","kr":"나 이 기계 쓰는 법 알아.","en":"I know how to use this machine."},{"q":"I know how to _____.","a":"look good in pictures","kr":"나는 사진 잘 나오는 법을 알아.","en":"I know how to look good in pictures."},{"q":"I know how to _____.","a":"deal with difficult people","kr":"나는 까다로운 사람 대하는 법을 알아.","en":"I know how to deal with difficult people."}],"frame":"I know how to ~"},{"no":23,"items":[{"q":"I'm working on _____.","a":"a report","kr":"나 보고서 작성 중이야.","en":"I'm working on a report."},{"q":"I'm working on _____.","a":"a project","kr":"나 프로젝트 작업 중이야.","en":"I'm working on a project."},{"q":"I'm working on _____.","a":"my resume","kr":"나 이력서 작성 중이야.","en":"I'm working on my resume."},{"q":"I'm working on _____.","a":"a new idea","kr":"나 새로운 아이디어를 구상하고 있어.","en":"I'm working on a new idea."},{"q":"I'm working on _____.","a":"a new plan","kr":"나 새로운 계획을 세우고 있어.","en":"I'm working on a new plan."},{"q":"I'm working on _____.","a":"my schedule","kr":"나 일정 정리하고 있어.","en":"I'm working on my schedule."},{"q":"I'm working on _____.","a":"a new design","kr":"나 새로운 디자인 작업 중이야.","en":"I'm working on a new design."},{"q":"I'm working on _____.","a":"getting in shape","kr":"나 요즘 몸 만들고 있어.","en":"I'm working on getting in shape."},{"q":"I'm working on _____.","a":"staying positive","kr":"나 긍정적으로 지내려고 노력 중이야.","en":"I'm working on staying positive."},{"q":"I'm working on _____.","a":"cutting down on coffee","kr":"나 커피 줄이는 중이야.","en":"I'm working on cutting down on coffee."}],"frame":"I'm working on ~"},{"no":24,"items":[{"q":"I'm learning to _____.","a":"cook","kr":"나 요리 배우는 중이야.","en":"I'm learning to cook."},{"q":"I'm learning to _____.","a":"swim","kr":"나는 수영을 배우고 있어.","en":"I'm learning to swim."},{"q":"I'm learning to _____.","a":"paint","kr":"나는 그림을 배우고 있어.","en":"I'm learning to paint."},{"q":"I'm learning to _____.","a":"invest","kr":"나는 투자를 배우고 있어.","en":"I'm learning to invest."},{"q":"I'm learning to _____.","a":"play golf","kr":"나는 골프를 배우고 있어.","en":"I'm learning to play golf."},{"q":"I'm learning to _____.","a":"edit videos","kr":"나는 영상 편집을 배우고 있어.","en":"I'm learning to edit videos."},{"q":"I'm learning to _____.","a":"let things go","kr":"나 그냥 넘기는 법을 배우고 있어.","en":"I'm learning to let things go."},{"q":"I'm learning to _____.","a":"speak Spanish","kr":"나는 스페인어를 배우고 있어.","en":"I'm learning to speak Spanish."},{"q":"I'm learning to _____.","a":"be more patient","kr":"나 좀 더 참고 기다리는 법을 배우고 있어.","en":"I'm learning to be more patient."},{"q":"I'm learning to _____.","a":"speak up for myself","kr":"나 내 의견 당당하게 말하는 법을 배우고 있어.","en":"I'm learning to speak up for myself."}],"frame":"I'm learning to ~"},{"no":25,"items":[{"q":"I'm thinking about _____.","a":"moving","kr":"나 이사할까 생각 중이야.","en":"I'm thinking about moving."},{"q":"I'm thinking about _____.","a":"buying a car","kr":"나 차 살까 생각 중이야.","en":"I'm thinking about buying a car."},{"q":"I'm thinking about _____.","a":"taking a break","kr":"나 좀 쉴까 생각 중이야.","en":"I'm thinking about taking a break."},{"q":"I'm thinking about _____.","a":"cutting my hair","kr":"나 머리 자를까 생각 중이야.","en":"I'm thinking about cutting my hair."},{"q":"I'm thinking about _____.","a":"getting a puppy","kr":"나 강아지 키울까 생각 중이야.","en":"I'm thinking about getting a puppy."},{"q":"I'm thinking about _____.","a":"quitting my job","kr":"나 퇴사할까 생각 중이야.","en":"I'm thinking about quitting my job."},{"q":"I'm thinking about _____.","a":"traveling alone","kr":"나 혼자 여행 갈까 생각 중이야.","en":"I'm thinking about traveling alone."},{"q":"I'm thinking about _____.","a":"learning Spanish","kr":"나 스페인어 배울까 생각 중이야.","en":"I'm thinking about learning Spanish."},{"q":"I'm thinking about _____.","a":"deleting social media","kr":"나 SNS 지울까 생각 중이야.","en":"I'm thinking about deleting social media."},{"q":"I'm thinking about _____.","a":"signing up for the gym","kr":"나 헬스장 등록할까 생각 중이야.","en":"I'm thinking about signing up for the gym."}],"frame":"I'm thinking about ~ing"},{"no":26,"items":[{"q":"I can't wait to _____.","a":"sleep","kr":"빨리 자고 싶어.","en":"I can't wait to sleep."},{"q":"I can't wait to _____.","a":"go home","kr":"빨리 집에 가고 싶어.","en":"I can't wait to go home."},{"q":"I can't wait to _____.","a":"catch up","kr":"빨리 만나서 얘기하고 싶어.","en":"I can't wait to catch up."},{"q":"I can't wait to _____.","a":"get paid","kr":"빨리 월급 받고 싶어.","en":"I can't wait to get paid."},{"q":"I can't wait to _____.","a":"finish work","kr":"빨리 퇴근하고 싶어.","en":"I can't wait to finish work."},{"q":"I can't wait to _____.","a":"see the movie","kr":"빨리 그 영화 보고 싶어.","en":"I can't wait to see the movie."},{"q":"I can't wait to _____.","a":"go on vacation","kr":"빨리 휴가 가고 싶어.","en":"I can't wait to go on vacation."},{"q":"I can't wait to _____.","a":"hear the results","kr":"빨리 결과 듣고 싶어.","en":"I can't wait to hear the results."},{"q":"I can't wait to _____.","a":"hang out this weekend","kr":"빨리 주말에 놀고 싶어.","en":"I can't wait to hang out this weekend."},{"q":"I can't wait to _____.","a":"watch the next episode","kr":"빨리 다음 회 보고 싶어.","en":"I can't wait to watch the next episode."}],"frame":"I can't wait to ~"},{"no":27,"items":[{"q":"I want to _____.","a":"move","kr":"나는 이사하고 싶어.","en":"I want to move."},{"q":"I want to _____.","a":"sleep in","kr":"나는 늦잠 자고 싶어.","en":"I want to sleep in."},{"q":"I want to _____.","a":"buy a car","kr":"나는 차를 사고 싶어.","en":"I want to buy a car."},{"q":"I want to _____.","a":"save money","kr":"나는 돈을 모으고 싶어.","en":"I want to save money."},{"q":"I want to _____.","a":"travel abroad","kr":"나 해외여행 가고 싶어.","en":"I want to travel abroad."},{"q":"I want to _____.","a":"clear my head","kr":"머리 좀 식히고 싶어.","en":"I want to clear my head."},{"q":"I want to _____.","a":"take a day off","kr":"나는 하루 쉬고 싶어.","en":"I want to take a day off."},{"q":"I want to _____.","a":"stay out of this","kr":"난 이 일에서 빠지고 싶어.","en":"I want to stay out of this."},{"q":"I want to _____.","a":"start a YouTube channel","kr":"나는 유튜브 채널을 시작하고 싶어.","en":"I want to start a YouTube channel."},{"q":"I want to _____.","a":"take a rain check on that","kr":"그건 다음 기회로 미루고 싶어.","en":"I want to take a rain check on that."}],"frame":"I want to ~"},{"no":28,"items":[{"q":"My goal is to _____.","a":"open my own café","kr":"내 목표는 내 카페 여는 거야.","en":"My goal is to open my own café."},{"q":"My goal is to _____.","a":"become financially independent","kr":"내 목표는 경제적 자유 이루는 거야.","en":"My goal is to become financially independent."},{"q":"My goal is to _____.","a":"live by the sea","kr":"내 목표는 바닷가에 사는 거야.","en":"My goal is to live by the sea."},{"q":"My goal is to _____.","a":"own a house","kr":"내 목표는 내 집 갖는 거야.","en":"My goal is to own a house."},{"q":"My goal is to _____.","a":"own a farm","kr":"내 목표는 농장(전원주택) 갖는 거야.","en":"My goal is to own a farm."},{"q":"My goal is to _____.","a":"build a well-known brand","kr":"내 목표는 유명한 브랜드 만드는 거야.","en":"My goal is to build a well-known brand."},{"q":"My goal is to _____.","a":"publish my own book","kr":"내 목표는 내 책 출판하는 거야.","en":"My goal is to publish my own book."},{"q":"My goal is to _____.","a":"retire early and enjoy life","kr":"내 목표는 일찍 은퇴해서 인생 즐기는 거야.","en":"My goal is to retire early and enjoy life."},{"q":"My goal is to _____.","a":"help people in need","kr":"내 목표는 도움이 필요한 사람들 돕는 거야.","en":"My goal is to help people in need."},{"q":"My goal is to _____.","a":"buy my parents a car","kr":"내 목표는 부모님께 차 사드리는 거야.","en":"My goal is to buy my parents a car."}],"frame":"My goal is to ~"},{"no":29,"items":[{"q":"I'm going to _____.","a":"sleep early tonight","kr":"나 오늘 일찍 잘 거야.","en":"I'm going to sleep early tonight."},{"q":"I'm going to _____.","a":"switch jobs","kr":"나 이직할 거야.","en":"I'm going to switch jobs."},{"q":"I'm going to _____.","a":"stay home tonight","kr":"나 오늘 집에 있을 거야.","en":"I'm going to stay home tonight."},{"q":"I'm going to _____.","a":"cook dinner","kr":"나 저녁 만들 거야.","en":"I'm going to cook dinner."},{"q":"I'm going to _____.","a":"take a walk","kr":"나 산책할 거야.","en":"I'm going to take a walk."},{"q":"I'm going to _____.","a":"call my mom","kr":"나 엄마한테 전화할 거야.","en":"I'm going to call my mom."},{"q":"I'm going to _____.","a":"exercise tomorrow","kr":"나 내일 운동할 거야.","en":"I'm going to exercise tomorrow."},{"q":"I'm going to _____.","a":"visit my parents","kr":"나 부모님 뵈러 갈 거야.","en":"I'm going to visit my parents."},{"q":"I'm going to _____.","a":"give it a try","kr":"나 한번 해볼 거야.","en":"I'm going to give it a try."},{"q":"I'm going to _____.","a":"quit smoking","kr":"나 담배 끊을 거야.","en":"I'm going to quit smoking."}],"frame":"I'm going to ~"},{"no":30,"items":[{"q":"I'll _____.","a":"send it","kr":"내가 보낼게.","en":"I'll send it."},{"q":"I'll _____.","a":"ask him","kr":"내가 그에게 물어볼게.","en":"I'll ask him."},{"q":"I'll _____.","a":"call you","kr":"내가 전화할게.","en":"I'll call you."},{"q":"I'll _____.","a":"help you","kr":"내가 도와줄게.","en":"I'll help you."},{"q":"I'll _____.","a":"check it","kr":"내가 확인해볼게.","en":"I'll check it."},{"q":"I'll _____.","a":"wait here","kr":"내가 여기서 기다릴게.","en":"I'll wait here."},{"q":"I'll _____.","a":"let you know","kr":"내가 알려줄게.","en":"I'll let you know."},{"q":"I'll _____.","a":"have the same","kr":"나도 같은 거 할게.","en":"I'll have the same."},{"q":"I'll _____.","a":"take care of it","kr":"내가 처리할게.","en":"I'll take care of it."},{"q":"I'll _____.","a":"be there in a minute","kr":"금방 갈게.","en":"I'll be there in a minute."}],"frame":"I'll ~"}];
+let sq = null;
+function startSQuiz(no){
+  const L = SENT_BANK[no-1];
+  sq = { no, items:L.items, order:vqShuffle(L.items.map((_,i)=>i)), i:0, score:0, answered:false };
+  $("sqTot").textContent = sq.items.length;
+  $("sqTag").textContent = "✍️ 문장 완성하기 · " + no + "강";
+  show("squiz");
+  sqQuestion();
+}
+function sqQuestion(){
+  sq.answered = false;
+  const it = sq.items[sq.order[sq.i]];
+  $("sqCur").textContent = sq.i + 1;
+  $("sqBar").style.width = (sq.i / sq.items.length * 100) + "%";
+  const others = vqShuffle(sq.items.filter((x)=>x.a!==it.a).map(x=>x.a)).slice(0,3);
+  const opts = vqShuffle([it.a, ...others]);
+  $("sqBody").innerHTML = `
+    <div class="vqword">
+      <div class="w" style="font-size:22px;line-height:1.5">${escapeHtml(it.q)}</div>
+      <div class="sub">${escapeHtml(it.kr)}</div>
+    </div>
+    <div class="options" id="sqOpts" style="margin-top:16px">
+      ${opts.map((o,k)=>`<button class="opt" type="button" data-a="${escapeHtml(o)}"><span class="key">${k+1}</span>${escapeHtml(o)}</button>`).join("")}
+    </div>
+    <button class="vqreveal" type="button" id="sqReveal">💡 정답 바로보기</button>
+    <div id="sqFb"></div>`;
+  $("sqOpts").addEventListener("click",(e)=>{
+    const opt = e.target.closest(".opt"); if(!opt || sq.answered) return; Sound.ensure();
+    sqResolve(opt.dataset.a === it.a ? "correct" : "wrong", opt);
+  });
+  $("sqReveal").onclick = ()=>{ if(!sq.answered) sqResolve("reveal"); };
+}
+function sqResolve(kind, clicked){
+  if(sq.answered) return;
+  sq.answered = true;
+  const it = sq.items[sq.order[sq.i]];
+  document.querySelectorAll("#sqOpts .opt").forEach(o=>{
+    if(o.dataset.a === it.a) o.classList.add("correct");
+    else if(o === clicked) o.classList.add("wrong");
+    else o.classList.add("dim");
+  });
+  let fb = "";
+  const full = `📌 ${escapeHtml(it.en)} — ${escapeHtml(it.kr)}`;
+  if(kind === "correct"){
+    sq.score++; addXP(5);
+    fb = `<div class="vqfb good">✅ 정답! (+5 XP)<br>${full}</div>`;
+  } else if(kind === "wrong"){
+    fb = `<div class="vqfb bad">❌ 아쉬워요! 정답은 '<b>${escapeHtml(it.a)}</b>'예요.<br>${full}</div>`;
+  } else {
+    fb = `<div class="vqfb info">💡 정답: <b>${escapeHtml(it.a)}</b><br>${full}</div>`;
+  }
+  const last = sq.i >= sq.items.length - 1;
+  $("sqFb").innerHTML = fb + `
+    <div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap">
+      <button class="vqreveal" type="button" id="sqSay" style="margin:14px 0 0">🔊 문장 듣기</button>
+      <button class="vqnext" type="button" id="sqNext" style="margin:14px 0 0">${last ? "🏁 결과 보기" : "다음 →"}</button>
+    </div>`;
+  $("sqSay").onclick = ()=> speakText(it.en);
+  $("sqNext").onclick = ()=>{ sq.i++; if(sq.i >= sq.items.length) sqFinish(); else sqQuestion(); };
+}
+function sqFinish(){
+  $("sqBar").style.width = "100%";
+  const n = sq.items.length;
+  const good = sq.score >= 8, mid = sq.score >= 5;
+  if(good){ Sound.fanfare && Sound.fanfare(); Confetti && Confetti.burst && Confetti.burst(140); }
+  $("sqBody").innerHTML = `
+    <div class="vqresult">
+      <div class="big">${good ? "🏆" : mid ? "💪" : "📖"}</div>
+      <div class="sc">${sq.score} / ${n} 정답</div>
+      <div class="msg2">${good ? "완벽해요! 이 프레임 문장을 다 익혔어요." : mid ? "잘했어요! 틀린 문장만 다시 확인해요." : "괜찮아요! 프레임 익히기에서 예문을 다시 듣고 도전해요."}</div>
+      <div class="btns2">
+        <button class="lbtn" type="button" id="sqAgain">🔁 다시 풀기</button>
+        <button class="lbtn" type="button" id="sqList">강 목록으로</button>
+      </div>
+    </div>`;
+  $("sqAgain").onclick = ()=> startSQuiz(sq.no);
+  $("sqList").onclick  = ()=> renderLessonHome("sent");
+}
+$("sqBack").onclick = ()=> renderLessonHome("sent");
+
+/* =========================================================
+   문장 쉐도잉 — 엑셀 예문 순차 드릴 (강별 10문장)
+   ========================================================= */
+let sh = null, shRecog = null, shRecognizing = false;
+function shStopRecog(){
+  try{ if(shRecog && shRecognizing) shRecog.stop(); }catch(e){}
+  shRecognizing = false; Sound.duck(false);
+  const b = document.getElementById("shMic"); if(b) b.classList.remove("rec");
+}
+function startShadow(no){
+  sh = { no, items: FRAME_BANK[no-1].items, i:0, scores:[] };
+  $("shTot").textContent = sh.items.length;
+  $("shTag").textContent = "🎤 문장 쉐도잉 · " + no + "강";
+  show("shadowPr");
+  shQuestion();
+}
+function shQuestion(){
+  shStopRecog();
+  const it = sh.items[sh.i];
+  $("shCur").textContent = sh.i + 1;
+  $("shBar").style.width = (sh.i / sh.items.length * 100) + "%";
+  const last = sh.i >= sh.items.length - 1;
+  $("shBody").innerHTML = `
+    <div class="vqword">
+      <div class="w" id="shSen" style="font-size:22px;line-height:1.5">${it.en.split(" ").map(w=>`<span class="w">${escapeHtml(w)}</span>`).join(" ")}</div>
+      <div class="sub">${escapeHtml(it.kr)}</div>
+    </div>
+    <div style="display:flex;gap:8px;justify-content:center;margin-top:16px;flex-wrap:wrap">
+      <button class="exbtn listen" type="button" id="shListen">🔊 듣기</button>
+      <button class="exbtn listen" type="button" id="shSlow">🐢 천천히</button>
+      <button class="exbtn mic" type="button" id="shMic">🎤 따라 말하기</button>
+    </div>
+    <div class="exfb hide" id="shFb" style="border-top:none;text-align:center"></div>
+    <div style="display:flex;justify-content:center" id="shNextWrap">
+      <button class="vqreveal" type="button" id="shSkip">${last ? "결과 보기 →" : "건너뛰기 →"}</button>
+    </div>`;
+  $("shListen").onclick = ()=>{ Sound.ensure(); speakText(it.en, 0.95); };
+  $("shSlow").onclick   = ()=>{ Sound.ensure(); speakText(it.en, 0.7); };
+  $("shMic").onclick    = ()=>{ Sound.ensure(); shRecord(); };
+  $("shSkip").onclick   = ()=> shNext();
+}
+function shRecord(){
+  const fb = $("shFb");
+  if(!SR){
+    fb.classList.remove("hide");
+    fb.innerHTML = `<div class="msg">😥 이 브라우저는 음성 인식을 지원하지 않아요. 크롬(Chrome)에서 열어주세요.</div>`;
+    return;
+  }
+  shStopRecog();
+  if(window.speechSynthesis) window.speechSynthesis.cancel();
+  shRecog = new SR();
+  shRecog.lang = "en-US"; shRecog.interimResults = false; shRecog.maxAlternatives = 5;
+  shRecog.onresult = (e)=>{ const alts=[...e.results[0]].map(r=>r.transcript); shEval(alts); };
+  shRecog.onerror  = ()=>{ shStopRecog(); fb.classList.remove("hide"); fb.innerHTML = `<div class="msg">인식하지 못했어요. 🎤 버튼을 누르고 다시 또렷하게 말해보세요.</div>`; };
+  shRecog.onend    = ()=>{ shRecognizing=false; Sound.duck(false); const b=document.getElementById("shMic"); if(b) b.classList.remove("rec"); };
+  try{
+    shRecog.start(); shRecognizing = true; Sound.duck(true);
+    $("shMic").classList.add("rec");
+    fb.classList.remove("hide");
+    fb.innerHTML = `<div class="msg">듣고 있어요... 🎙️ 문장을 말해보세요!</div>`;
+  }catch(err){}
+}
+function shEval(alts){
+  const it = sh.items[sh.i];
+  const targetWords = norm(it.en).split(" ").filter(Boolean);
+  let best = {ratio:-1, heardWords:[], raw:alts[0]||""};
+  alts.forEach(a=>{
+    const hw = norm(a).split(" ").filter(Boolean);
+    const pool = [...hw]; let m=0;
+    targetWords.forEach(w=>{ const k=pool.indexOf(w); if(k>=0){ m++; pool.splice(k,1); } });
+    const ratio = targetWords.length ? m/targetWords.length : 0;
+    if(ratio>best.ratio) best = {ratio, heardWords:hw, raw:a};
+  });
+  const acc = Math.round(best.ratio*100);
+  sh.scores[sh.i] = Math.max(sh.scores[sh.i]||0, acc);
+
+  const words = it.en.split(" ");
+  const pool = [...best.heardWords];
+  $("shSen").innerHTML = targetWords.map((w,k)=>{
+    const p = pool.indexOf(w); const ok = p>=0; if(ok) pool.splice(p,1);
+    return `<span class="w ${ok?'ok':'miss'}">${escapeHtml(words[k]||w)}</span>`;
+  }).join(" ");
+
+  const color = acc>=80 ? "#16a34a" : acc>=50 ? "#f59e0b" : "#ef4444";
+  let msg, xp = 0;
+  if(acc>=80){ msg = "🎉 훌륭해요! 원어민 발음과 거의 같아요."; xp = 10; }
+  else if(acc>=50){ msg = "👍 좋아요! <b>빨간 단어</b>만 🔊 다시 듣고 또박또박 발음해 보세요."; xp = 5; }
+  else { msg = "💪 다시 한번! 🐢 천천히 듣기로 들은 뒤 끊어서 따라해 보세요."; }
+  if(xp) addXP(xp);
+
+  const last = sh.i >= sh.items.length - 1;
+  const fb = $("shFb");
+  fb.classList.remove("hide");
+  fb.innerHTML = `
+    <div class="scoreline" style="justify-content:center">원어민 발음과 일치율 <span class="pct" style="color:${color}">${acc}%</span>${xp?` <span style="color:#d97706">+${xp} XP</span>`:""}</div>
+    <div class="heardline">내가 말한 것: "${escapeHtml(best.raw)}"</div>
+    <div class="msg">${msg}</div>`;
+  $("shNextWrap").innerHTML = `
+    <div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap">
+      <button class="vqreveal" type="button" id="shRetry" style="margin-top:14px">🎤 다시 말하기</button>
+      <button class="vqnext" type="button" id="shNextBtn" style="margin-top:14px">${last ? "🏁 결과 보기" : "다음 →"}</button>
+    </div>`;
+  $("shRetry").onclick   = ()=> shRecord();
+  $("shNextBtn").onclick = ()=> shNext();
+}
+function shNext(){
+  shStopRecog();
+  if(sh.i >= sh.items.length - 1){ shFinish(); return; }
+  sh.i++; shQuestion();
+}
+function shFinish(){
+  $("shBar").style.width = "100%";
+  const tried = sh.scores.filter(s=>s!==undefined);
+  const avg = tried.length ? Math.round(tried.reduce((a,b)=>a+b,0)/tried.length) : 0;
+  const good = tried.length >= 8 && avg >= 80;
+  if(good){ Sound.fanfare && Sound.fanfare(); Confetti && Confetti.burst && Confetti.burst(140); }
+  $("shBody").innerHTML = `
+    <div class="vqresult">
+      <div class="big">${good ? "🏆" : avg >= 50 ? "💪" : "🎧"}</div>
+      <div class="sc">${tried.length}문장 연습 · 평균 일치율 ${avg}%</div>
+      <div class="msg2">${good ? "완벽해요! 원어민처럼 말하고 있어요." : tried.length ? "잘했어요! 낮았던 문장만 다시 도전해 보세요." : "🎤 버튼으로 직접 말해봐야 실력이 늘어요!"}</div>
+      <div class="btns2">
+        <button class="lbtn" type="button" id="shAgain">🔁 다시 하기</button>
+        <button class="lbtn" type="button" id="shList">강 목록으로</button>
+      </div>
+    </div>`;
+  $("shAgain").onclick = ()=> startShadow(sh.no);
+  $("shList").onclick  = ()=> renderLessonHome("shadow");
+}
+$("shadowPrBack").onclick = ()=>{ shStopRecog(); renderLessonHome("shadow"); };
 
 /* ---------- 트랙별 징검다리 지도 ---------- */
 const ZIGZAG = [0, 1, 1, 0, -1, -1, 0, 1, 1, 0];   // 좌우 흔들림 패턴
@@ -1702,20 +1958,22 @@ function flashLocked(node){
 let curScreen = "langHome";
 function show(which){
   curScreen = which;
-  ["langHome","rootHome","courseHome","modeHome","learn","frameHome","framePr","vocabHome","vquiz","testHome","test","catHome","quiz","speak","trainer","result","testResult"].forEach(s=>$(s).classList.toggle("hide", s!==which));
+  ["langHome","rootHome","courseHome","modeHome","learn","frameHome","framePr","lessonHome","vquiz","squiz","shadowPr","testHome","test","catHome","quiz","speak","trainer","result","testResult"].forEach(s=>$(s).classList.toggle("hide", s!==which));
   $("bottomNav").classList.toggle("hide", which === "langHome");
 }
 
 /* ---------- 하단 내비게이션 (뒤로 / 홈) ---------- */
 const BACK_MAP = {
   rootHome:"rootBack", courseHome:"courseBack", modeHome:"modeBack", learn:"learnBack",
-  frameHome:"frameHomeBack", framePr:"framePrBack", vocabHome:"vocabHomeBack", vquiz:"vqBack",
+  frameHome:"frameHomeBack", framePr:"framePrBack", lessonHome:"lessonHomeBack", vquiz:"vqBack",
+  squiz:"sqBack", shadowPr:"shadowPrBack",
   testHome:"testBack", test:"testQuit", catHome:"catBack", quiz:"homeBtn",
   speak:"speakBack", trainer:"trainerBack", result:"backBtn", testResult:"trBack",
 };
 function navCleanup(){
   try{ if(typeof frStopRecog === "function") frStopRecog(); }catch(e){}
   try{ if(typeof vqStopTimer === "function") vqStopTimer(); }catch(e){}
+  try{ if(typeof shStopRecog === "function") shStopRecog(); }catch(e){}
   try{ stopRecog(); }catch(e){}
   try{ if(window.speechSynthesis) window.speechSynthesis.cancel(); }catch(e){}
 }
