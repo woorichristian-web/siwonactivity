@@ -43,7 +43,24 @@
   .hero{text-align:center;margin-bottom:18px}
   .hero h1{margin:0 0 6px;font-size:27px;font-weight:700;letter-spacing:-.4px}
   .hero p{margin:0;color:var(--muted);font-size:15px;line-height:1.5}
-  .cats{display:grid;grid-template-columns:1fr 1fr;gap:18px;margin-top:10px}
+  .cats{display:grid;grid-template-columns:1fr;gap:12px;margin-top:10px}
+  /* 루트 메뉴(#rootCats) 외의 .cat은 한 줄 가로형 버튼으로 */
+  .cats:not(#rootCats) .cat{
+    display:grid;grid-template-columns:54px 1fr auto;grid-template-areas:"ic t go" "ic d go";
+    column-gap:14px;row-gap:3px;align-items:center;text-align:left;padding:15px 18px;
+  }
+  .cats:not(#rootCats) .cat .ic{grid-area:ic;width:54px;height:54px;font-size:26px;margin:0;border-radius:14px}
+  .cats:not(#rootCats) .cat .t{grid-area:t;font-size:17px;align-self:end}
+  .cats:not(#rootCats) .cat .d{grid-area:d;font-size:12.5px;padding:0;align-self:start}
+  .cats:not(#rootCats) .cat .best{grid-area:go;margin:0;justify-self:end;white-space:nowrap}
+  .cats:not(#rootCats) .cat .lvdots{grid-area:d;justify-self:start}
+  .cats:not(#rootCats) .cat .t{white-space:nowrap}
+  @media(max-width:520px){
+    .cats:not(#rootCats) .cat{grid-template-columns:50px 1fr;grid-template-areas:"ic t" "ic d"}
+    .cats:not(#rootCats) .cat .ic{width:50px;height:50px;font-size:24px}
+    .cats:not(#rootCats) .cat .best{display:none}
+    .cats:not(#rootCats) .cat .t{white-space:normal}
+  }
   .cat{
     position:relative;border:1px solid rgba(255,255,255,.14);border-radius:18px;padding:26px 18px 22px;cursor:pointer;
     color:#fff;text-align:center;display:flex;flex-direction:column;align-items:center;gap:8px;
