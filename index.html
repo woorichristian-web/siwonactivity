@@ -535,10 +535,10 @@
   <section id="lessonHome" class="card hide">
     <div class="topbar">
       <button class="iconbtn" id="lessonHomeBack" title="뒤로">←</button>
-      <div class="qtag" id="lhTag" style="margin:0">🧠 어휘 암기</div>
+      <div class="qtag" id="lhTag" style="margin:0">🧠 어휘 학습</div>
     </div>
     <div class="hero" style="margin-top:6px">
-      <h1 id="lhTitle">어휘 암기</h1>
+      <h1 id="lhTitle">어휘 학습</h1>
       <p id="lhDesc">강을 골라 시작하세요.</p>
     </div>
     <div class="courselist" id="lessonRows"></div>
@@ -1285,14 +1285,14 @@ const COURSE_ACTIVITIES = {
   "richard-speak1": [
     { key:"frame",  name:"프레임 익히기", icon:"🧩", desc:"프레임 30개 — 예문 10개씩 듣고 따라 말하기",
       c1:"#0ea5e9", c2:"#0369a1", go:()=> renderFrameHome() },
+    { key:"memo",   name:"어휘 학습", icon:"🧠", desc:"강별 단어 10개 플래시카드 학습",
+      c1:"#059669", c2:"#047857", go:()=> renderLessonHome("memo") },
+    { key:"vquiz",  name:"어휘 퀴즈", icon:"📚", desc:"강별 단어 10개 — 5초 스피드 퀴즈",
+      c1:"#d97706", c2:"#b45309", go:()=> renderLessonHome("quiz") },
     { key:"sent",   name:"문장 완성하기", icon:"✍️", desc:"강별 예문 10개 — 빈칸에 알맞은 말 고르기",
       c1:"#4f46e5", c2:"#4338ca", go:()=> renderLessonHome("sent") },
     { key:"shadow", name:"문장 쉐도잉", icon:"🎤", desc:"강별 예문 10개 — 따라 말하며 발음 비교",
       c1:"#e11d48", c2:"#be123c", go:()=> renderLessonHome("shadow") },
-    { key:"memo",   name:"어휘 암기", icon:"🧠", desc:"강별 단어 10개 플래시카드 암기",
-      c1:"#059669", c2:"#047857", go:()=> renderLessonHome("memo") },
-    { key:"vquiz",  name:"어휘 퀴즈", icon:"📚", desc:"강별 단어 10개 — 5초 스피드 퀴즈",
-      c1:"#d97706", c2:"#b45309", go:()=> renderLessonHome("quiz") },
   ],
 };
 
@@ -1539,7 +1539,7 @@ const LESSON_MODES = {
            info:"예문 10개 · 빈칸 채우기", color:["#4f46e5","#4338ca"], pick:(n)=> startSQuiz(n) },
   shadow:{ tag:"🎤 문장 쉐도잉", title:"문장 쉐도잉", desc:"강을 골라 예문 10개를 원어민처럼 따라 말해보세요.",
            info:"예문 10개 · 발음 비교", color:["#e11d48","#be123c"], pick:(n)=> startShadow(n) },
-  memo:  { tag:"🧠 어휘 암기", title:"어휘 암기", desc:"강을 골라 단어 10개를 익히고, 마지막에 퀴즈로 확인해요.",
+  memo:  { tag:"🧠 어휘 학습", title:"어휘 학습", desc:"강을 골라 단어 10개를 익히고, 마지막에 퀴즈로 확인해요.",
            info:"단어 10개 암기 → 5초 스피드 퀴즈", color:["#059669","#047857"], pick:(n)=> startVocabLesson(n) },
   quiz:  { tag:"📚 어휘 퀴즈", title:"어휘 퀴즈", desc:"강을 골라 단어 10개를 5초 스피드 퀴즈로 확인해요.",
            info:"단어 10개 · 5초 스피드 퀴즈", color:["#d97706","#b45309"], pick:(n)=> startVQuiz(n) },
@@ -1575,7 +1575,7 @@ $("lessonHomeBack").onclick = ()=> renderModeHome();
 function startVocabLesson(no){
   const L = VOCAB_BANK[no-1];
   renderLearnDeck({
-    tag:"🧠 어휘 암기 · "+no+"강",
+    tag:"🧠 어휘 학습 · "+no+"강",
     title: no+"강 어휘 — "+L.frame,
     desc:"카드를 눌러 뜻을 확인하고, 발음을 들어보세요. 마지막 카드 다음엔 퀴즈!",
     items: L.words.map(w=>({en:w.en, kr:w.kr, ex:[[w.exEn, w.exKr]]})),
