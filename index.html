@@ -489,8 +489,8 @@
 <div class="app">
   <div class="hud">
     <div class="brand"><span class="logo" id="brandLogo">🌏</span> <span id="brandName">SiwonXAI Language Game Center</span></div>
-    <div class="chip xp">⭐ <span id="xp">0</span> XP</div>
-    <div class="chip streak">🔥 <span id="streak">0</span></div>
+    <div class="chip xp hide" id="chipXp">⭐ <span id="xp">0</span> XP</div>
+    <div class="chip streak hide" id="chipStreak">🔥 <span id="streak">0</span></div>
     <button class="soundbtn" id="soundBtn" title="소리 켜기/끄기">🔊</button>
   </div>
 
@@ -511,23 +511,23 @@
       <div class="qtag" style="margin:0">🇺🇸 English</div>
     </div>
     <div class="hero" style="margin-top:6px">
-      <h1>English Quest</h1>
-      <p>퀘스트로 즐기며 배우거나,<br>실전 테스트로 내 레벨을 진단해요.</p>
+      <h1>Siwon AI Activities</h1>
+      <p>복습 · 퀘스트 · 트레이너봇으로<br>즐겁게 학습해요.</p>
     </div>
     <div class="cats" id="rootCats">
-      <button class="cat" type="button" data-root="quest" style="--c1:#4f46e5;--c2:#4338ca">
-        <div class="ic">🎮</div><div class="t">Quest</div>
-        <div class="d">징검다리 10단계로 게임처럼 학습</div>
-        <div class="best">시작하기 →</div>
+      <button class="cat" type="button" data-root="course" style="--c1:#4f46e5;--c2:#4338ca">
+        <div class="ic">📚</div><div class="t">Course Review</div>
+        <div class="d">수업 내용을 복습하세요.</div>
+        <div class="best">복습 시작 →</div>
       </button>
-      <button class="cat" type="button" data-root="test" style="--c1:#7c3aed;--c2:#6d28d9">
-        <div class="ic">📋</div><div class="t">Test</div>
-        <div class="d">실전 배치고사로 내 레벨 진단</div>
-        <div class="best">레벨 진단 →</div>
+      <button class="cat" type="button" data-root="quest10" style="--c1:#7c3aed;--c2:#6d28d9">
+        <div class="ic">🎮</div><div class="t">Quest</div>
+        <div class="d">10단계 레벨을 정복해보세요!</div>
+        <div class="best">도전하기 →</div>
       </button>
       <button class="cat" type="button" data-root="trainer" style="--c1:#0ea5e9;--c2:#0369a1">
-        <div class="ic">🤖</div><div class="t">트레이너봇</div>
-        <div class="d">따라 말하기(쉐도잉) · 발음·문법 즉시 교정</div>
+        <div class="ic">🤖</div><div class="t">Trainer Bot</div>
+        <div class="d">챗봇을 따라 무한 말하기 연습을 해보세요!</div>
         <div class="best">대화 시작 →</div>
       </button>
     </div>
@@ -821,7 +821,7 @@
     <button class="bn home" type="button" id="bnHome">🏠 홈으로</button>
   </div>
 
-  <div class="footer" id="footer">English Quest · 문법 · 어휘 · 듣기 · 말하기</div>
+  <div class="footer" id="footer">Siwon Language Game Center</div>
 </div>
 <canvas id="confettiCanvas"></canvas>
 <div class="toast" id="toast"></div>
@@ -1346,6 +1346,7 @@ const COURSES = [
 ];
 let curCourse = COURSES[0];
 function renderCourseHome(){
+  questMode = false; setChips(false); Sound.stopBGM();
   const wrap = $("courses");
   if(!wrap.childElementCount){
     COURSES.forEach(c=>{
@@ -1367,6 +1368,7 @@ function renderCourseHome(){
 $("courses").addEventListener("click",(e)=>{
   const btn = e.target.closest(".course"); if(!btn) return; Sound.ensure();
   curCourse = COURSES.find(c=>c.id===btn.dataset.course) || COURSES[0];
+  questMode = false; setChips(false);
   renderModeHome();
 });
 
@@ -1392,12 +1394,12 @@ const COURSE_ACTIVITIES = {
    상위 모드(트랙) 홈
    ========================================================= */
 function renderModeHome(){
-  $("modeCourseTitle").textContent = curCourse ? curCourse.name : "퀘스트";
+  $("modeCourseTitle").textContent = curCourse ? curCourse.name : "Quest";
   const wrap = $("modes"); wrap.innerHTML = "";
   const acts = curCourse && COURSE_ACTIVITIES[curCourse.id];
   $("modeCourseDesc").textContent = acts
     ? "학습할 액티비티를 선택하세요."
-    : "문법 · 어휘 · 듣기 · 말하기를 게임처럼 학습해요.";
+    : "문법 · 어휘 · 듣기 · 말하기 — 10단계 징검다리를 정복해보세요!";
   if(acts){
     wrap.className = "courselist";
     acts.forEach(a=>{
@@ -2987,9 +2989,12 @@ function showToast(msg){
   toastTimer = setTimeout(()=> t.classList.remove("on"), 1800);
 }
 function setBrand(logo, name){ $("brandLogo").textContent=logo; $("brandName").textContent=name; }
+function setChips(v){ $("chipXp").classList.toggle("hide", !v); $("chipStreak").classList.toggle("hide", !v); }
+let questMode = false;
 function renderLangHome(){
   Sound.stopBGM();
-  setBrand("🌏","SiwonXAI Language Game Center");
+  setChips(false);
+  setBrand("🌏","Siwon Language Game Center");
   const wrap=$("langs");
   if(!wrap.childElementCount){
     LANGS.forEach(l=>{
@@ -3012,16 +3017,17 @@ $("langs").addEventListener("click",(e)=>{
 });
 
 /* ---------- 루트 메뉴 (Quest / Test) ---------- */
-function renderRootHome(){ Sound.startBGM(); setBrand("🚀","English Quest"); show("rootHome"); }
+function renderRootHome(){ Sound.stopBGM(); setChips(false); setBrand("🌏","Siwon Language Game Center"); show("rootHome"); }
+function renderQuestTracks(){ questMode = true; curCourse = null; setChips(true); renderModeHome(); }
 $("rootCats").addEventListener("click",(e)=>{
   const card=e.target.closest(".cat"); if(!card) return; Sound.ensure();
-  if(card.dataset.root==="quest") renderCourseHome();
-  else if(card.dataset.root==="test") renderTestHome();
+  if(card.dataset.root==="course") renderCourseHome();
+  else if(card.dataset.root==="quest10") renderQuestTracks();
   else if(card.dataset.root==="trainer") renderTrainerHome();
 });
 $("rootBack").onclick = ()=>{ resetStreak(); renderLangHome(); };
 $("courseBack").onclick = ()=>{ resetStreak(); renderRootHome(); };
-$("modeBack").onclick = ()=>{ resetStreak(); renderCourseHome(); };
+$("modeBack").onclick = ()=>{ resetStreak(); if(questMode) renderRootHome(); else renderCourseHome(); };
 $("testBack").onclick = ()=>{ resetStreak(); renderRootHome(); };
 
 /* ---------- 테스트 영역 선택 ---------- */
