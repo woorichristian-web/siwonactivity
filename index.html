@@ -254,31 +254,37 @@
   @media(max-width:600px){ .langs{grid-template-columns:repeat(3,1fr)} }
   @media(max-width:420px){ .langs{grid-template-columns:repeat(2,1fr)} }
   .lang{
-    position:relative;border:1px solid var(--line);border-radius:16px;padding:16px 8px 14px;cursor:pointer;
-    background:var(--soft);color:var(--ink);text-align:center;
+    position:relative;border:none;border-radius:16px;padding:16px 8px 14px;cursor:pointer;
+    color:#fff;text-align:center;
+    background:linear-gradient(155deg,var(--c1,#64748b),var(--c2,#475569));
     display:flex;flex-direction:column;align-items:center;gap:5px;
-    transition:transform .15s ease, box-shadow .15s ease, border-color .15s ease, background .15s ease;
+    box-shadow:0 12px 26px -14px rgba(2,6,23,.55);
+    transition:transform .15s ease, box-shadow .15s ease, filter .15s ease;
     user-select:none;-webkit-user-select:none;font-family:inherit;
   }
   .lang .flag{font-size:30px;line-height:1}
-  .lang .nm{font-weight:700;font-size:14.5px;letter-spacing:-.2px}
-  .lang .kr{font-size:11.5px;color:var(--muted);font-weight:500}
-  .lang:hover{transform:translateY(-3px);box-shadow:0 14px 26px -16px rgba(2,6,23,.35);border-color:#c7d2fe;background:#fff}
+  .lang .nm{font-weight:800;font-size:14.5px;letter-spacing:-.2px}
+  .lang .kr{font-size:11.5px;color:rgba(255,255,255,.85);font-weight:500}
+  .lang:hover{transform:translateY(-3px);box-shadow:0 18px 32px -14px rgba(2,6,23,.6);filter:brightness(1.06)}
   .lang:active{transform:translateY(0)}
-  .lang.ready{
-    background:linear-gradient(155deg,var(--blue),var(--blue-d));color:#fff;border-color:transparent;
-    box-shadow:0 14px 30px -16px rgba(2,6,23,.55);
-  }
-  .lang.ready .kr{color:rgba(255,255,255,.8)}
-  .lang.ready:hover{filter:brightness(1.06)}
-  .lang.soon .flag,.lang.soon .nm{opacity:.55}
+  .lang.soon .flag,.lang.soon .nm,.lang.soon .kr{opacity:.9}
   .lang .badge{
-    position:absolute;top:8px;right:8px;font-size:9.5px;font-weight:700;letter-spacing:.2px;
-    padding:2px 7px;border-radius:99px;background:#e2e8f0;color:#64748b;
+    position:absolute;top:8px;right:8px;font-size:9.5px;font-weight:800;letter-spacing:.2px;
+    padding:2px 7px;border-radius:99px;background:rgba(255,255,255,.22);color:#fff;
+    border:1px solid rgba(255,255,255,.25);
   }
-  .lang.ready .badge{background:rgba(255,255,255,.22);color:#fff}
   @keyframes langShake{0%,100%{transform:translateX(0)}25%{transform:translateX(-5px)}75%{transform:translateX(5px)}}
   .lang.shake{animation:langShake .3s ease 2}
+
+  /* ===== 토스트 메시지 ===== */
+  .toast{
+    position:fixed;left:50%;bottom:90px;transform:translateX(-50%) translateY(20px);
+    background:rgba(15,23,42,.94);color:#fff;font-weight:700;font-size:14.5px;
+    padding:13px 24px;border-radius:99px;box-shadow:0 18px 40px -12px rgba(2,6,23,.7);
+    opacity:0;pointer-events:none;transition:opacity .25s ease, transform .25s ease;z-index:99;
+    border:1px solid rgba(255,255,255,.14);white-space:nowrap;
+  }
+  .toast.on{opacity:1;transform:translateX(-50%) translateY(0)}
 
   /* ===== Quiz ===== */
   .topbar{display:flex;align-items:center;gap:12px;margin-bottom:16px}
@@ -801,6 +807,7 @@
   <div class="footer" id="footer">English Quest · 문법 · 어휘 · 듣기 · 말하기</div>
 </div>
 <canvas id="confettiCanvas"></canvas>
+<div class="toast" id="toast"></div>
 
 <script>
 /* =========================================================
@@ -2941,19 +2948,27 @@ const TESTS = {
 
 /* ---------- 언어 선택 (SiwonXAI Language Game Center) ---------- */
 const LANGS = [
-  { code:"en", native:"English",          kr:"영어",       flag:"🇺🇸", ready:true  },
-  { code:"zh", native:"中文",              kr:"중국어",     flag:"🇨🇳", ready:false },
-  { code:"ja", native:"日本語",            kr:"일본어",     flag:"🇯🇵", ready:false },
-  { code:"vi", native:"Tiếng Việt",       kr:"베트남어",   flag:"🇻🇳", ready:false },
-  { code:"es", native:"Español",          kr:"스페인어",   flag:"🇪🇸", ready:false },
-  { code:"fr", native:"Français",         kr:"프랑스어",   flag:"🇫🇷", ready:false },
-  { code:"de", native:"Deutsch",          kr:"독일어",     flag:"🇩🇪", ready:false },
-  { code:"ru", native:"Русский",          kr:"러시아어",   flag:"🇷🇺", ready:false },
-  { code:"th", native:"ภาษาไทย",          kr:"태국어",     flag:"🇹🇭", ready:false },
-  { code:"id", native:"Bahasa Indonesia", kr:"인도네시아어", flag:"🇮🇩", ready:false },
-  { code:"ar", native:"العربية",          kr:"아랍어",     flag:"🇸🇦", ready:false },
-  { code:"ko", native:"한국어",            kr:"한국어",     flag:"🇰🇷", ready:false },
+  { code:"en", native:"English",          kr:"영어",        flag:"🇺🇸", ready:true,  c1:"#4f46e5", c2:"#4338ca" },
+  { code:"zh", native:"中文",              kr:"중국어",      flag:"🇨🇳", ready:false, c1:"#ef4444", c2:"#b91c1c" },
+  { code:"ja", native:"日本語",            kr:"일본어",      flag:"🇯🇵", ready:false, c1:"#f472b6", c2:"#db2777" },
+  { code:"vi", native:"Tiếng Việt",       kr:"베트남어",    flag:"🇻🇳", ready:false, c1:"#f59e0b", c2:"#b45309" },
+  { code:"es", native:"Español",          kr:"스페인어",    flag:"🇪🇸", ready:false, c1:"#f97316", c2:"#c2410c" },
+  { code:"fr", native:"Français",         kr:"프랑스어",    flag:"🇫🇷", ready:false, c1:"#3b82f6", c2:"#1d4ed8" },
+  { code:"de", native:"Deutsch",          kr:"독일어",      flag:"🇩🇪", ready:false, c1:"#eab308", c2:"#a16207" },
+  { code:"ru", native:"Русский",          kr:"러시아어",    flag:"🇷🇺", ready:false, c1:"#0ea5e9", c2:"#0369a1" },
+  { code:"th", native:"ภาษาไทย",          kr:"태국어",      flag:"🇹🇭", ready:false, c1:"#8b5cf6", c2:"#6d28d9" },
+  { code:"id", native:"Bahasa Indonesia", kr:"인도네시아어", flag:"🇮🇩", ready:false, c1:"#14b8a6", c2:"#0f766e" },
+  { code:"ar", native:"العربية",          kr:"아랍어",      flag:"🇸🇦", ready:false, c1:"#22c55e", c2:"#15803d" },
+  { code:"ko", native:"한국어",            kr:"한국어",      flag:"🇰🇷", ready:false, c1:"#06b6d4", c2:"#0e7490" },
 ];
+let toastTimer = null;
+function showToast(msg){
+  const t = $("toast");
+  t.textContent = msg;
+  t.classList.add("on");
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(()=> t.classList.remove("on"), 1800);
+}
 function setBrand(logo, name){ $("brandLogo").textContent=logo; $("brandName").textContent=name; }
 function renderLangHome(){
   Sound.stopBGM();
@@ -2963,6 +2978,7 @@ function renderLangHome(){
     LANGS.forEach(l=>{
       const el=document.createElement("button");
       el.className="lang "+(l.ready?"ready":"soon"); el.type="button"; el.dataset.lang=l.code;
+      el.style.setProperty("--c1", l.c1); el.style.setProperty("--c2", l.c2);
       el.innerHTML=`<span class="badge">${l.ready?"OPEN":"준비 중"}</span>
         <span class="flag">${l.flag}</span><span class="nm">${l.native}</span><span class="kr">${l.kr}</span>`;
       wrap.appendChild(el);
@@ -2975,8 +2991,7 @@ $("langs").addEventListener("click",(e)=>{
   const lang=LANGS.find(l=>l.code===btn.dataset.lang); if(!lang) return;
   if(lang.ready){ renderRootHome(); return; }
   btn.classList.remove("shake"); void btn.offsetWidth; btn.classList.add("shake");
-  const badge=btn.querySelector(".badge"); const prev=badge.textContent;
-  badge.textContent="곧 만나요!"; setTimeout(()=>{ badge.textContent=prev; }, 1200);
+  showToast(`🚧 ${lang.kr}는 준비중입니다`);
 });
 
 /* ---------- 루트 메뉴 (Quest / Test) ---------- */
