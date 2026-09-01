@@ -162,6 +162,12 @@
   .swipecard.inR{animation:slideInR .22s ease}
   .swipecard.inL{animation:slideInL .22s ease}
   .swipehint{text-align:center;color:var(--muted);font-size:12.5px;margin:10px 0 0}
+  /* 기기별 안내: 터치 기기는 스와이프, PC는 버튼·키보드 */
+  .hint-touch{display:none}
+  @media (hover:none) and (pointer:coarse){
+    .hint-touch{display:block}
+    .hint-mouse{display:none}
+  }
   #frSen .w{font-size:inherit;font-weight:inherit}
   #frSen .w.ok{color:#16a34a}
   #frSen .w.miss{color:#ef4444;text-decoration:underline;text-decoration-style:dotted}
@@ -556,7 +562,8 @@
     <div class="swipewrap" id="frSwipe">
       <div class="exrow swipecard" id="frCard" style="text-align:center;padding:22px 18px"></div>
     </div>
-    <p class="swipehint">👈 카드를 옆으로 밀거나(스와이프) 버튼으로 넘겨보세요 👉</p>
+    <p class="swipehint hint-touch">👈 카드를 옆으로 밀어(스와이프) 넘겨보세요 👉</p>
+    <p class="swipehint hint-mouse">버튼 또는 키보드 ←/→ 키로 카드를 넘겨보세요</p>
   </section>
 
   <!-- ============ LESSON HOME (강 선택 · 공용) ============ -->
