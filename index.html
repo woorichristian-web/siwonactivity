@@ -154,6 +154,18 @@
   }
   .frgoal b{font-size:15px}
 
+  /* ===== 프레임 연습 스와이프 카드 ===== */
+  .swipewrap{touch-action:pan-y;margin-top:14px}
+  .swipecard{user-select:none;-webkit-user-select:none}
+  @keyframes slideInR{from{transform:translateX(70px);opacity:0}to{transform:none;opacity:1}}
+  @keyframes slideInL{from{transform:translateX(-70px);opacity:0}to{transform:none;opacity:1}}
+  .swipecard.inR{animation:slideInR .22s ease}
+  .swipecard.inL{animation:slideInL .22s ease}
+  .swipehint{text-align:center;color:var(--muted);font-size:12.5px;margin:10px 0 0}
+  #frSen .w{font-size:inherit;font-weight:inherit}
+  #frSen .w.ok{color:#16a34a}
+  #frSen .w.miss{color:#ef4444;text-decoration:underline;text-decoration-style:dotted}
+
   /* ===== 쉐도잉 드릴 문장 단어 색칠 ===== */
   #shSen .w{font-size:inherit;font-weight:inherit}
   #shSen .w.ok{color:#16a34a}
@@ -536,7 +548,15 @@
       <p id="frRep"></p>
     </div>
     <div class="frgoal" id="frGoal"></div>
-    <div class="exlist" id="frExs"></div>
+    <div class="lctrl" style="margin:14px 0 0">
+      <button class="lbtn" id="frPrev">← 이전</button>
+      <div class="lcount"><span id="frCur">1</span>/<span id="frTot">10</span></div>
+      <button class="lbtn" id="frNext">다음 →</button>
+    </div>
+    <div class="swipewrap" id="frSwipe">
+      <div class="exrow swipecard" id="frCard" style="text-align:center;padding:22px 18px"></div>
+    </div>
+    <p class="swipehint">👈 카드를 옆으로 밀거나(스와이프) 버튼으로 넘겨보세요 👉</p>
   </section>
 
   <!-- ============ LESSON HOME (강 선택 · 공용) ============ -->
@@ -1455,42 +1475,74 @@ let frCur = null, frRecog = null, frRecognizing = false;
 function frStopRecog(){
   try{ if(frRecog && frRecognizing) frRecog.stop(); }catch(e){}
   frRecognizing = false; Sound.duck(false);
-  document.querySelectorAll("#frExs .exbtn.mic.rec").forEach(b=>b.classList.remove("rec"));
+  const b = document.getElementById("frMic"); if(b) b.classList.remove("rec");
 }
 function renderFramePr(no){
   frCur = FRAME_BANK[no-1];
+  frIdx = 0;
   $("frTag").textContent = "🧩 프레임 " + no;
   $("frTitle").textContent = frCur.frame;
   $("frRep").innerHTML = frCur.repEn
     ? `대표문장: <b>${escapeHtml(frCur.repEn)}</b> ${frCur.repKr?"("+escapeHtml(frCur.repKr)+")":""}`
     : "";
-  $("frGoal").innerHTML = `<b>🎯 ${escapeHtml(frCur.goal||"프레임 연습")}</b><br>각 문장을 🔊 듣고, 🎤 버튼을 눌러 따라 말해보세요. 원어민 발음과 얼마나 비슷한지 비교해 드려요.`;
-  const wrap = $("frExs"); wrap.innerHTML = "";
-  frCur.items.forEach((it, i)=>{
-    const row = document.createElement("div");
-    row.className = "exrow"; row.dataset.idx = i;
-    row.innerHTML = `
-      <div class="sen" id="frSen${i}">${it.en.split(" ").map(w=>`<span class="w">${escapeHtml(w)}</span>`).join(" ")}</div>
-      <div class="krline">${escapeHtml(it.kr)}</div>
-      <div class="btns">
-        <button class="exbtn listen" type="button" data-i="${i}">🔊 듣기</button>
-        <button class="exbtn listen slow" type="button" data-i="${i}">🐢 천천히</button>
-        <button class="exbtn mic" type="button" data-i="${i}">🎤 따라 말하기</button>
-      </div>
-      <div class="exfb hide" id="frFb${i}"></div>`;
-    wrap.appendChild(row);
-  });
+  $("frGoal").innerHTML = `<b>🎯 ${escapeHtml(frCur.goal||"프레임 연습")}</b><br>🔊 듣고 → 🎤 따라 말하고 → 옆으로 밀어 다음 문장으로!`;
+  $("frTot").textContent = frCur.items.length;
+  frShowCard(0);
   show("framePr");
 }
-$("frExs").addEventListener("click",(e)=>{
-  const btn = e.target.closest(".exbtn"); if(!btn) return; Sound.ensure();
-  const i = parseInt(btn.dataset.i,10);
-  const it = frCur.items[i];
-  if(btn.classList.contains("listen")){ speakText(it.en, btn.classList.contains("slow") ? 0.7 : 0.95); return; }
-  if(btn.classList.contains("mic")) frRecord(i, btn);
+let frIdx = 0;
+function frShowCard(dir){
+  frStopRecog();
+  if(window.speechSynthesis) window.speechSynthesis.cancel();
+  const it = frCur.items[frIdx];
+  $("frCur").textContent = frIdx + 1;
+  $("frPrev").disabled = frIdx === 0;
+  $("frNext").textContent = frIdx === frCur.items.length-1 ? "처음으로 ↻" : "다음 →";
+  const card = $("frCard");
+  card.classList.remove("inR","inL"); void card.offsetWidth;
+  if(dir === 1) card.classList.add("inR");
+  else if(dir === -1) card.classList.add("inL");
+  card.innerHTML = `
+    <div class="sen" id="frSen" style="font-size:21px;font-weight:700;line-height:1.5">${it.en.split(" ").map(w=>`<span class="w">${escapeHtml(w)}</span>`).join(" ")}</div>
+    <div class="krline" style="font-size:14px;margin-top:6px">${escapeHtml(it.kr)}</div>
+    <div class="btns" style="justify-content:center;margin-top:14px">
+      <button class="exbtn listen" type="button" id="frListen">🔊 듣기</button>
+      <button class="exbtn listen" type="button" id="frSlow">🐢 천천히</button>
+      <button class="exbtn mic" type="button" id="frMic">🎤 따라 말하기</button>
+    </div>
+    <div class="exfb hide" id="frFb" style="text-align:center"></div>`;
+  $("frListen").onclick = ()=>{ Sound.ensure(); speakText(it.en, 0.95); };
+  $("frSlow").onclick   = ()=>{ Sound.ensure(); speakText(it.en, 0.7); };
+  $("frMic").onclick    = ()=>{ Sound.ensure(); frRecord(); };
+}
+function frNextCard(){ frIdx = (frIdx + 1) % frCur.items.length; frShowCard(1); }
+function frPrevCard(){ if(frIdx === 0) return; frIdx--; frShowCard(-1); }
+$("frNext").onclick = ()=> frNextCard();
+$("frPrev").onclick = ()=> frPrevCard();
+
+/* 스와이프 (터치·마우스 드래그) */
+(function(){
+  let sx = null, sy = null;
+  const wrap = $("frSwipe");
+  wrap.addEventListener("pointerdown",(e)=>{ sx = e.clientX; sy = e.clientY; });
+  wrap.addEventListener("pointerup",(e)=>{
+    if(sx === null) return;
+    const dx = e.clientX - sx, dy = e.clientY - sy;
+    sx = sy = null;
+    if(Math.abs(dx) < 60 || Math.abs(dx) < Math.abs(dy)*1.2) return;   // 클릭·세로 스크롤은 무시
+    if(dx < 0) frNextCard(); else frPrevCard();
+  });
+  wrap.addEventListener("pointercancel",()=>{ sx = sy = null; });
+})();
+/* 키보드 ←/→ */
+document.addEventListener("keydown",(e)=>{
+  if(curScreen !== "framePr") return;
+  if(e.key === "ArrowRight") frNextCard();
+  else if(e.key === "ArrowLeft") frPrevCard();
 });
-function frRecord(i, btn){
-  const fb = $("frFb"+i);
+
+function frRecord(){
+  const fb = $("frFb");
   if(!SR){
     fb.classList.remove("hide");
     fb.innerHTML = `<div class="msg">😥 이 브라우저는 음성 인식을 지원하지 않아요. 크롬(Chrome)에서 열어주세요.</div>`;
@@ -1498,11 +1550,12 @@ function frRecord(i, btn){
   }
   frStopRecog();
   if(window.speechSynthesis) window.speechSynthesis.cancel();
+  const btn = $("frMic");
   frRecog = new SR();
   frRecog.lang = "en-US"; frRecog.interimResults = false; frRecog.maxAlternatives = 5;
-  frRecog.onresult = (e)=>{ const alts=[...e.results[0]].map(r=>r.transcript); frEval(i, alts); };
+  frRecog.onresult = (e)=>{ const alts=[...e.results[0]].map(r=>r.transcript); frEval(alts); };
   frRecog.onerror  = ()=>{ frStopRecog(); fb.classList.remove("hide"); fb.innerHTML = `<div class="msg">인식하지 못했어요. 🎤 버튼을 누르고 다시 또렷하게 말해보세요.</div>`; };
-  frRecog.onend    = ()=>{ frRecognizing=false; Sound.duck(false); btn.classList.remove("rec"); };
+  frRecog.onend    = ()=>{ frRecognizing=false; Sound.duck(false); const b=document.getElementById("frMic"); if(b) b.classList.remove("rec"); };
   try{
     frRecog.start(); frRecognizing = true; Sound.duck(true);
     btn.classList.add("rec");
@@ -1510,8 +1563,8 @@ function frRecord(i, btn){
     fb.innerHTML = `<div class="msg">듣고 있어요... 🎙️ 문장을 말해보세요!</div>`;
   }catch(err){}
 }
-function frEval(i, alts){
-  const it = frCur.items[i];
+function frEval(alts){
+  const it = frCur.items[frIdx];
   const targetWords = norm(it.en).split(" ").filter(Boolean);
   let best = {ratio:-1, heardWords:[], raw:alts[0]||""};
   alts.forEach(a=>{
@@ -1523,26 +1576,25 @@ function frEval(i, alts){
   });
   const acc = Math.round(best.ratio*100);
 
-  // 문장 단어별 색칠 (맞음: 초록 / 놓침: 빨강)
   const words = it.en.split(" ");
   const pool = [...best.heardWords];
-  $("frSen"+i).innerHTML = targetWords.map((w,k)=>{
+  $("frSen").innerHTML = targetWords.map((w,k)=>{
     const p = pool.indexOf(w); const ok = p>=0; if(ok) pool.splice(p,1);
     return `<span class="w ${ok?'ok':'miss'}">${escapeHtml(words[k]||w)}</span>`;
   }).join(" ");
 
   const color = acc>=80 ? "#16a34a" : acc>=50 ? "#f59e0b" : "#ef4444";
   let msg, xp = 0;
-  if(acc>=80){ msg = "🎉 훌륭해요! 원어민 발음과 거의 같아요."; xp = 10; }
+  if(acc>=80){ msg = "🎉 훌륭해요! 옆으로 밀어 다음 문장으로 가세요 👉"; xp = 10; }
   else if(acc>=50){ msg = "👍 좋아요! <b>빨간 단어</b>만 🔊 다시 듣고 또박또박 발음해 보세요."; xp = 5; }
   else { msg = "💪 다시 한번! 🐢 천천히 듣기로 들은 뒤 끊어서 따라해 보세요."; }
   if(xp) addXP(xp);
 
   markDone("frame", frCur.no);
-  const fb = $("frFb"+i);
+  const fb = $("frFb");
   fb.classList.remove("hide");
   fb.innerHTML = `
-    <div class="scoreline">원어민 발음과 일치율 <span class="pct" style="color:${color}">${acc}%</span>${xp?` <span style="color:#d97706">+${xp} XP</span>`:""}</div>
+    <div class="scoreline" style="justify-content:center">원어민 발음과 일치율 <span class="pct" style="color:${color}">${acc}%</span>${xp?` <span style="color:#d97706">+${xp} XP</span>`:""}</div>
     <div class="heardline">내가 말한 것: "${escapeHtml(best.raw)}"</div>
     <div class="msg">${msg}</div>`;
 }
