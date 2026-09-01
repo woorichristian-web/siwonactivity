@@ -177,6 +177,22 @@
   .vqresult .msg2{color:var(--muted);margin-top:6px;font-size:14.5px}
   .vqresult .btns2{display:flex;gap:10px;justify-content:center;flex-wrap:wrap;margin-top:18px}
 
+  /* ===== 하단 내비게이션 (뒤로 / 홈) ===== */
+  .bottomnav{
+    position:sticky;bottom:14px;z-index:30;
+    display:flex;gap:12px;margin-top:16px;
+  }
+  .bn{
+    flex:1;padding:14px 10px;border-radius:16px;font-weight:800;font-size:15.5px;cursor:pointer;
+    font-family:inherit;display:flex;align-items:center;justify-content:center;gap:7px;
+    box-shadow:0 14px 30px -14px rgba(2,6,23,.65);
+    transition:transform .12s ease, filter .12s ease;
+  }
+  .bn:hover{transform:translateY(-2px);filter:brightness(1.05)}
+  .bn:active{transform:translateY(0)}
+  .bn.back{background:#fff;border:1px solid var(--line);color:var(--ink)}
+  .bn.home{background:linear-gradient(155deg,var(--blue),var(--blue-d));border:none;color:#fff}
+
   /* ===== 언어 선택 (Language Game Center) ===== */
   .hero .globe{font-size:44px;margin-bottom:8px}
   .langs{display:grid;grid-template-columns:repeat(4,1fr);gap:13px;margin-top:14px}
@@ -690,6 +706,11 @@
       <button class="btn ghost" id="trBack">테스트 목록</button>
     </div>
   </section>
+
+  <div class="bottomnav hide" id="bottomNav">
+    <button class="bn back" type="button" id="bnBack">← 뒤로 가기</button>
+    <button class="bn home" type="button" id="bnHome">🏠 홈으로</button>
+  </div>
 
   <div class="footer" id="footer">English Quest · 문법 · 어휘 · 듣기 · 말하기</div>
 </div>
@@ -1678,9 +1699,33 @@ function flashLocked(node){
   setTimeout(()=>{ cap.textContent = prev; }, 1200);
 }
 
+let curScreen = "langHome";
 function show(which){
+  curScreen = which;
   ["langHome","rootHome","courseHome","modeHome","learn","frameHome","framePr","vocabHome","vquiz","testHome","test","catHome","quiz","speak","trainer","result","testResult"].forEach(s=>$(s).classList.toggle("hide", s!==which));
+  $("bottomNav").classList.toggle("hide", which === "langHome");
 }
+
+/* ---------- 하단 내비게이션 (뒤로 / 홈) ---------- */
+const BACK_MAP = {
+  rootHome:"rootBack", courseHome:"courseBack", modeHome:"modeBack", learn:"learnBack",
+  frameHome:"frameHomeBack", framePr:"framePrBack", vocabHome:"vocabHomeBack", vquiz:"vqBack",
+  testHome:"testBack", test:"testQuit", catHome:"catBack", quiz:"homeBtn",
+  speak:"speakBack", trainer:"trainerBack", result:"backBtn", testResult:"trBack",
+};
+function navCleanup(){
+  try{ if(typeof frStopRecog === "function") frStopRecog(); }catch(e){}
+  try{ if(typeof vqStopTimer === "function") vqStopTimer(); }catch(e){}
+  try{ stopRecog(); }catch(e){}
+  try{ if(window.speechSynthesis) window.speechSynthesis.cancel(); }catch(e){}
+}
+$("bnBack").onclick = ()=>{
+  const id = BACK_MAP[curScreen];
+  const btn = id && document.getElementById(id);
+  if(btn){ btn.click(); return; }
+  navCleanup(); resetStreak(); renderRootHome();
+};
+$("bnHome").onclick = ()=>{ navCleanup(); resetStreak(); renderRootHome(); };
 
 /* =========================================================
    적응형 단계 (문법 / 어휘 / 듣기)
