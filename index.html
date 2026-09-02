@@ -84,7 +84,7 @@
   }
 
   /* ===== 루트 메뉴: 3칸 나란히 (좁은 화면에선 세로) ===== */
-  #rootCats{grid-template-columns:repeat(3,1fr)}
+  #rootCats{grid-template-columns:repeat(2,1fr)}
   @media(max-width:560px){ #rootCats{grid-template-columns:1fr} }
 
   /* ===== 과정 선택 리스트 (Quest 과정) ===== */
@@ -530,6 +530,11 @@
         <div class="d">챗봇을 따라 무한 말하기 연습을 해보세요!</div>
         <div class="best">대화 시작 →</div>
       </button>
+      <button class="cat" type="button" data-root="mockspeak" style="--c1:#f43f5e;--c2:#be123c">
+        <div class="ic">🎙️</div><div class="t">모의 스피킹 테스트</div>
+        <div class="d">실전처럼 주제를 받고 말하기 시험을 연습해보세요!</div>
+        <div class="best">테스트 시작 →</div>
+      </button>
     </div>
   </section>
 
@@ -657,6 +662,16 @@
     </div>
     <div class="tagrow"><span class="qtag" id="shTag" style="margin:0">🎤 문장 쉐도잉</span></div>
     <div id="shBody"></div>
+  </section>
+
+  <!-- ============ MOCK SPEAKING TEST (모의 스피킹 테스트) ============ -->
+  <section id="mockspeak" class="card hide">
+    <div class="topbar">
+      <button class="iconbtn" id="mockBack" title="뒤로">←</button>
+      <div class="qtag" style="margin:0">🎙️ 모의 스피킹 테스트</div>
+      <button class="btn ghost" id="mockHomeBtn" style="flex:0 0 auto;min-width:auto;padding:9px 16px;margin-left:auto">🏠 홈으로</button>
+    </div>
+    <div id="mockBody"></div>
   </section>
 
   <!-- ============ TEST HOME (영역 선택) ============ -->
@@ -2086,6 +2101,270 @@ function shFinish(){
 }
 $("shadowPrBack").onclick = ()=>{ shStopRecog(); renderLessonHome("shadow"); };
 
+/* =========================================================
+   모의 스피킹 테스트 (수행평가 대비) — 문장 따라 읽고 발음 채점
+   ========================================================= */
+const MOCK_LEVELS = [
+  { key:"elem", name:"초등",        sec:60  },   // 1분
+  { key:"mid",  name:"중등",        sec:120 },   // 2분
+  { key:"high", name:"고등",        sec:120 },   // 2분
+  { key:"univ", name:"대학생 이상", sec:180 },   // 3분
+];
+// 각 프롬프트: { ko: 화면에 보여줄 질문(한국어), en: 영어 버전(참고) }
+const MOCK_SPEAK = {
+  elem:[
+    { ko:"가장 좋아하는 음식은 무엇인가요? 왜 좋아하는지 말해보세요.", en:"What is your favorite food? Tell us why you like it." },
+    { ko:"가장 친한 친구를 소개해 주세요. 어떤 친구인가요?", en:"Introduce your best friend. What is he or she like?" },
+    { ko:"좋아하는 동물은 무엇인가요? 왜 좋아하나요?", en:"What animal do you like, and why?" },
+    { ko:"주말에 무엇을 하고 싶나요? 이야기해 보세요.", en:"What do you want to do on the weekend?" },
+    { ko:"여러분의 가족을 소개해 주세요.", en:"Please introduce your family." },
+    { ko:"가장 좋아하는 계절은 언제인가요? 왜인가요?", en:"What is your favorite season, and why?" },
+    { ko:"커서 무엇이 되고 싶나요? 이유도 말해보세요.", en:"What do you want to be when you grow up, and why?" },
+    { ko:"가장 좋아하는 놀이나 게임은 무엇인가요?", en:"What is your favorite game or activity?" },
+    { ko:"학교에서 가장 좋아하는 과목은 무엇인가요? 이유는?", en:"What is your favorite subject at school, and why?" },
+    { ko:"가장 기억에 남는 여행이나 소풍을 말해보세요.", en:"Talk about a trip or picnic you remember well." },
+    { ko:"애완동물을 키운다면 무엇을 키우고 싶나요?", en:"If you could have a pet, what would you choose?" },
+    { ko:"가장 좋아하는 책이나 만화를 소개해 주세요.", en:"Introduce your favorite book or cartoon." },
+    { ko:"오늘 하루 무엇을 했는지 말해보세요.", en:"Talk about what you did today." },
+    { ko:"가장 행복했던 순간은 언제였나요?", en:"When was your happiest moment?" },
+    { ko:"좋아하는 운동은 무엇인가요? 왜 좋아하나요?", en:"What sport do you like, and why?" },
+    { ko:"하루 동안 마법을 쓸 수 있다면 무엇을 하고 싶나요?", en:"If you had magic for one day, what would you do?" },
+    { ko:"가장 좋아하는 색깔과 그 이유를 말해보세요.", en:"Talk about your favorite color and why you like it." },
+    { ko:"방학 때 무엇을 하고 싶나요?", en:"What do you want to do during your vacation?" },
+    { ko:"여러분이 좋아하는 장소를 소개해 주세요.", en:"Introduce a place you like." },
+    { ko:"여러분을 행복하게 하는 것은 무엇인가요?", en:"What makes you happy?" },
+  ],
+  mid:[
+    { ko:"당신의 부모님이 당신의 나이에 살았던 삶이 지금의 당신의 삶과 어떻게 다른가요? 예를 들어 말해보세요.", en:"How was your parents' life at your age different from your life now? Give examples." },
+    { ko:"당신의 꿈은 무엇인가요? 꿈이 무엇인지, 왜 그 꿈을 이루고 싶은지 말해보세요.", en:"What is your dream? Explain what it is and why you want to achieve it." },
+    { ko:"스마트폰은 우리 삶에 도움이 될까요, 해가 될까요? 이유와 함께 말해보세요.", en:"Do smartphones help or harm our lives? Explain with reasons." },
+    { ko:"가장 존경하는 사람은 누구인가요? 왜 그 사람을 존경하나요?", en:"Who do you respect the most, and why?" },
+    { ko:"학교 생활에서 가장 즐거운 것과 힘든 것은 무엇인가요?", en:"What is the most enjoyable and the hardest part of school life?" },
+    { ko:"바꾸고 싶은 학교 규칙이 있다면 무엇인가요? 이유는?", en:"Is there a school rule you would change? Why?" },
+    { ko:"가장 기억에 남는 경험을 이야기해 보세요.", en:"Talk about your most memorable experience." },
+    { ko:"좋은 친구란 어떤 친구라고 생각하나요?", en:"What do you think makes a good friend?" },
+    { ko:"가장 좋아하는 취미와 그것을 좋아하는 이유를 말해보세요.", en:"Talk about your favorite hobby and why you enjoy it." },
+    { ko:"환경을 보호하기 위해 우리가 할 수 있는 일은 무엇일까요?", en:"What can we do to protect the environment?" },
+    { ko:"여행 가고 싶은 나라가 있나요? 왜 그곳에 가고 싶나요?", en:"Is there a country you want to visit? Why there?" },
+    { ko:"가장 소중한 물건은 무엇이고 왜 소중한가요?", en:"What is your most precious belonging, and why?" },
+    { ko:"하루 동안 어른이 된다면 무엇을 하고 싶나요?", en:"If you were an adult for one day, what would you do?" },
+    { ko:"책을 읽는 것과 영상을 보는 것 중 무엇이 더 좋다고 생각하나요?", en:"Which is better, reading books or watching videos? Why?" },
+    { ko:"여러분이 생각하는 행복이란 무엇인가요?", en:"What does happiness mean to you?" },
+    { ko:"실패했던 경험과 그로부터 배운 것을 말해보세요.", en:"Talk about a failure and what you learned from it." },
+    { ko:"10년 후 여러분의 모습을 상상해서 말해보세요.", en:"Imagine and describe yourself ten years from now." },
+    { ko:"용돈을 어떻게 쓰는 것이 현명하다고 생각하나요?", en:"How do you think is the wise way to spend your allowance?" },
+    { ko:"여러분이 자신 있게 잘하는 것을 소개해 주세요.", en:"Introduce something you are confident you do well." },
+    { ko:"만약 무엇이든 배울 수 있다면 무엇을 배우고 싶나요? 왜인가요?", en:"If you could learn anything, what would it be, and why?" },
+  ],
+  high:[
+    { ko:"인공지능(AI)의 발전은 우리 사회에 어떤 영향을 줄까요? 긍정적·부정적 측면을 말해보세요.", en:"How will the development of AI affect our society? Discuss both sides." },
+    { ko:"학생들의 교복 착용에 찬성하나요, 반대하나요? 근거를 들어 말해보세요.", en:"Are you for or against school uniforms? Support your view." },
+    { ko:"SNS는 우리에게 득이 많을까요, 실이 많을까요? 이유와 함께 말해보세요.", en:"Do social media do more good or harm? Explain with reasons." },
+    { ko:"여러분이 생각하는 좋은 리더의 조건은 무엇인가요?", en:"What qualities make a good leader, in your opinion?" },
+    { ko:"기후 변화를 해결하기 위해 개인이 할 수 있는 노력은 무엇일까요?", en:"What can individuals do to help solve climate change?" },
+    { ko:"성공이란 무엇이라고 생각하나요? 여러분의 기준으로 말해보세요.", en:"What does success mean to you?" },
+    { ko:"시험 위주의 교육에 대해 어떻게 생각하나요?", en:"What do you think about exam-centered education?" },
+    { ko:"여러분의 진로 계획과 그 이유를 말해보세요.", en:"Talk about your career plan and the reasons behind it." },
+    { ko:"돈과 행복은 어떤 관계가 있다고 생각하나요?", en:"What is the relationship between money and happiness?" },
+    { ko:"자원봉사나 나눔의 경험이 어떤 의미였는지 말해보세요.", en:"Talk about a volunteering or sharing experience and its meaning." },
+    { ko:"청소년의 아르바이트에 대해 찬성하나요, 반대하나요?", en:"Are you for or against part-time jobs for teenagers?" },
+    { ko:"사회에서 바꾸고 싶은 문제 한 가지와 해결 방법을 말해보세요.", en:"Choose a social problem you'd change and suggest a solution." },
+    { ko:"실패를 두려워하지 않는 것이 왜 중요한가요?", en:"Why is it important not to fear failure?" },
+    { ko:"진정한 우정이란 무엇이라고 생각하나요?", en:"What do you think true friendship is?" },
+    { ko:"외국어를 배우는 것이 왜 중요하다고 생각하나요?", en:"Why do you think learning a foreign language is important?" },
+    { ko:"여러분이 존경하는 인물과 그 이유를 말해보세요.", en:"Talk about a person you admire and why." },
+    { ko:"개인의 자유와 공동체의 규칙 중 무엇이 더 중요할까요?", en:"Which matters more: individual freedom or community rules?" },
+    { ko:"스트레스를 건강하게 관리하는 방법은 무엇인가요?", en:"What are healthy ways to manage stress?" },
+    { ko:"하루 동안 대통령이 된다면 무엇을 하고 싶나요?", en:"If you were president for one day, what would you do?" },
+    { ko:"10년 후 여러분이 살고 싶은 삶을 구체적으로 말해보세요.", en:"Describe in detail the life you want to live ten years from now." },
+  ],
+  univ:[
+    { ko:"인공지능이 일자리에 미치는 영향에 대해 여러분의 견해를 말해보세요.", en:"Share your view on the impact of AI on jobs." },
+    { ko:"대학 교육의 진정한 가치는 무엇이라고 생각하나요?", en:"What do you think is the true value of a university education?" },
+    { ko:"일과 삶의 균형(워라밸)에 대한 여러분의 생각을 말해보세요.", en:"Share your thoughts on work-life balance." },
+    { ko:"기술의 발전이 인간관계에 어떤 변화를 가져왔나요?", en:"How has technology changed human relationships?" },
+    { ko:"리더십에서 가장 중요한 자질은 무엇이라고 생각하나요?", en:"What is the most important quality of leadership?" },
+    { ko:"세계화는 우리에게 기회일까요, 위협일까요?", en:"Is globalization an opportunity or a threat for us?" },
+    { ko:"여러분의 전공(또는 관심 분야)을 소개하고 왜 선택했는지 말해보세요.", en:"Introduce your major or field of interest and why you chose it." },
+    { ko:"실패로부터 배운 값진 교훈이 있다면 말해보세요.", en:"Share a valuable lesson you learned from failure." },
+    { ko:"기업의 사회적 책임은 어디까지여야 할까요?", en:"How far should a company's social responsibility go?" },
+    { ko:"평생 학습이 왜 중요하다고 생각하나요?", en:"Why do you think lifelong learning is important?" },
+    { ko:"정보의 홍수 속에서 비판적으로 사고하는 방법은 무엇일까요?", en:"How can we think critically amid an overload of information?" },
+    { ko:"여러분이 생각하는 이상적인 사회의 모습을 말해보세요.", en:"Describe your idea of an ideal society." },
+    { ko:"SNS 시대에 개인의 프라이버시는 어떻게 보호되어야 할까요?", en:"How should personal privacy be protected in the age of social media?" },
+    { ko:"여러분의 인생에서 가장 중요한 가치는 무엇인가요?", en:"What is the most important value in your life?" },
+    { ko:"세대 간 갈등의 원인과 해결 방안에 대해 말해보세요.", en:"Discuss the causes of generational conflict and possible solutions." },
+    { ko:"창의성은 타고나는 것일까요, 길러지는 것일까요?", en:"Is creativity something you are born with, or is it nurtured?" },
+    { ko:"10년 후 이루고 싶은 목표와 계획을 말해보세요.", en:"Talk about the goals and plans you want to achieve in ten years." },
+    { ko:"돈, 명예, 자아실현 중 무엇을 가장 우선시하나요? 이유는?", en:"Which do you prioritize: money, fame, or self-fulfillment? Why?" },
+    { ko:"우리 사회가 시급히 해결해야 할 문제 하나와 해결책을 제시해 보세요.", en:"Pick one urgent social problem and propose a solution." },
+    { ko:"여러분의 좌우명이나 삶의 원칙을 소개하고 그 이유를 말해보세요.", en:"Share your motto or life principle and explain why." },
+  ],
+};
+let mockLevel = "elem";
+let mockState = null, mockRecog = null;
+
+function fmtTime(sec){ const m=Math.floor(sec/60), s=sec%60; return (m<10?'0':'')+m+":"+(s<10?'0':'')+s; }
+function mockLevelObj(){ return MOCK_LEVELS.find(l=>l.key===mockLevel) || MOCK_LEVELS[0]; }
+function mockClearTimer(){ if(mockState && mockState.timer){ clearInterval(mockState.timer); mockState.timer=null; } }
+function mockStopRec(){ if(mockState) mockState.listening=false; try{ mockRecog && mockRecog.stop(); }catch(_){} }
+
+// 홈 = 대상 선택 + 안내
+function renderMockHome(){
+  mockClearTimer(); mockStopRec();
+  Sound.startBGM();
+  mockState = null;
+  show("mockspeak");
+  const chips = MOCK_LEVELS.map(l=>
+    `<button type="button" class="tr-chip${l.key===mockLevel?' on':''}" data-lv="${l.key}">${l.name} · ${Math.round(l.sec/60)}분</button>`).join("");
+  const min = Math.round(mockLevelObj().sec/60);
+  $("mockBody").innerHTML =
+    `<div class="hero" style="margin-top:6px">
+       <h1>🎙️ 모의 스피킹 테스트</h1>
+       <p>말하기 수행평가에 대비해보세요!<br>주제를 받고 <b>${min}분</b> 동안 자신의 생각을 영어로 말합니다.</p>
+     </div>
+     <div class="tr-chips" id="mockLevels" style="justify-content:center;margin-bottom:6px">${chips}</div>
+     <div class="fb explain" style="text-align:left"><div class="body">
+       📢 <b>진행 방식</b><br>
+       ① 무작위 <b>주제</b>가 주어져요.<br>
+       ② 먼저 <b>연습 말하기 ${min}분</b> — 편하게 연습해요.<br>
+       ③ 이어서 <b>실전 말하기 ${min}분</b> — 생각을 말해요.<br>
+       ④ 말하는 동안 화면에 <b>남은 시간이 카운트다운</b>돼요.
+     </div></div>
+     <div class="actions"><button class="btn next" id="mockStart">▶ 주제 받기</button></div>`;
+  $("mockLevels").querySelectorAll(".tr-chip").forEach(b=>{
+    b.onclick = ()=>{ mockLevel = b.dataset.lv; renderMockHome(); };
+  });
+  $("mockStart").onclick = mockNewTopic;
+}
+
+// 무작위 주제 뽑아 안내 화면으로
+function mockNewTopic(){
+  const pool = MOCK_SPEAK[mockLevel] || [];
+  const prompt = pool[Math.floor(Math.random()*pool.length)];
+  mockState = { levelKey:mockLevel, sec:mockLevelObj().sec, prompt, phase:"intro",
+                finalText:"", timer:null, remaining:0, listening:false };
+  Sound.startBGM();
+  mockRenderIntro();
+}
+
+function mockRenderIntro(){
+  const s = mockState, min = Math.round(s.sec/60);
+  $("mockBody").innerHTML =
+    `<div class="qtag" style="display:inline-block">🎙️ ${mockLevelObj().name} · 제한시간 ${min}분</div>
+     <p class="target" style="font-size:22px;text-align:left;line-height:1.55">${escapeHtml(s.prompt.ko)}</p>
+     <p class="kr" style="text-align:left">${escapeHtml(s.prompt.en)}</p>
+     <div class="fb explain" style="text-align:left"><div class="body">
+       ⏱️ <b>연습 ${min}분</b> → <b>실전 ${min}분</b> 순서로 진행돼요. 준비되면 연습을 시작하세요.
+     </div></div>
+     <div class="actions">
+       <button class="btn next" id="mockPractice">🟡 연습 시작 (${min}분)</button>
+       <button class="btn ghost" id="mockOther">🔀 다른 주제</button>
+     </div>`;
+  $("mockPractice").onclick = ()=> mockBeginPhase("practice");
+  $("mockOther").onclick = mockNewTopic;
+}
+
+// 연습/실전 말하기 (카운트다운 + 음성인식)
+function mockBeginPhase(kind){
+  const s = mockState; s.phase=kind; s.remaining=s.sec; s.finalText="";
+  Sound.stopBGM();
+  const label = kind==="practice" ? "🟡 연습 말하기" : "🔴 실전 말하기";
+  $("mockBody").innerHTML =
+    `<div class="qtag" style="display:inline-block">${label} · ${mockLevelObj().name}</div>
+     <p class="target" style="font-size:19px;text-align:left;line-height:1.55">${escapeHtml(s.prompt.ko)}</p>
+     <div style="text-align:center;margin:14px 0">
+       <div id="mockTimer" style="font-size:48px;font-weight:900;letter-spacing:1px">${fmtTime(s.remaining)}</div>
+       <div class="micbtn rec" style="margin:8px auto 0;cursor:default">🎤</div>
+       <div class="heard" id="mockLive" style="margin-top:10px;min-height:40px">${SR?"말하는 내용이 여기에 표시돼요…":"이 브라우저는 음성인식 미지원 — 소리 내어 말하며 연습하세요 (Chrome·Edge 권장)"}</div>
+     </div>
+     <div class="actions"><button class="btn retry" id="mockStop">⏹ ${kind==="practice"?"연습 끝내기":"말하기 끝내기"}</button></div>`;
+  $("mockStop").onclick = ()=> mockEndPhase(kind);
+  mockClearTimer();
+  s.timer = setInterval(()=>{
+    s.remaining--;
+    const t=$("mockTimer");
+    if(t){ t.textContent=fmtTime(Math.max(0,s.remaining)); if(s.remaining<=10) t.style.color="#ef4444"; }
+    if(s.remaining<=0) mockEndPhase(kind);
+  }, 1000);
+  mockStartRec();
+}
+
+function mockStartRec(){
+  if(!SR) return;
+  try{ if(mockRecog) mockRecog.abort(); }catch(_){}
+  mockRecog = new SR(); mockRecog.lang="en-US"; mockRecog.continuous=true; mockRecog.interimResults=true;
+  mockRecog.onresult = (e)=>{
+    let interim="";
+    for(let i=e.resultIndex;i<e.results.length;i++){ const r=e.results[i];
+      if(r.isFinal) mockState.finalText += r[0].transcript+" "; else interim+=r[0].transcript; }
+    const live=$("mockLive"); if(live) live.textContent=(mockState.finalText+interim).trim() || "말하는 내용이 여기에 표시돼요…";
+  };
+  mockRecog.onerror = ()=>{};
+  mockRecog.onend   = ()=>{ if(mockState && mockState.listening){ try{ mockRecog.start(); }catch(_){} } };  // 시간 내 자동 재시작
+  try{ mockRecog.start(); mockState.listening=true; }catch(_){}
+}
+
+function mockEndPhase(kind){
+  mockClearTimer(); mockStopRec();
+  const s = mockState, min = Math.round(s.sec/60);
+  if(kind==="practice"){
+    Sound.startBGM();
+    $("mockBody").innerHTML =
+      `<div class="fb good" style="text-align:left"><div class="h">✅ 연습 완료!</div>
+         <div class="body">이제 같은 주제로 <b>실전 ${min}분</b> 말하기를 해볼까요?</div></div>
+       <p class="target" style="font-size:19px;text-align:left;line-height:1.55">${escapeHtml(s.prompt.ko)}</p>
+       <div class="actions">
+         <button class="btn next" id="mockReal">🔴 실전 시작 (${min}분)</button>
+         <button class="btn ghost" id="mockPracAgain">🔁 연습 다시</button>
+       </div>`;
+    $("mockReal").onclick = ()=> mockBeginPhase("real");
+    $("mockPracAgain").onclick = ()=> mockBeginPhase("practice");
+  } else {
+    mockFinish();
+  }
+}
+
+function mockFinish(){
+  Sound.startBGM();
+  const s = mockState;
+  const text = (s.finalText||"").trim();
+  const words = text ? text.split(/\s+/).filter(Boolean).length : 0;
+  let grade, emoji, col, msg;
+  if(!SR){ grade="연습 완료"; emoji="🎤"; col="#0ea5e9"; msg="음성인식이 없어 채점은 생략했어요. 시간에 맞춰 말하는 연습이 되었길 바라요!"; }
+  else if(words>=60){ grade="유창해요"; emoji="🏆"; col="#16a34a"; msg="풍부하게 이야기했어요! 아주 훌륭합니다."; }
+  else if(words>=30){ grade="좋아요"; emoji="🎉"; col="#0ea5e9"; msg="잘 말했어요. 예시를 조금 더 붙이면 더 좋아요."; }
+  else if(words>=10){ grade="좋은 시작"; emoji="💪"; col="#f59e0b"; msg="아이디어를 문장으로 더 이어서 말해볼까요?"; }
+  else { grade="조금 더!"; emoji="🌱"; col="#ef4444"; msg="주제에 대해 더 많이, 더 길게 말해보면 좋아요."; }
+  const min = Math.round(s.sec/60);
+  $("mockBody").innerHTML =
+    `<div class="result" style="text-align:center">
+       <div class="big">${emoji}</div>
+       <h2 style="margin:0 0 4px">말하기 완료!</h2>
+       <p style="color:var(--muted);margin:0 0 8px">${mockLevelObj().name} · ${min}분 스피치 · <b style="color:${col}">${grade}</b></p>
+       ${SR?`<div class="acc" style="color:${col}">${words} 단어</div>`:""}
+       <p style="color:var(--muted);margin:2px 0 0">${escapeHtml(msg)}</p>
+       <div class="fb explain" style="text-align:left;margin-top:14px"><div class="body">
+         <b>📝 주제</b> · ${escapeHtml(s.prompt.ko)}<br><br>
+         <b>🗣️ 내가 말한 내용</b><br>${text?escapeHtml(text):"<span style='color:#94a3b8'>(인식된 내용이 없어요)</span>"}
+       </div></div>
+       <div class="actions">
+         <button class="btn next" id="mockNewTopic2">🔀 다른 주제로</button>
+         <button class="btn ghost" id="mockHomeR">🏠 홈으로</button>
+       </div>
+     </div>`;
+  $("mockNewTopic2").onclick = mockNewTopic;
+  $("mockHomeR").onclick = renderMockHome;
+  if(SR && words>=30){ Sound.fanfare(); Confetti.burst(140); addXP(20); }
+  else if(SR && words>=10){ addXP(10); }
+}
+
+function mockLeave(){ mockClearTimer(); mockStopRec();
+  if(window.speechSynthesis) window.speechSynthesis.cancel(); }
+$("mockBack").onclick    = ()=>{ mockLeave(); renderRootHome(); };
+$("mockHomeBtn").onclick = ()=>{ mockLeave(); renderMockHome(); };
+
+
 /* ---------- 트랙별 징검다리 지도 ---------- */
 const ZIGZAG = [0, 1, 1, 0, -1, -1, 0, 1, 1, 0];   // 좌우 흔들림 패턴
 let trackAlias = null;   // 과정 액티비티에서 진입 시 표시 이름 유지
@@ -2143,7 +2422,7 @@ function flashLocked(node){
 let curScreen = "langHome";
 function show(which){
   curScreen = which;
-  ["langHome","rootHome","courseHome","modeHome","learn","frameHome","framePr","lessonHome","vquiz","squiz","shadowPr","testHome","test","catHome","quiz","speak","trainer","result","testResult"].forEach(s=>$(s).classList.toggle("hide", s!==which));
+  ["langHome","rootHome","courseHome","modeHome","learn","frameHome","framePr","lessonHome","vquiz","squiz","shadowPr","mockspeak","testHome","test","catHome","quiz","speak","trainer","result","testResult"].forEach(s=>$(s).classList.toggle("hide", s!==which));
   $("bottomNav").classList.toggle("hide", which === "langHome");
 }
 
@@ -2151,7 +2430,7 @@ function show(which){
 const BACK_MAP = {
   rootHome:"rootBack", courseHome:"courseBack", modeHome:"modeBack", learn:"learnBack",
   frameHome:"frameHomeBack", framePr:"framePrBack", lessonHome:"lessonHomeBack", vquiz:"vqBack",
-  squiz:"sqBack", shadowPr:"shadowPrBack",
+  squiz:"sqBack", shadowPr:"shadowPrBack", mockspeak:"mockBack",
   testHome:"testBack", test:"testQuit", catHome:"catBack", quiz:"homeBtn",
   speak:"speakBack", trainer:"trainerBack", result:"backBtn", testResult:"trBack",
 };
@@ -2159,6 +2438,7 @@ function navCleanup(){
   try{ if(typeof frStopRecog === "function") frStopRecog(); }catch(e){}
   try{ if(typeof vqStopTimer === "function") vqStopTimer(); }catch(e){}
   try{ if(typeof shStopRecog === "function") shStopRecog(); }catch(e){}
+  try{ if(typeof mockLeave === "function") mockLeave(); }catch(e){}
   try{ stopRecog(); }catch(e){}
   try{ if(window.speechSynthesis) window.speechSynthesis.cancel(); }catch(e){}
 }
@@ -3024,6 +3304,7 @@ $("rootCats").addEventListener("click",(e)=>{
   if(card.dataset.root==="course") renderCourseHome();
   else if(card.dataset.root==="quest10") renderQuestTracks();
   else if(card.dataset.root==="trainer") renderTrainerHome();
+  else if(card.dataset.root==="mockspeak") renderMockHome();
 });
 $("rootBack").onclick = ()=>{ resetStreak(); renderLangHome(); };
 $("courseBack").onclick = ()=>{ resetStreak(); renderRootHome(); };
