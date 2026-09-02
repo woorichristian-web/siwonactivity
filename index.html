@@ -511,7 +511,7 @@
       <div class="qtag" style="margin:0">🇺🇸 English</div>
     </div>
     <div class="hero" style="margin-top:6px">
-      <h1>Siwon AI Activities</h1>
+      <h1>SiwonWorld Activities</h1>
       <p>복습 · 퀘스트 · 트레이너봇으로<br>즐겁게 학습해요.</p>
     </div>
     <div class="cats" id="rootCats">
@@ -836,7 +836,7 @@
     <button class="bn home" type="button" id="bnHome">🏠 홈으로</button>
   </div>
 
-  <div class="footer" id="footer">Siwon Language Game Center</div>
+  <div class="footer" id="footer">SiwonWorld</div>
 </div>
 <canvas id="confettiCanvas"></canvas>
 <div class="toast" id="toast"></div>
@@ -3274,7 +3274,7 @@ let questMode = false;
 function renderLangHome(){
   Sound.stopBGM();
   setChips(false);
-  setBrand("🌏","Siwon Language Game Center");
+  setBrand("🌏","SiwonWorld");
   const wrap=$("langs");
   if(!wrap.childElementCount){
     LANGS.forEach(l=>{
@@ -3297,7 +3297,7 @@ $("langs").addEventListener("click",(e)=>{
 });
 
 /* ---------- 루트 메뉴 (Quest / Test) ---------- */
-function renderRootHome(){ Sound.stopBGM(); setChips(false); setBrand("🌏","Siwon Language Game Center"); show("rootHome"); }
+function renderRootHome(){ Sound.stopBGM(); setChips(false); setBrand("🌏","SiwonWorld"); show("rootHome"); }
 function renderQuestTracks(){ questMode = true; curCourse = null; setChips(true); renderModeHome(); }
 $("rootCats").addEventListener("click",(e)=>{
   const card=e.target.closest(".cat"); if(!card) return; Sound.ensure();
