@@ -930,7 +930,7 @@
     </div>
     <div class="hero" style="margin-top:6px">
       <h1>트레이너봇</h1>
-      <p>봇이 문장을 한국어로 설명하고 영어로 읽어줘요.<br>그대로 따라 말하면 발음·문법을 교정해 드려요.<br><span style="font-size:12.5px;color:#94a3b8">설치·서버·계정 없이 무료로 동작해요.</span></p>
+      <p>같은 패턴의 문장을 단어만 바꿔가며 반복 훈련해요.<br>3문장 연습 후, 원하면 10문장을 더 이어서 말해요.<br><span style="font-size:12.5px;color:#94a3b8">레벨이 올라갈수록 문장이 길고 복잡해져요.</span></p>
     </div>
 
     <!-- 주제 / 난이도 -->
@@ -3036,145 +3036,161 @@ if(window.speechSynthesis){ window.speechSynthesis.onvoiceschanged = ()=>{}; }
    봇이 한국어로 설명 → 영어로 읽어줌(TTS) → 학습자가 따라 말함(음성인식)
    → 발음/문법 교정 피드백을 규칙 기반으로 제공. 외부 API/서버/비용 없음.
    ========================================================= */
-const TR_TOPICS = ["일상 대화","여행","자기소개","음식·맛집","비즈니스","영화·취미"];
 const TR_LEVELS = ["왕초보","초급","중급","고급"];
 
-/* 내장 문장 모음: 주제 → 난이도 → [{en 영어, kr 뜻, tip 발음팁, gr 문법포인트}] */
-const TR_BANK = {
- "일상 대화":{
-  "왕초보":[
-   {en:"How are you today?",kr:"오늘 기분 어때요?",tip:"are you를 '아유'처럼 이어서 발음해요.",gr:"How + be동사(are) + 주어 형태의 안부 의문문."},
-   {en:"I am really hungry now.",kr:"나 지금 정말 배고파요.",tip:"really의 'r'을 부드럽게 굴려요.",gr:"주어 + be동사 + 부사 + 형용사."},
-   {en:"See you again tomorrow.",kr:"내일 또 봐요.",tip:"See you를 '씨유'로 붙여 발음해요.",gr:"작별 인사로 쓰는 명령문 형태 표현."}],
-  "초급":[
-   {en:"I usually get up at seven.",kr:"나는 보통 7시에 일어나요.",tip:"get up을 '게럽'처럼 연음해요.",gr:"빈도부사 usually는 일반동사 앞에 와요."},
-   {en:"What did you do last weekend?",kr:"지난 주말에 뭐 했어요?",tip:"did you를 '디쥬'로 연음해요.",gr:"과거 의문문: did + 주어 + 동사원형."},
-   {en:"Can you help me for a second?",kr:"잠깐만 도와줄 수 있어요?",tip:"help me를 끊지 말고 이어요.",gr:"조동사 can으로 만든 부탁 의문문."}],
-  "중급":[
-   {en:"I've been a little under the weather lately.",kr:"요즘 컨디션이 좀 안 좋았어요.",tip:"under the weather를 한 덩어리로 빠르게요.",gr:"현재완료 + 관용구 under the weather(컨디션 난조)."},
-   {en:"Would you mind turning down the volume?",kr:"소리 좀 줄여 주시겠어요?",tip:"Would you를 '우쥬'로 발음해요.",gr:"Would you mind + 동명사: 정중한 부탁."},
-   {en:"I'm not really in the mood for going out.",kr:"별로 나갈 기분이 아니에요.",tip:"in the mood for를 이어서요.",gr:"be in the mood for + 동명사: ~할 기분이다."}],
-  "고급":[
-   {en:"If I had known earlier, I would have called you.",kr:"더 일찍 알았더라면 전화했을 거예요.",tip:"would have를 '우드햅'으로 줄여요.",gr:"가정법 과거완료: If + had p.p., would have p.p."},
-   {en:"I can't help but wonder how things turned out.",kr:"일이 어떻게 됐는지 궁금하지 않을 수 없네요.",tip:"can't help but을 끊김 없이요.",gr:"can't help but + 동사원형: ~하지 않을 수 없다."},
-   {en:"You might as well tell me the truth now.",kr:"이제 사실대로 말하는 게 나을 거예요.",tip:"might as well을 자연스럽게 이어요.",gr:"might as well + 동사원형: ~하는 편이 낫다."}]},
- "여행":{
-  "왕초보":[
-   {en:"Where is the bus stop?",kr:"버스 정류장이 어디예요?",tip:"Where is를 '웨어리즈'로 이어요.",gr:"Where + be동사 의문문(위치 묻기)."},
-   {en:"I want a window seat.",kr:"창가 자리를 원해요.",tip:"want a를 '워너'로 연음해요.",gr:"want + 명사: 원하는 것 말하기."},
-   {en:"How much is this ticket?",kr:"이 표 얼마예요?",tip:"How much를 또박또박요.",gr:"가격을 묻는 How much is ~ 표현."}],
-  "초급":[
-   {en:"Could you tell me the way to the station?",kr:"역으로 가는 길 좀 알려주실래요?",tip:"Could you를 '쿠쥬'로요.",gr:"Could you + 동사원형: 정중한 부탁."},
-   {en:"I would like to check in, please.",kr:"체크인 하고 싶어요.",tip:"would like to를 '우들라익투'로 이어요.",gr:"would like to + 동사원형: 정중한 희망."},
-   {en:"Is there a pharmacy near here?",kr:"이 근처에 약국이 있나요?",tip:"near here를 부드럽게 이어요.",gr:"Is there ~?: ~가 있나요(존재 의문문)."}],
-  "중급":[
-   {en:"I'd appreciate it if you could call me a taxi.",kr:"택시 좀 불러주시면 감사하겠어요.",tip:"appreciate it을 '어프리시에잇잇'으로요.",gr:"I'd appreciate it if + 가정: 정중한 요청."},
-   {en:"We ended up missing our connecting flight.",kr:"결국 연결 항공편을 놓치고 말았어요.",tip:"ended up을 '엔디덥'으로 연음해요.",gr:"end up + 동명사: 결국 ~하게 되다."},
-   {en:"Make sure you keep your passport handy.",kr:"여권을 꼭 가까이 두세요.",tip:"keep your를 '키퓨어'로요.",gr:"Make sure (that) ~: 반드시 ~하도록 하다."}],
-  "고급":[
-   {en:"Had we booked earlier, we would have saved money.",kr:"더 일찍 예약했더라면 돈을 아꼈을 거예요.",tip:"Had we를 도치로 자연스럽게요.",gr:"가정법 도치: Had + 주어 + p.p. = If had p.p."},
-   {en:"The sooner we leave, the better our chances are.",kr:"빨리 떠날수록 가능성이 더 좋아져요.",tip:"the sooner ~ the better 리듬을 살려요.",gr:"The 비교급 ~, the 비교급 ~: ~할수록 더 ~하다."},
-   {en:"I'd rather take the train than fly this time.",kr:"이번엔 비행기보다 기차를 타는 게 낫겠어요.",tip:"I'd rather를 '아이드 래더'로요.",gr:"would rather A than B: B보다 A하는 게 낫다."}]},
- "자기소개":{
-  "왕초보":[
-   {en:"My name is Mina.",kr:"제 이름은 미나예요.",tip:"name is를 '네이미즈'로 이어요.",gr:"My name is ~: 이름 말하기."},
-   {en:"I am from Korea.",kr:"저는 한국에서 왔어요.",tip:"I am을 'I'm'처럼 줄여도 돼요.",gr:"be from + 장소: 출신 말하기."},
-   {en:"I like music and movies.",kr:"저는 음악과 영화를 좋아해요.",tip:"and를 약하게 '언'으로요.",gr:"like + 명사: 좋아하는 것 말하기."}],
-  "초급":[
-   {en:"I work as a designer at a small company.",kr:"저는 작은 회사에서 디자이너로 일해요.",tip:"work as a를 이어서요.",gr:"work as + 직업: ~로 일하다."},
-   {en:"I have been learning English for two years.",kr:"영어를 배운 지 2년 됐어요.",tip:"been learning을 부드럽게요.",gr:"현재완료진행: have been + ~ing(지속)."},
-   {en:"In my free time, I enjoy hiking.",kr:"여가 시간에 등산을 즐겨요.",tip:"enjoy hiking을 이어요.",gr:"enjoy + 동명사: ~하기를 즐기다."}],
-  "중급":[
-   {en:"I'd describe myself as a curious and patient person.",kr:"저는 호기심 많고 인내심 있는 사람이라고 할 수 있어요.",tip:"describe myself를 또박또박요.",gr:"describe A as B: A를 B라고 묘사하다."},
-   {en:"I'm passionate about solving real problems.",kr:"실제 문제를 해결하는 데 열정이 있어요.",tip:"passionate about을 이어요.",gr:"be passionate about + 명사/동명사."},
-   {en:"What got me into coding was a school project.",kr:"제가 코딩에 빠진 계기는 학교 프로젝트였어요.",tip:"got me into를 '갓미인투'로요.",gr:"What ~ was ...: 주어를 강조하는 구문."}],
-  "고급":[
-   {en:"Having lived abroad, I've grown more open-minded.",kr:"해외에 살아본 덕분에 더 열린 마음을 갖게 됐어요.",tip:"Having lived를 부드럽게 시작해요.",gr:"분사구문 Having p.p.: 이유·완료를 나타냄."},
-   {en:"What sets me apart is my attention to detail.",kr:"제 차별점은 디테일에 신경 쓴다는 거예요.",tip:"sets me apart를 이어요.",gr:"What ~ is ... 강조 + set apart(차별화하다)."},
-   {en:"I tend to thrive under pressure rather than crumble.",kr:"저는 압박 속에서 무너지기보다 오히려 잘해내는 편이에요.",tip:"thrive의 'th'를 혀끝으로요.",gr:"tend to + 동사원형: ~하는 경향이 있다."}]},
- "음식·맛집":{
-  "왕초보":[
-   {en:"This food is very good.",kr:"이 음식 정말 맛있어요.",tip:"food의 'oo'를 길게요.",gr:"주어 + be동사 + 부사 + 형용사."},
-   {en:"I want some water, please.",kr:"물 좀 주세요.",tip:"want some을 '원썸'으로요.",gr:"want + some + 명사: 정중한 요청."},
-   {en:"Can I see the menu?",kr:"메뉴 좀 볼 수 있을까요?",tip:"Can I를 '캐나이'로 이어요.",gr:"Can I + 동사원형: 허락 요청."}],
-  "초급":[
-   {en:"I'd like to order a cheeseburger.",kr:"치즈버거를 주문할게요.",tip:"order a를 '오더러'로요.",gr:"would like to + 동사원형: 정중한 주문."},
-   {en:"Could we get the bill, please?",kr:"계산서 좀 주시겠어요?",tip:"get the를 '겟더'로요.",gr:"Could we + 동사원형: 정중한 요청."},
-   {en:"Is this dish spicy or mild?",kr:"이 음식 매워요, 순해요?",tip:"or를 약하게 '어'로요.",gr:"A or B 선택 의문문."}],
-  "중급":[
-   {en:"This restaurant is known for its fresh seafood.",kr:"이 식당은 신선한 해산물로 유명해요.",tip:"known for를 이어요.",gr:"be known for + 명사: ~로 유명하다."},
-   {en:"I'm allergic to peanuts, so I have to be careful.",kr:"저는 땅콩 알레르기가 있어서 조심해야 해요.",tip:"allergic to를 '얼러직투'로요.",gr:"be allergic to + 명사 / so로 결과 연결."},
-   {en:"The sooner we order, the faster we will eat.",kr:"빨리 주문할수록 빨리 먹겠죠.",tip:"the sooner ~ the faster 리듬을요.",gr:"The 비교급 ~, the 비교급 ~ 구문."}],
-  "고급":[
-   {en:"I'd say the dessert was the highlight of the meal.",kr:"제 생각엔 디저트가 식사의 하이라이트였어요.",tip:"I'd say를 '아이드 쎄이'로요.",gr:"I'd say (that) ~: 제 생각엔 ~인 것 같다."},
-   {en:"No matter how full I am, I always save room for cake.",kr:"아무리 배불러도 케이크 먹을 배는 늘 남겨둬요.",tip:"No matter how를 이어서요.",gr:"No matter how + 형용사: 아무리 ~해도."},
-   {en:"This is by far the best ramen I have ever had.",kr:"이건 지금까지 먹어본 라멘 중 단연 최고예요.",tip:"by far를 강조해서요.",gr:"by far + 최상급 / I have ever had(경험 강조)."}]},
- "비즈니스":{
-  "왕초보":[
-   {en:"Nice to meet you.",kr:"만나서 반가워요.",tip:"meet you를 '미츄'로요.",gr:"처음 만났을 때 쓰는 인사 표현."},
-   {en:"Here is my business card.",kr:"제 명함이에요.",tip:"Here is를 '히어리즈'로요.",gr:"Here is + 단수 명사: 건네며 소개하기."},
-   {en:"Let's start the meeting.",kr:"회의를 시작합시다.",tip:"Let's를 '레츠'로요.",gr:"Let's + 동사원형: ~합시다(제안)."}],
-  "초급":[
-   {en:"Could you send me the report by Friday?",kr:"금요일까지 보고서 보내주실 수 있어요?",tip:"send me를 이어요.",gr:"Could you + 동사원형 / by + 기한."},
-   {en:"I'll get back to you as soon as possible.",kr:"가능한 한 빨리 다시 연락드릴게요.",tip:"get back to를 이어요.",gr:"as soon as possible: 가능한 한 빨리."},
-   {en:"Let me know if you have any questions.",kr:"질문 있으면 알려주세요.",tip:"Let me를 '렘미'로요.",gr:"Let me know if ~: ~하면 알려줘."}],
-  "중급":[
-   {en:"I'd like to follow up on our previous conversation.",kr:"지난 대화에 대해 후속 논의를 하고 싶어요.",tip:"follow up on을 이어요.",gr:"follow up on + 명사: ~에 대해 후속 조치하다."},
-   {en:"We need to touch base before the deadline.",kr:"마감 전에 한번 상의해야 해요.",tip:"touch base를 한 덩어리로요.",gr:"touch base: 간단히 상의·확인하다(관용구)."},
-   {en:"Let's circle back to this issue tomorrow.",kr:"이 문제는 내일 다시 다루죠.",tip:"circle back을 이어요.",gr:"circle back to: ~로 다시 돌아오다(관용구)."}],
-  "고급":[
-   {en:"Going forward, we should streamline our workflow.",kr:"앞으로는 업무 흐름을 간소화해야 해요.",tip:"Going forward를 부드럽게요.",gr:"Going forward: 앞으로는(문두 부사구)."},
-   {en:"I'd appreciate it if we could finalize the terms today.",kr:"오늘 조건을 마무리할 수 있으면 감사하겠어요.",tip:"finalize를 '파이널라이즈'로요.",gr:"I'd appreciate it if + 가정: 정중한 요청."},
-   {en:"Let's not lose sight of the bigger picture here.",kr:"여기서 큰 그림을 놓치지 맙시다.",tip:"lose sight of를 이어요.",gr:"lose sight of: ~을 놓치다(관용구)."}]},
- "영화·취미":{
-  "왕초보":[
-   {en:"I like action movies.",kr:"저는 액션 영화를 좋아해요.",tip:"like action을 이어요.",gr:"like + 명사: 좋아하는 장르 말하기."},
-   {en:"This movie is so fun.",kr:"이 영화 정말 재밌어요.",tip:"so fun을 또렷하게요.",gr:"so + 형용사: 강조 표현."},
-   {en:"Let's watch a film tonight.",kr:"오늘 밤 영화 보자.",tip:"watch a를 '워치어'로요.",gr:"Let's + 동사원형: 제안하기."}],
-  "초급":[
-   {en:"What kind of music do you listen to?",kr:"어떤 종류의 음악을 들어요?",tip:"listen to를 이어요.",gr:"What kind of + 명사: 어떤 종류의 ~."},
-   {en:"I've been into photography recently.",kr:"요즘 사진에 빠져 있어요.",tip:"been into를 부드럽게요.",gr:"be into + 명사: ~에 푹 빠져 있다."},
-   {en:"I usually read before going to bed.",kr:"저는 보통 자기 전에 책을 읽어요.",tip:"before going을 이어요.",gr:"before + 동명사: ~하기 전에."}],
-  "중급":[
-   {en:"That film really resonated with me.",kr:"그 영화는 정말 와닿았어요.",tip:"resonated with를 이어요.",gr:"resonate with: ~에게 공감을 일으키다."},
-   {en:"I'm hooked on this series; I can't stop watching.",kr:"이 시리즈에 푹 빠져서 멈출 수가 없어요.",tip:"hooked on을 이어요.",gr:"be hooked on: ~에 빠지다/중독되다."},
-   {en:"The plot kept me on the edge of my seat.",kr:"줄거리가 손에 땀을 쥐게 했어요.",tip:"on the edge를 이어요.",gr:"on the edge of one's seat: 손에 땀을 쥐는(관용구)."}],
-  "고급":[
-   {en:"What I love most is how the director builds tension.",kr:"제가 가장 좋아하는 건 감독이 긴장감을 쌓는 방식이에요.",tip:"What I love most를 한 호흡으로요.",gr:"What ~ is how ...: 명사절 강조 구문."},
-   {en:"This soundtrack never fails to give me goosebumps.",kr:"이 사운드트랙은 늘 소름이 돋게 해요.",tip:"never fails to를 이어요.",gr:"never fail to + 동사원형: 반드시 ~하다."},
-   {en:"I'd go so far as to call it a modern masterpiece.",kr:"저는 이걸 현대의 걸작이라고까지 부르겠어요.",tip:"go so far as to를 이어요.",gr:"go so far as to + 동사원형: ~하기까지 하다."}]}
+/* 패턴 드릴 뱅크: 레벨 → [{name 패턴, gr 문법, tip 발음팁, sents[13] (단어·목적어만 바뀜)}] */
+const TR_PATTERNS = {
+ "왕초보":[
+  { name:"I want ~", gr:"want + 명사: ~을 원해요/하고 싶어요", tip:"want의 t는 살짝만, '워ᄂ(트)'처럼 가볍게.",
+    sents:[
+     {en:"I want some water.",kr:"물 마시고 싶어요."},
+     {en:"I want a nap.",kr:"낮잠 자고 싶어요."},
+     {en:"I want more coffee.",kr:"커피 더 마시고 싶어요."},
+     {en:"I want a break.",kr:"좀 쉬고 싶어요."},
+     {en:"I want some food.",kr:"뭐 좀 먹고 싶어요."},
+     {en:"I want a new bag.",kr:"새 가방을 갖고 싶어요."},
+     {en:"I want some juice.",kr:"주스 마시고 싶어요."},
+     {en:"I want a big pizza.",kr:"큰 피자가 먹고 싶어요."},
+     {en:"I want more time.",kr:"시간이 더 필요해요."},
+     {en:"I want a puppy.",kr:"강아지를 키우고 싶어요."},
+     {en:"I want some rest.",kr:"휴식이 필요해요."},
+     {en:"I want a cold drink.",kr:"시원한 음료를 마시고 싶어요."},
+     {en:"I want more sleep.",kr:"잠을 더 자고 싶어요."}]},
+  { name:"I like ~", gr:"like + 명사: ~을 좋아해요", tip:"like의 l은 혀끝을 윗잇몸에 붙였다 떼요.",
+    sents:[
+     {en:"I like pizza.",kr:"나는 피자를 좋아해요."},
+     {en:"I like this song.",kr:"이 노래가 좋아요."},
+     {en:"I like your bag.",kr:"네 가방 마음에 들어요."},
+     {en:"I like hot tea.",kr:"뜨거운 차를 좋아해요."},
+     {en:"I like this color.",kr:"이 색이 마음에 들어요."},
+     {en:"I like that movie.",kr:"그 영화 좋아해요."},
+     {en:"I like my school.",kr:"우리 학교가 좋아요."},
+     {en:"I like cold milk.",kr:"차가운 우유를 좋아해요."},
+     {en:"I like your idea.",kr:"네 아이디어가 마음에 들어요."},
+     {en:"I like this game.",kr:"이 게임 재미있어요."},
+     {en:"I like sunny days.",kr:"맑은 날을 좋아해요."},
+     {en:"I like my teacher.",kr:"우리 선생님이 좋아요."},
+     {en:"I like green tea.",kr:"녹차를 좋아해요."}]}],
+ "초급":[
+  { name:"I'm going to ~ tonight", gr:"be going to + 동사원형: (오늘 밤) ~할 거예요", tip:"going to는 '고잉투' 대신 '고너'처럼 자연스럽게.",
+    sents:[
+     {en:"I'm going to cook dinner tonight.",kr:"오늘 밤엔 저녁을 요리할 거예요."},
+     {en:"I'm going to watch a movie tonight.",kr:"오늘 밤엔 영화를 볼 거예요."},
+     {en:"I'm going to call my mom tonight.",kr:"오늘 밤엔 엄마에게 전화할 거예요."},
+     {en:"I'm going to clean my room tonight.",kr:"오늘 밤엔 방을 청소할 거예요."},
+     {en:"I'm going to study English tonight.",kr:"오늘 밤엔 영어 공부를 할 거예요."},
+     {en:"I'm going to take a walk tonight.",kr:"오늘 밤엔 산책할 거예요."},
+     {en:"I'm going to meet my friend tonight.",kr:"오늘 밤엔 친구를 만날 거예요."},
+     {en:"I'm going to do my laundry tonight.",kr:"오늘 밤엔 빨래를 할 거예요."},
+     {en:"I'm going to go to bed early tonight.",kr:"오늘 밤엔 일찍 잘 거예요."},
+     {en:"I'm going to order chicken tonight.",kr:"오늘 밤엔 치킨을 시킬 거예요."},
+     {en:"I'm going to read a book tonight.",kr:"오늘 밤엔 책을 읽을 거예요."},
+     {en:"I'm going to stay home tonight.",kr:"오늘 밤엔 집에 있을 거예요."},
+     {en:"I'm going to wash my hair tonight.",kr:"오늘 밤엔 머리를 감을 거예요."}]},
+  { name:"Can I get ~, please?", gr:"Can I get ~?: 주문·요청할 때 쓰는 공손한 표현", tip:"Can I를 '캐나이'로 이어서 발음해요.",
+    sents:[
+     {en:"Can I get a coffee, please?",kr:"커피 한 잔 주시겠어요?"},
+     {en:"Can I get an iced tea, please?",kr:"아이스티 하나 주시겠어요?"},
+     {en:"Can I get a glass of water, please?",kr:"물 한 잔 주시겠어요?"},
+     {en:"Can I get the check, please?",kr:"계산서 좀 주시겠어요?"},
+     {en:"Can I get a small salad, please?",kr:"작은 샐러드 하나 주시겠어요?"},
+     {en:"Can I get a window seat, please?",kr:"창가 자리로 주시겠어요?"},
+     {en:"Can I get a refill, please?",kr:"리필 좀 해주시겠어요?"},
+     {en:"Can I get the menu, please?",kr:"메뉴판 좀 주시겠어요?"},
+     {en:"Can I get a large size, please?",kr:"라지 사이즈로 주시겠어요?"},
+     {en:"Can I get some napkins, please?",kr:"냅킨 좀 주시겠어요?"},
+     {en:"Can I get a receipt, please?",kr:"영수증 주시겠어요?"},
+     {en:"Can I get a bag, please?",kr:"봉투 하나 주시겠어요?"},
+     {en:"Can I get one more spoon, please?",kr:"숟가락 하나 더 주시겠어요?"}]}],
+ "중급":[
+  { name:"I'm thinking about ~ing this weekend", gr:"think about + 동명사: ~할까 생각 중이에요", tip:"thinking about을 '띵킹어바웃'으로 부드럽게 이어요.",
+    sents:[
+     {en:"I'm thinking about going hiking this weekend.",kr:"이번 주말에 등산 갈까 생각 중이에요."},
+     {en:"I'm thinking about trying a new cafe this weekend.",kr:"이번 주말에 새 카페에 가볼까 생각 중이에요."},
+     {en:"I'm thinking about visiting my parents this weekend.",kr:"이번 주말에 부모님 댁에 갈까 생각 중이에요."},
+     {en:"I'm thinking about taking a short trip this weekend.",kr:"이번 주말에 짧은 여행을 갈까 생각 중이에요."},
+     {en:"I'm thinking about cleaning out my closet this weekend.",kr:"이번 주말에 옷장 정리를 할까 생각 중이에요."},
+     {en:"I'm thinking about getting a haircut this weekend.",kr:"이번 주말에 머리를 자를까 생각 중이에요."},
+     {en:"I'm thinking about going camping this weekend.",kr:"이번 주말에 캠핑 갈까 생각 중이에요."},
+     {en:"I'm thinking about watching a musical this weekend.",kr:"이번 주말에 뮤지컬을 볼까 생각 중이에요."},
+     {en:"I'm thinking about staying home and resting this weekend.",kr:"이번 주말엔 집에서 쉴까 생각 중이에요."},
+     {en:"I'm thinking about meeting my old friends this weekend.",kr:"이번 주말에 옛 친구들을 만날까 생각 중이에요."},
+     {en:"I'm thinking about trying that new gym this weekend.",kr:"이번 주말에 그 새 헬스장에 가볼까 생각 중이에요."},
+     {en:"I'm thinking about cooking something special this weekend.",kr:"이번 주말에 특별한 요리를 해볼까 생각 중이에요."},
+     {en:"I'm thinking about learning some baking this weekend.",kr:"이번 주말에 베이킹을 배워볼까 생각 중이에요."}]},
+  { name:"I've been ~ing a lot these days", gr:"현재완료진행(have been -ing): 요즘 계속 ~하고 있어요", tip:"I've been을 '아이브빈'으로 한 호흡에.",
+    sents:[
+     {en:"I've been working out a lot these days.",kr:"요즘 운동을 많이 하고 있어요."},
+     {en:"I've been studying English a lot these days.",kr:"요즘 영어 공부를 많이 하고 있어요."},
+     {en:"I've been drinking too much coffee these days.",kr:"요즘 커피를 너무 많이 마시고 있어요."},
+     {en:"I've been thinking about my future a lot these days.",kr:"요즘 미래에 대해 많이 생각하고 있어요."},
+     {en:"I've been watching cooking shows a lot these days.",kr:"요즘 요리 방송을 많이 보고 있어요."},
+     {en:"I've been eating out a lot these days.",kr:"요즘 외식을 많이 하고 있어요."},
+     {en:"I've been staying up late a lot these days.",kr:"요즘 자주 늦게까지 깨어 있어요."},
+     {en:"I've been listening to podcasts a lot these days.",kr:"요즘 팟캐스트를 많이 듣고 있어요."},
+     {en:"I've been skipping breakfast a lot these days.",kr:"요즘 아침을 자주 걸러요."},
+     {en:"I've been spending time alone a lot these days.",kr:"요즘 혼자 있는 시간이 많아요."},
+     {en:"I've been using my phone too much these days.",kr:"요즘 휴대폰을 너무 많이 봐요."},
+     {en:"I've been walking to work a lot these days.",kr:"요즘 자주 걸어서 출근해요."},
+     {en:"I've been saving money a lot these days.",kr:"요즘 돈을 열심히 모으고 있어요."}]}],
+ "고급":[
+  { name:"If I had more time, I would ~", gr:"가정법 과거(If + 과거, would + 동사원형): 시간이 더 있다면 ~할 텐데", tip:"I would를 '아이우드', would의 l은 묵음이에요.",
+    sents:[
+     {en:"If I had more time, I would travel around Europe.",kr:"시간이 더 있다면 유럽 여행을 다닐 텐데요."},
+     {en:"If I had more time, I would learn to play the piano.",kr:"시간이 더 있다면 피아노를 배울 텐데요."},
+     {en:"If I had more time, I would start my own business.",kr:"시간이 더 있다면 제 사업을 시작할 텐데요."},
+     {en:"If I had more time, I would read more books.",kr:"시간이 더 있다면 책을 더 읽을 텐데요."},
+     {en:"If I had more time, I would spend it with my family.",kr:"시간이 더 있다면 가족과 함께 보낼 텐데요."},
+     {en:"If I had more time, I would study another language.",kr:"시간이 더 있다면 다른 언어를 공부할 텐데요."},
+     {en:"If I had more time, I would volunteer at a shelter.",kr:"시간이 더 있다면 보호소에서 봉사할 텐데요."},
+     {en:"If I had more time, I would write a novel.",kr:"시간이 더 있다면 소설을 쓸 텐데요."},
+     {en:"If I had more time, I would get in better shape.",kr:"시간이 더 있다면 몸을 더 만들 텐데요."},
+     {en:"If I had more time, I would take a photography class.",kr:"시간이 더 있다면 사진 수업을 들을 텐데요."},
+     {en:"If I had more time, I would visit my old friends.",kr:"시간이 더 있다면 옛 친구들을 찾아갈 텐데요."},
+     {en:"If I had more time, I would learn how to cook properly.",kr:"시간이 더 있다면 요리를 제대로 배울 텐데요."},
+     {en:"If I had more time, I would go back to school.",kr:"시간이 더 있다면 다시 공부하러 갈 텐데요."}]},
+  { name:"One of the best decisions I've ever made was to ~", gr:"One of the + 최상급 + 현재완료: 지금까지 한 최고의 결정 중 하나는 ~", tip:"decisions의 강세는 'ci'에, 문장을 두 호흡으로 나눠요.",
+    sents:[
+     {en:"One of the best decisions I've ever made was to start exercising.",kr:"제가 한 최고의 결정 중 하나는 운동을 시작한 거예요."},
+     {en:"One of the best decisions I've ever made was to learn English.",kr:"제가 한 최고의 결정 중 하나는 영어를 배운 거예요."},
+     {en:"One of the best decisions I've ever made was to move to this city.",kr:"제가 한 최고의 결정 중 하나는 이 도시로 이사 온 거예요."},
+     {en:"One of the best decisions I've ever made was to adopt my dog.",kr:"제가 한 최고의 결정 중 하나는 강아지를 입양한 거예요."},
+     {en:"One of the best decisions I've ever made was to quit that job.",kr:"제가 한 최고의 결정 중 하나는 그 일을 그만둔 거예요."},
+     {en:"One of the best decisions I've ever made was to start saving early.",kr:"제가 한 최고의 결정 중 하나는 일찍 저축을 시작한 거예요."},
+     {en:"One of the best decisions I've ever made was to travel alone once.",kr:"제가 한 최고의 결정 중 하나는 한 번 혼자 여행한 거예요."},
+     {en:"One of the best decisions I've ever made was to cut down on sugar.",kr:"제가 한 최고의 결정 중 하나는 설탕을 줄인 거예요."},
+     {en:"One of the best decisions I've ever made was to keep a journal.",kr:"제가 한 최고의 결정 중 하나는 일기를 쓰기 시작한 거예요."},
+     {en:"One of the best decisions I've ever made was to say no more often.",kr:"제가 한 최고의 결정 중 하나는 거절을 더 자주 하게 된 거예요."},
+     {en:"One of the best decisions I've ever made was to wake up earlier.",kr:"제가 한 최고의 결정 중 하나는 더 일찍 일어나는 거예요."},
+     {en:"One of the best decisions I've ever made was to join that study group.",kr:"제가 한 최고의 결정 중 하나는 그 스터디에 들어간 거예요."},
+     {en:"One of the best decisions I've ever made was to trust my instincts.",kr:"제가 한 최고의 결정 중 하나는 제 직감을 믿은 거예요."}]}]
 };
 const TR_CHEER_GOOD = ["완벽에 가까워요! 👏","아주 자연스러웠어요! 🌟","발음이 또렷했어요! 잘했어요 ✨","원어민 같았어요! 계속 이렇게 👍"];
 const TR_CHEER_OK   = ["좋아요, 조금만 더 또박또박! 💪","거의 다 왔어요, 한 번 더 해볼까요? 🙂","점점 자연스러워지고 있어요! 🔥"];
 const TR_CHEER_LOW  = ["천천히 다시 따라 해볼까요? 괜찮아요 🙂","듣고 한 단어씩 끊어 말해봐요 💡","연습하면 금방 늘어요! 다시 도전 💪"];
 
-let trState = { topic:"일상 대화", level:"초급", cur:null, used:[], busy:false };
+const TR_WARMUP = 3, TR_BONUS = 10;   // 워밍업 3문장 → (선택) 보너스 10문장
+let trState = { level:"왕초보", pat:null, order:[], idx:0, phase:"warmup", good:0, cur:null, busy:false, usedPats:[] };
 let trRecog = null, trRecognizing = false;
 
 function renderTrainerHome(){
   Sound.stopBGM();              // 음성에 집중하도록 BGM 끔
-  trState = { topic:"일상 대화", level:"초급", cur:null, used:[], busy:false };
+  trState = { level:trState.level||"왕초보", pat:null, order:[], idx:0, phase:"warmup", good:0, cur:null, busy:false, usedPats:[] };
   $("trLog").innerHTML = "";
   $("trMic").style.display = "none";
   $("trStatus").textContent = "";
   renderTrChips();
   show("trainer");
-  trBot(`안녕하세요! 따라 말하기 트레이너예요. 주제와 난이도를 고른 뒤 <b>시작하기</b>를 누르면, 제가 문장을 한국어로 설명하고 영어로 읽어드릴게요. 그대로 따라 말해보세요 🎤`);
+  trBot(`안녕하세요! 패턴 반복 트레이너예요.<br>제가 <b>같은 패턴의 문장</b>을 단어만 바꿔가며 들려드릴게요. 먼저 <b>3문장</b>을 따라 말하고, 원하면 <b>10문장</b>을 이어서 연습해요 🎤<br><span style="font-size:12.5px;color:#64748b">레벨이 올라갈수록 문장이 길고 복잡해져요.</span>`);
   trSetActions([ mkBtn("▶ 시작하기","next", trStart) ]);
 }
 function renderTrChips(){
-  const tWrap = $("trTopics"); tWrap.innerHTML = "";
-  TR_TOPICS.forEach(t=>{
-    const b = document.createElement("button");
-    b.className = "tr-chip" + (t===trState.topic?" on":"");
-    b.textContent = t; b.onclick = ()=>{ trState.topic=t; renderTrChips(); };
-    tWrap.appendChild(b);
-  });
+  $("trTopics").innerHTML = "";
   const lWrap = $("trLevels"); lWrap.innerHTML = "";
   TR_LEVELS.forEach(l=>{
     const b = document.createElement("button");
     b.className = "tr-chip" + (l===trState.level?" on":"");
-    b.textContent = l; b.onclick = ()=>{ trState.level=l; renderTrChips(); };
+    b.textContent = l; b.onclick = ()=>{ trState.level=l; trState.usedPats=[]; renderTrChips(); };
     lWrap.appendChild(b);
   });
 }
@@ -3195,40 +3211,82 @@ function trMe(html){
   return el;
 }
 
-/* 다음 문장 선택 (내장 모음에서, 최근 반복 회피) */
-function trPick(){
-  const list = (TR_BANK[trState.topic]||{})[trState.level] || [];
-  if(!list.length) return null;
-  let pool = list.filter(x=>!trState.used.includes(x.en));
-  if(!pool.length){ trState.used = trState.used.filter(u=>!list.some(x=>x.en===u)); pool = list; }
-  const it = pool[Math.floor(Math.random()*pool.length)];
-  trState.used.push(it.en);
-  return it;
+/* 패턴 드릴 시작: 레벨에서 패턴 하나 뽑고 13문장 순서 섞기 */
+function trStart(){
+  const pats = TR_PATTERNS[trState.level] || [];
+  if(!pats.length){ trBot("이 레벨의 패턴을 준비 중이에요!"); return; }
+  let pool = pats.filter(p=>!trState.usedPats.includes(p.name));
+  if(!pool.length){ trState.usedPats = []; pool = pats; }
+  const pat = pool[Math.floor(Math.random()*pool.length)];
+  trState.usedPats.push(pat.name);
+  trState.pat = pat;
+  trState.order = vqShuffle(pat.sents.map((_,i)=>i)).slice(0, TR_WARMUP + TR_BONUS);
+  trState.idx = 0; trState.phase = "warmup"; trState.good = 0; trState.cur = null;
+  trSetActions([]);
+  trBot(`오늘의 패턴은 <b>“${escapeHtml(pat.name)}”</b> 예요!<br>📘 ${escapeHtml(pat.gr)}<br>이 틀에서 <b>단어만 바꿔가며 3문장</b>을 연습해볼게요. 준비되셨죠? 💪`);
+  setTimeout(trNextSentence, 600);
 }
 
-function trStart(){ trSetActions([]); trNextSentence(); }
+/* 현재 회차 라벨 (워밍업 n/3, 보너스 n/10) */
+function trCountLabel(){
+  return trState.phase === "warmup"
+    ? `연습 ${trState.idx+1}/${TR_WARMUP}`
+    : `보너스 ${trState.idx-TR_WARMUP+1}/${TR_BONUS}`;
+}
 
 function trNextSentence(){
   $("trMic").style.display = "none"; $("trStatus").textContent = "";
-  const it = trPick();
-  if(!it){ trBot("이 주제·난이도의 문장을 준비 중이에요. 다른 조합을 골라보세요!"); return; }
+  const target = trState.phase === "warmup" ? TR_WARMUP : TR_WARMUP + TR_BONUS;
+  if(trState.idx >= target){
+    if(trState.phase === "warmup") trAskMore(); else trFinish();
+    return;
+  }
+  const pat = trState.pat;
+  const it = pat.sents[trState.order[trState.idx]];
   trState.cur = it;
   const el = trBot(
-    `<div class="kr">${escapeHtml(it.kr)}</div>
+    `<div class="kr">🔁 ${trCountLabel()} · ${escapeHtml(it.kr)}</div>
      <div class="en">${it.en.split(" ").map(w=>`<span class="w">${escapeHtml(w)}</span>`).join(" ")}</div>
-     ${it.tip?`<div class="tip">💡 ${escapeHtml(it.tip)}</div>`:""}
+     ${pat.tip?`<div class="tip">💡 ${escapeHtml(pat.tip)}</div>`:""}
      <button class="listen" type="button">🔊 다시 듣기</button>`);
   el.querySelector(".listen").onclick = ()=> speakText(it.en, 0.9);
   speakText(it.en, 0.9);
   if(SR){
     $("trMic").style.display = ""; $("trStatus").textContent = "마이크를 누르고 따라 말해보세요";
     trSetActions([ mkBtn("🔊 천천히 듣기","show",()=>speakText(it.en,0.7)),
-                   mkBtn("다음 문장 →","ghost",trNextSentence) ]);
+                   mkBtn("건너뛰기 →","ghost",trAdvance) ]);
   } else {
-    $("trStatus").textContent = "이 브라우저는 음성인식을 지원하지 않아요 (Chrome·Edge 권장). 듣고 따라 말한 뒤 다음으로 넘어가세요.";
+    $("trStatus").textContent = "이 브라우저는 음성인식을 지원하지 않아요 (Chrome 권장). 듣고 따라 말한 뒤 다음으로 넘어가세요.";
     trSetActions([ mkBtn("🔊 천천히 듣기","show",()=>speakText(it.en,0.7)),
-                   mkBtn("다음 문장 →","next",trNextSentence) ]);
+                   mkBtn("다음 문장 →","next",trAdvance) ]);
   }
+}
+function trAdvance(){ trState.idx++; trNextSentence(); }
+
+/* 워밍업 3문장 끝 → 10문장 더? (네 / 아니요) */
+function trAskMore(){
+  $("trMic").style.display = "none"; $("trStatus").textContent = "";
+  trBot(`🎉 패턴 <b>“${escapeHtml(trState.pat.name)}”</b> 3문장 연습 완료!<br>같은 패턴으로 <b>10문장 더</b> 말해볼래요?`);
+  trSetActions([
+    mkBtn("👍 네, 10문장 더!","next", ()=>{ trState.phase = "bonus"; trSetActions([]); trNextSentence(); }),
+    mkBtn("아니요, 여기까지 할래요","ghost", trFinish),
+  ]);
+}
+
+/* 드릴 종료 */
+function trFinish(){
+  $("trMic").style.display = "none"; $("trStatus").textContent = "";
+  const done = Math.min(trState.idx, TR_WARMUP + TR_BONUS);
+  const full = trState.phase === "bonus" && trState.idx >= TR_WARMUP + TR_BONUS;
+  if(full){ Sound.fanfare(); Confetti.burst(160); }
+  trBot(`${full ? "🏆 13문장 풀코스 완주! 대단해요!" : "✅ 오늘의 패턴 연습 끝!"}<br>
+     패턴 <b>“${escapeHtml(trState.pat ? trState.pat.name : "")}”</b>로 <b>${done}문장</b>을 말했고, 그중 <b>${trState.good}문장</b>이 80점 이상이었어요 👏<br>
+     같은 문장 틀을 반복하면 입이 기억해요. 내일 또 만나요!`);
+  trSetActions([
+    mkBtn("🔁 새 패턴 시작","next", trStart),
+    mkBtn("난이도 바꾸기","ghost", renderTrainerHome),
+    mkBtn("🏠 홈으로","ghost", ()=>{ if(window.speechSynthesis) window.speechSynthesis.cancel(); renderRootHome(); }),
+  ]);
 }
 
 /* 음성인식 */
@@ -3250,11 +3308,11 @@ $("trMic").onclick = ()=>{
   catch(_){ trRecognizing=false; }
 };
 
-/* 발음/문법 교정 (오프라인 · 규칙 기반) */
+/* 발음 교정 (오프라인 · 규칙 기반) */
 function trEvaluate(alts){
   const it = trState.cur; if(!it) return;
+  const pat = trState.pat || {};
   const tw = norm(it.en).split(" ").filter(Boolean);
-  // 여러 인식 후보 중 가장 잘 맞는 것 선택
   let best = { ratio:-1, hw:[], raw:(alts&&alts[0])||"" };
   (alts||[]).forEach(a=>{
     const hw = norm(a).split(" ").filter(Boolean);
@@ -3266,7 +3324,6 @@ function trEvaluate(alts){
   const score = Math.round(best.ratio*100);
   const good = score>=80;
 
-  // 정확/누락 단어 하이라이트
   const words = it.en.split(" ");
   const pool = [...best.hw]; const missed = [];
   const marks = tw.map((w,i)=>{ const k=pool.indexOf(w); const ok=k>=0; if(ok) pool.splice(k,1); else missed.push(words[i]||w);
@@ -3274,25 +3331,25 @@ function trEvaluate(alts){
   trMe(`<div class="kr">내가 말한 내용 (인식)</div><div class="en">${marks}</div>
         <div class="tip" style="color:#475569">“${escapeHtml(best.raw||'(인식 안 됨)')}”</div>`);
 
-  // 발음 피드백 (누락 단어 + 저장된 발음 팁)
   let pron;
   if(good) pron = "거의 정확했어요! 원어민 억양으로 한 번 더 따라 하면 완벽해요.";
-  else if(missed.length) pron = `‘${missed.slice(0,4).join(", ")}’ 발음이 약하게 들렸어요. ${it.tip||""}`;
-  else pron = `또박또박 한 번 더 말해볼까요? ${it.tip||""}`;
+  else if(missed.length) pron = `‘${missed.slice(0,4).join(", ")}’ 발음이 약하게 들렸어요. ${pat.tip||""}`;
+  else pron = `또박또박 한 번 더 말해볼까요? ${pat.tip||""}`;
   const cheerArr = good ? TR_CHEER_GOOD : score>=50 ? TR_CHEER_OK : TR_CHEER_LOW;
   const enc = cheerArr[Math.floor(Math.random()*cheerArr.length)];
   const col = good?"#16a34a":score>=50?"#f59e0b":"#ef4444";
 
+  if(good) trState.good++;
   trBot(
-    `<div class="score" style="color:${col}">${good?"✅":"🔁"} 정확도 ${score}점</div>
+    `<div class="score" style="color:${col}">${good?"✅":"🔁"} 정확도 ${score}점 · ${trCountLabel()}</div>
      <div class="fbline">🗣️ <b>발음</b> · ${escapeHtml(pron)}</div>
-     <div class="fbline">📘 <b>문법</b> · ${escapeHtml(it.gr||"")}</div>
+     <div class="fbline">📘 <b>패턴</b> · ${escapeHtml(pat.gr||"")}</div>
      <div class="fbline" style="color:#6d28d9">💪 ${escapeHtml(enc)}</div>`);
   if(good){ addXPSafe(10); Sound.fanfare(); } else addXPSafe(3);
   trSetActions([
     mkBtn("🎤 다시 말하기","retry", trRetry),
     mkBtn("🔊 다시 듣기","show", ()=>speakText(it.en,0.85)),
-    mkBtn("다음 문장 →","next", trNextSentence)
+    mkBtn("다음 문장 →","next", trAdvance)
   ]);
 }
 function trRetry(){
@@ -3300,7 +3357,7 @@ function trRetry(){
   $("trMic").style.display = SR ? "" : "none";
   $("trStatus").textContent = SR ? "마이크를 누르고 다시 말해보세요" : "";
   trSetActions([ mkBtn("🔊 다시 듣기","show",()=>speakText(trState.cur.en,0.85)),
-                 mkBtn("다음 문장 →","ghost",trNextSentence) ]);
+                 mkBtn("다음 문장 →","ghost",trAdvance) ]);
 }
 /* 트레이너봇은 단계 state가 없으므로 XP만 누적 */
 function addXPSafe(n){ totalXP += n; persistXP(); }
