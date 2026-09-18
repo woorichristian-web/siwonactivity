@@ -282,9 +282,9 @@
     transition:transform .15s ease, box-shadow .15s ease, filter .15s ease;
     user-select:none;-webkit-user-select:none;font-family:inherit;
   }
-  .lang .flag{font-size:30px;line-height:1}
-  .lang .nm{font-weight:800;font-size:14.5px;letter-spacing:-.2px}
-  .lang .kr{font-size:11.5px;color:rgba(255,255,255,.85);font-weight:500}
+  .lang{padding:24px 8px 20px;gap:6px;justify-content:center}
+  .lang .nm{font-weight:800;font-size:19px;letter-spacing:-.2px}
+  .lang .kr{font-size:12px;color:rgba(255,255,255,.82);font-weight:500}
   .lang:hover{transform:translateY(-3px);box-shadow:0 18px 32px -14px rgba(2,6,23,.6);filter:brightness(1.06)}
   .lang:active{transform:translateY(0)}
   .lang.soon .flag,.lang.soon .nm,.lang.soon .kr{opacity:.9}
@@ -3413,7 +3413,7 @@ function renderLangHome(){
       el.className="lang "+(l.ready?"ready":"soon"); el.type="button"; el.dataset.lang=l.code;
       el.style.setProperty("--c1", l.c1); el.style.setProperty("--c2", l.c2);
       el.innerHTML=`<span class="badge">${l.ready?"OPEN":"준비 중"}</span>
-        <span class="flag">${l.flag}</span><span class="nm">${l.native}</span><span class="kr">${l.kr}</span>`;
+        <span class="nm">${l.kr}</span><span class="kr">${l.native}</span>`;
       wrap.appendChild(el);
     });
   }
