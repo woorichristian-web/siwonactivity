@@ -771,10 +771,10 @@
   <section id="lessonHome" class="card hide">
     <div class="topbar">
       <button class="iconbtn" id="lessonHomeBack" title="뒤로">←</button>
-      <div class="qtag" id="lhTag" style="margin:0">🧠 보카 해머</div>
+      <div class="qtag" id="lhTag" style="margin:0">🧠 어휘 학습</div>
     </div>
     <div class="hero" style="margin-top:6px">
-      <h1 id="lhTitle">보카 해머</h1>
+      <h1 id="lhTitle">어휘 학습</h1>
       <p id="lhDesc">강을 골라 시작하세요.</p>
     </div>
     <div class="courselist" id="lessonRows"></div>
@@ -787,7 +787,7 @@
       <div class="progress"><i id="vqBar"></i></div>
       <div class="qcount"><span id="vqCur">1</span>/<span id="vqTot">10</span></div>
     </div>
-    <div class="tagrow"><span class="qtag" id="vqTag" style="margin:0">📝 보카 퀴즈</span></div>
+    <div class="tagrow"><span class="qtag" id="vqTag" style="margin:0">📝 보카해머 Game</span></div>
     <div id="vqBody"></div>
   </section>
 
@@ -1544,9 +1544,9 @@ const COURSE_ACTIVITIES = {
   "richard-speak1": [
     { key:"frame",  name:"말하기 공식 익히기", icon:"🧩", desc:"프레임 30개 — 예문 10개씩 듣고 따라 말하기",
       c1:"#0ea5e9", c2:"#0369a1", go:()=> renderFrameHome() },
-    { key:"memo",   name:"보카 해머", icon:"🧠", desc:"강별 단어 10개 플래시카드 학습",
+    { key:"memo",   name:"어휘 학습", icon:"🧠", desc:"강별 단어 10개 플래시카드 학습",
       c1:"#059669", c2:"#047857", go:()=> renderLessonHome("memo") },
-    { key:"vquiz",  name:"보카 퀴즈", icon:"📚", desc:"강별 단어 10개 — 5초 스피드 퀴즈",
+    { key:"vquiz",  name:"보카해머 Game", icon:"📚", desc:"강별 단어 10개 — 5초 스피드 퀴즈",
       c1:"#d97706", c2:"#b45309", go:()=> renderLessonHome("quiz") },
     { key:"sent",   name:"문장 만들기", icon:"✍️", desc:"섞인 단어를 탭해서 문장 만들기 (Unscramble)",
       c1:"#4f46e5", c2:"#4338ca", go:()=> renderLessonHome("sent") },
@@ -1832,9 +1832,9 @@ const LESSON_MODES = {
            info:"예문 10개 · 단어 배열(Unscramble)", color:["#4f46e5","#4338ca"], pick:(n)=> startSQuiz(n) },
   shadow:{ tag:"🎤 문장 쉐도잉", title:"문장 쉐도잉", desc:"강을 골라 예문 10개를 원어민처럼 따라 말해보세요.",
            info:"예문 10개 · 발음 비교", color:["#e11d48","#be123c"], pick:(n)=> startShadow(n) },
-  memo:  { tag:"🧠 보카 해머", title:"보카 해머", desc:"강을 골라 단어 10개를 익히고, 마지막에 퀴즈로 확인해요.",
+  memo:  { tag:"🧠 어휘 학습", title:"어휘 학습", desc:"강을 골라 단어 10개를 익히고, 마지막에 퀴즈로 확인해요.",
            info:"단어 10개 암기 → 5초 스피드 퀴즈", color:["#059669","#047857"], pick:(n)=> startVocabLesson(n) },
-  quiz:  { tag:"📚 보카 퀴즈", title:"보카 퀴즈", desc:"강을 골라 단어 10개를 5초 스피드 퀴즈로 확인해요.",
+  quiz:  { tag:"📚 보카해머 Game", title:"보카해머 Game", desc:"강을 골라 단어 10개를 5초 스피드 퀴즈로 확인해요.",
            info:"단어 10개 · 5초 스피드 퀴즈", color:["#d97706","#b45309"], pick:(n)=> startVQuiz(n) },
 };
 let lessonMode = "memo";
@@ -1869,7 +1869,7 @@ $("lessonHomeBack").onclick = ()=> renderModeHome();
 function startVocabLesson(no){
   const L = VOCAB_BANK[no-1];
   renderLearnDeck({
-    tag:"🧠 보카 해머 · "+no+"강",
+    tag:"🧠 어휘 학습 · "+no+"강",
     title: no+"강 어휘 — "+L.frame,
     desc:"카드를 눌러 뜻을 확인하고, 발음을 들어보세요. 마지막 카드 다음엔 퀴즈!",
     items: L.words.map(w=>({en:w.en, kr:w.kr, ex:[[w.exEn, w.exKr]]})),
@@ -1888,7 +1888,7 @@ function startVQuiz(no){
   const L = VOCAB_BANK[no-1];
   vq = { no, words:L.words, order:vqShuffle(L.words.map((_,i)=>i)), i:0, score:0, timer:null, answered:false };
   $("vqTot").textContent = vq.words.length;
-  $("vqTag").textContent = "📝 보카 퀴즈 · " + no + "강";
+  $("vqTag").textContent = "📝 보카해머 Game · " + no + "강";
   show("vquiz");
   vqQuestion();
 }
