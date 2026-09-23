@@ -757,7 +757,7 @@
   <section id="modeHome" class="card hide">
     <div class="topbar">
       <button class="iconbtn" id="modeBack" title="뒤로">←</button>
-      <div class="qtag" style="margin:0">🎮 Quest</div>
+      <div class="qtag" id="modeTag" style="margin:0">🎮 Quest</div>
     </div>
     <span class="spark s1">✦</span><span class="spark s2">⭐</span>
     <div class="hero" style="margin-top:6px">
@@ -1603,6 +1603,7 @@ const COURSE_ACTIVITIES = {
    상위 모드(트랙) 홈
    ========================================================= */
 function renderModeHome(){
+  $("modeTag").textContent = "🎮 Quest";
   $("modeCourseTitle").textContent = curCourse ? curCourse.name : "Quest";
   const wrap = $("modes"); wrap.innerHTML = "";
   const acts = curCourse && COURSE_ACTIVITIES[curCourse.id];
@@ -3256,6 +3257,7 @@ const PREVIEW_ACTS = [
 ];
 function renderPreviewHome(){
   Sound.stopBGM(); setChips(false);
+  $("modeTag").textContent = "📖 예습";
   $("modeCourseTitle").textContent = "예습 · Preview";
   $("modeCourseDesc").textContent = "학습할 활동을 선택하세요.";
   const wrap = $("modes"); wrap.className = "cats"; wrap.innerHTML = "";
