@@ -341,9 +341,22 @@
   #frSen .w.miss{color:#ef4444;text-decoration:underline;text-decoration-style:dotted}
 
   /* ===== 쉐도잉 드릴 문장 단어 색칠 ===== */
-  #shSen .w{font-size:inherit;font-weight:inherit}
-  #shSen .w.ok{color:#16a34a}
-  #shSen .w.miss{color:#ef4444;text-decoration:underline;text-decoration-style:dotted}
+  #shSen .w, #atSen .w{font-size:inherit;font-weight:inherit}
+  #shSen .w.ok, #atSen .w.ok{color:#16a34a}
+  #shSen .w.miss, #atSen .w.miss{color:#ef4444;text-decoration:underline;text-decoration-style:dotted}
+  /* 성취도 평가 (Achievement Test) */
+  .at-sub{text-align:center;color:#64748b;font-size:13.5px;margin:4px 0 10px;font-weight:600}
+  .at-missions{display:flex;flex-direction:column;gap:10px;margin:14px 0 18px}
+  .at-mission{display:flex;gap:12px;align-items:flex-start;background:#f8fafc;border:1px solid #e2e8f0;border-radius:14px;padding:12px 14px;text-align:left}
+  .at-mission .mi{font-size:22px;flex:none}
+  .at-mission .mt{font-weight:800;font-size:14.5px;color:#1e293b}
+  .at-mission .md{font-size:12.5px;color:#64748b;margin-top:2px;line-height:1.5}
+  .at-para{background:#fff;border:1px solid #e2e8f0;border-radius:16px;padding:18px 16px;font-size:16px;line-height:2.5;font-weight:600;color:#334155;text-align:center;margin-top:12px}
+  .at-blank{display:inline-block;width:118px;margin:0 3px;padding:7px 6px;border:2px dashed #a5b4fc;border-radius:10px;font:inherit;font-size:14px;font-weight:800;color:#312e81;text-align:center;background:#eef2ff;outline:none;line-height:1.3}
+  .at-blank::placeholder{color:#a5b4fc;font-weight:600;font-size:12px}
+  .at-blank:focus{border-style:solid;border-color:#6366f1;background:#fff}
+  .at-blank.ok{border-style:solid;border-color:#34d399;background:#ecfdf5;color:#047857}
+  .at-blank.bad{border-style:solid;border-color:#fb7185;background:#fff1f3;color:#be123c}
 
   /* ===== 완료(DONE) 표시 ===== */
   .frnum.done{background:linear-gradient(155deg,#94a3b8,#64748b)!important}
@@ -875,9 +888,20 @@
     </div>
     <div class="hero" style="margin-top:6px">
       <h1>성취도 평가</h1>
-      <p>영역을 골라 실전처럼 풀어보세요.<br>배운 내용을 얼마나 성취했는지 확인해 드려요.</p>
+      <p>5개 강마다 한 번씩! 배운 패턴을 5가지 미션으로 확인해요.</p>
     </div>
     <div class="cats" id="testCats"></div>
+  </section>
+
+  <!-- ============ ACHIEVEMENT TEST (성취도 평가 진행) ============ -->
+  <section id="atest" class="card hide">
+    <div class="topbar">
+      <button class="iconbtn" id="atQuit" title="그만두기">←</button>
+      <div class="progress"><i id="atBar"></i></div>
+      <div class="qcount" id="atStep">준비</div>
+    </div>
+    <div class="tagrow"><span class="qtag" id="atTag" style="margin:0">📋 성취도 평가</span></div>
+    <div id="atBody"></div>
   </section>
 
   <!-- ============ TEST (진행) ============ -->
@@ -2353,7 +2377,7 @@ function flashLocked(node){
 let curScreen = "langHome";
 function show(which){
   curScreen = which;
-  ["langHome","rootHome","courseHome","modeHome","learn","frameHome","framePr","lessonHome","vquiz","squiz","shadowPr","testHome","test","catHome","quiz","speak","trainer","result","testResult"].forEach(s=>$(s).classList.toggle("hide", s!==which));
+  ["langHome","rootHome","courseHome","modeHome","learn","frameHome","framePr","lessonHome","vquiz","squiz","shadowPr","testHome","test","atest","catHome","quiz","speak","trainer","result","testResult"].forEach(s=>$(s).classList.toggle("hide", s!==which));
   $("bottomNav").classList.toggle("hide", which === "langHome" || which === "rootHome");
 }
 
@@ -2362,13 +2386,14 @@ const BACK_MAP = {
   rootHome:"rootBack", courseHome:"courseBack", modeHome:"modeBack", learn:"learnBack",
   frameHome:"frameHomeBack", framePr:"framePrBack", lessonHome:"lessonHomeBack", vquiz:"vqBack",
   squiz:"sqBack", shadowPr:"shadowPrBack",
-  testHome:"testBack", test:"testQuit", catHome:"catBack", quiz:"homeBtn",
+  testHome:"testBack", test:"testQuit", atest:"atQuit", catHome:"catBack", quiz:"homeBtn",
   speak:"speakBack", trainer:"trainerBack", result:"backBtn", testResult:"trBack",
 };
 function navCleanup(){
   try{ if(typeof frStopRecog === "function") frStopRecog(); }catch(e){}
   try{ if(typeof vqStopTimer === "function") vqStopTimer(); }catch(e){}
   try{ if(typeof shStopRecog === "function") shStopRecog(); }catch(e){}
+  try{ if(typeof atStopRecog === "function") atStopRecog(); }catch(e){}
   try{ stopRecog(); }catch(e){}
   try{ if(window.speechSynthesis) window.speechSynthesis.cancel(); }catch(e){}
 }
@@ -3279,35 +3304,28 @@ $("courseBack").onclick = ()=>{ resetStreak(); renderRootHome(); };
 $("modeBack").onclick   = ()=>{ resetStreak(); renderRootHome(); };
 $("testBack").onclick   = ()=>{ resetStreak(); renderRootHome(); };
 
-/* ---------- 테스트 영역 선택 ---------- */
+/* ---------- 성취도 평가 홈: 5개 강 단위 선택 (1~5강 · 6~10강 …) ---------- */
 function renderTestHome(){
   Sound.startBGM();
   const wrap=$("testCats"); wrap.className="cats"; wrap.innerHTML="";
-  const TPAL=[["#3b82f6","#1d4ed8"],["#f59e0b","#b45309"],["#8b5cf6","#6d28d9"]];
-  const order=["grammar","vocab","listen"];
-  order.forEach((dk,i)=>{
-    const t=TESTS[dk]; const col=TPAL[i%TPAL.length];
+  const TPAL=[["#3b82f6","#1d4ed8"],["#8b5cf6","#6d28d9"],["#0d9488","#0f766e"],["#f59e0b","#b45309"],["#db2777","#be185d"],["#4f46e5","#4338ca"]];
+  const units=Math.floor(FRAME_BANK.length/5);
+  for(let u=0; u<units; u++){
+    const from=u*5+1, to=u*5+5;
+    const frames=FRAME_BANK.slice(u*5,u*5+5).map(f=>f.frame);
+    const col=TPAL[u%TPAL.length];
     const el=document.createElement("button");
-    el.className="cat"; el.type="button"; el.dataset.test=dk;
+    el.className="cat"; el.type="button"; el.dataset.unit=u;
     el.style.setProperty("--c1",col[0]); el.style.setProperty("--c2",col[1]);
-    el.innerHTML=`<div class="ic">${t.icon}</div><div class="t">${t.name}</div>
-      <div class="d">${t.items.length}문항 · 성취도 확인</div><div class="best">테스트 시작 →</div>`;
+    el.innerHTML=`<div class="ic">📋</div><div class="t">성취도 평가 · ${from}~${to}강</div>
+      <div class="d">${escapeHtml(frames.slice(0,3).join(" · "))} …</div><div class="best">5가지 미션 →</div>`;
     wrap.appendChild(el);
-  });
-  // 말하기(준비 중)
-  const sp=document.createElement("button");
-  sp.className="cat"; sp.type="button"; sp.dataset.test="speak";
-  sp.style.setProperty("--c1","#94a3b8"); sp.style.setProperty("--c2","#64748b");
-  sp.style.opacity=".7";
-  sp.innerHTML=`<div class="ic">🎤</div><div class="t">말하기</div>
-    <div class="d">곧 준비됩니다</div><div class="best">준비 중</div>`;
-  wrap.appendChild(sp);
+  }
   show("testHome");
 }
 $("testCats").addEventListener("click",(e)=>{
-  const card=e.target.closest(".cat"); if(!card||!card.dataset.test) return;
-  if(card.dataset.test==="speak"){ const b=card.querySelector(".best"); const p=b.textContent; b.textContent="🛠️ 준비 중이에요"; setTimeout(()=>b.textContent=p,1200); return; }
-  startTest(card.dataset.test);
+  const card=e.target.closest(".cat"); if(!card||card.dataset.unit===undefined) return; Sound.ensure();
+  atIntro(parseInt(card.dataset.unit,10));
 });
 
 /* ---------- 테스트 진행 ---------- */
@@ -3408,6 +3426,389 @@ function finishTest(){
 }
 $("trAgain").onclick = ()=> startTest(testState.domain);
 $("trBack").onclick  = ()=> renderTestHome();
+
+/* =========================================================
+   성취도 평가 — 5개 강 단위 패턴 복습 (5가지 미션)
+   미션1 패턴 고르기(4지선다) → 미션2 패턴 채우기(타이핑)
+   → 미션3·4 문장 조합(Unscramble) → 미션5 스피킹(녹음·단어 피드백)
+   ========================================================= */
+function atPrefix(f){ return f.frame.split("~")[0].trim(); }
+function atPickSentence(f){
+  const pre = atPrefix(f).toLowerCase();
+  const cands = [{en:f.repEn, kr:f.repKr}, ...f.items];
+  return cands.find(c=>c.en && c.en.toLowerCase().startsWith(pre)) || cands[1];
+}
+function atExpandAlts(chunk){
+  const base = norm(chunk);
+  const a = [base];
+  [["i'm","i am"],["i've","i have"],["i'll","i will"],["can't","cannot"],["don't","do not"]]
+    .forEach(([c,f])=>{ if(base.includes(c)) a.push(base.replace(c,f)); });
+  return a;
+}
+function atBuildUnit(u){
+  const Ls = FRAME_BANK.slice(u*5, u*5+5);
+  const from=u*5+1, to=u*5+5;
+  const pres = Ls.map(atPrefix);
+
+  // 미션1: 각 강 대표문장의 패턴 부분 빈칸 → 같은 단위의 유사 패턴 4지선다
+  const q1 = Ls.map((f,i)=>{
+    const s = atPickSentence(f);
+    const pre = atPrefix(f);
+    const rest = s.en.slice(pre.length).trim();
+    let opts = shuffleSeeded([...new Set(pres.filter(p=>p!==pre))], u*31+i*7+1).slice(0,3);
+    const pads=["I do","I am to","I will to","I does"];
+    let pi=0; while(opts.length<3 && pi<pads.length){ if(!opts.includes(pads[pi]) && pads[pi]!==pre) opts.push(pads[pi]); pi++; }
+    const a = Math.floor(mulberry32(u*97+i*13+5)()*4);
+    opts.splice(a,0,pre);
+    return { kr:s.kr, q:"___ "+rest, opts, a, en:s.en,
+      exp:`'${f.frame}' 패턴이에요 — ${f.goal} (${f.no}강)` };
+  });
+
+  // 미션2: 5개 패턴 문장을 이은 문단, 패턴 부분을 직접 타이핑
+  const q2parts=[];
+  Ls.forEach((f,i)=>{
+    const s = atPickSentence(f);
+    const pre = atPrefix(f);
+    q2parts.push({ b:pre, alt:atExpandAlts(pre), hint:`${f.no}강 패턴` });
+    q2parts.push({ t:" "+s.en.slice(pre.length).trim()+(i<4?"  ":"") });
+  });
+  const q2 = { parts:q2parts,
+    kr:Ls.map(f=>atPickSentence(f).kr).join(" "),
+    en:Ls.map(f=>atPickSentence(f).en).join(" ") };
+
+  // 미션3: 패턴 2개 조합 / 미션4: 패턴 3개 조합 → 단어 전체 섞어 Unscramble
+  const pick=(li,ii)=>Ls[li].items[ii % Ls[li].items.length];
+  const s3=[pick(0,2), pick(2,4)];
+  const s4=[pick(1,1), pick(3,3), pick(4,5)];
+  const q3={ kr:s3.map(x=>x.kr).join(" "), en:s3.map(x=>x.en).join(" "), n:2,
+    label:`패턴 2개 조합 (${Ls[0].no}강+${Ls[2].no}강)` };
+  const q4={ kr:s4.map(x=>x.kr).join(" "), en:s4.map(x=>x.en).join(" "), n:3,
+    label:`패턴 3개 조합 (${Ls[1].no}강+${Ls[3].no}강+${Ls[4].no}강)` };
+
+  // 미션5: 5개 패턴을 모두 사용한 이어진 스토리 → 한 문장씩 스피킹
+  const q5 = Ls.map(f=>{ const s=atPickSentence(f); return {kr:s.kr, en:s.en, no:f.no}; });
+
+  return { u, from, to, label:`${from}~${to}강`, q1, q2, q3, q4, q5 };
+}
+
+let at = null, atRecogI = null, atRecognizing = false;
+function atStopRecog(){
+  try{ if(atRecogI && atRecognizing) atRecogI.stop(); }catch(e){}
+  atRecognizing = false; Sound.duck(false);
+  const b = document.getElementById("atMic"); if(b) b.classList.remove("rec");
+}
+function atSetTop(step, label){
+  $("atStep").textContent = step ? `미션 ${step}/5` : "준비";
+  $("atBar").style.width = (Math.max(0,step-1)/5*100)+"%";
+  $("atTag").textContent = label || "📋 성취도 평가";
+}
+
+/* ----- 미션 안내 ----- */
+function atIntro(u){
+  atStopRecog();
+  const unit = atBuildUnit(u);
+  at = { unit, i:0, s1:0, s2:0, s3:0, s4:0, s5:[] };
+  Sound.startBGM();
+  atSetTop(0, `📋 성취도 평가 · ${unit.label}`);
+  $("atBody").innerHTML = `
+    <div class="hero" style="margin-top:2px">
+      <h1>성취도 평가 <span style="color:#6366f1">${unit.label}</span></h1>
+      <p>${unit.label}에서 배운 핵심 패턴 5개를<br>다섯 가지 미션으로 확인해요.</p>
+    </div>
+    <div class="at-missions">
+      <div class="at-mission"><div class="mi">🔤</div><div><div class="mt">미션 1 · 패턴 고르기</div><div class="md">한글 뜻을 보고 빈칸에 맞는 패턴을 유사 표현 중에서 골라요 (5문항)</div></div></div>
+      <div class="at-mission"><div class="mi">⌨️</div><div><div class="mt">미션 2 · 패턴 채우기</div><div class="md">다섯 패턴으로 이어진 문단의 빈칸에 패턴을 직접 입력해요 (빈칸 5개)</div></div></div>
+      <div class="at-mission"><div class="mi">🧩</div><div><div class="mt">미션 3 · 문장 조합 ①</div><div class="md">패턴 2개를 이어 만든 한글 문장을 영어 단어 배열로 완성해요</div></div></div>
+      <div class="at-mission"><div class="mi">🧩</div><div><div class="mt">미션 4 · 문장 조합 ②</div><div class="md">패턴 3개 조합 — 세 문장의 단어가 모두 섞여 난이도 UP!</div></div></div>
+      <div class="at-mission"><div class="mi">🎤</div><div><div class="mt">미션 5 · 스피킹 미션</div><div class="md">패턴 5개로 이어진 한글 스토리를 영어로 직접 말해요 — 한 단어라도 틀리면 피드백!</div></div></div>
+    </div>
+    <div style="display:flex;justify-content:center"><button class="vqnext" type="button" id="atStart" style="margin:0">🚀 평가 시작하기</button></div>`;
+  $("atStart").onclick = ()=> atM1();
+  show("atest");
+}
+
+/* ----- 미션1: 패턴 고르기 ----- */
+function atM1(){
+  atSetTop(1, `🔤 미션 1 · 패턴 고르기`);
+  const it = at.unit.q1[at.i];
+  $("atBody").innerHTML = `
+    <div class="at-sub">한글 뜻에 맞게 빈칸에 들어갈 패턴을 고르세요 · ${at.i+1}/5</div>
+    <p class="sentence">${escapeHtml(it.q).replace("___",'<span class="blank">&nbsp;?&nbsp;</span>')}</p>
+    <p class="kr">${escapeHtml(it.kr)}</p>
+    <div class="options" id="atOpts"></div>
+    <div id="atFb"></div>`;
+  const keys=["A","B","C","D"];
+  it.opts.forEach((t,i)=>{
+    const b=document.createElement("button");
+    b.className="opt"; b.type="button";
+    b.innerHTML=`<span class="key">${keys[i]}</span><span>${escapeHtml(t)}</span>`;
+    b.onclick=()=>{
+      Sound.ensure();
+      [...$("atOpts").children].forEach(x=>x.disabled=true);
+      const ok = i===it.a;
+      b.classList.add(ok?"correct":"wrong");
+      [...$("atOpts").children][it.a].classList.add("correct");
+      if(ok){ at.s1++; addXP(10); }
+      $("atFb").innerHTML = `<div class="vqfb ${ok?'good':'bad'}">${ok?'⭕ 정답! (+10 XP)':'❌ 아쉬워요!'} <b>${escapeHtml(it.en)}</b><br>💡 ${escapeHtml(it.exp)}</div>
+        <div style="display:flex;justify-content:center"><button class="vqnext" type="button" id="atN" style="margin-top:14px">${at.i>=4?"미션 2로 →":"다음 →"}</button></div>`;
+      speakText(it.en);
+      $("atN").onclick=()=>{ at.i++; if(at.i>=5) atM2(); else atM1(); };
+    };
+    $("atOpts").appendChild(b);
+  });
+}
+
+/* ----- 미션2: 패턴 채우기 (타이핑) ----- */
+function atM2(){
+  atSetTop(2, `⌨️ 미션 2 · 패턴 채우기`);
+  const q = at.unit.q2;
+  let bi = 0;
+  const html = q.parts.map(p=> p.t!==undefined
+    ? escapeHtml(p.t)
+    : `<input class="at-blank" data-b="${bi++}" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="${escapeHtml(p.hint)}">`).join("");
+  $("atBody").innerHTML = `
+    <div class="at-sub">한글 뜻을 보고 문단의 빈칸에 알맞은 패턴을 직접 입력하세요 · 빈칸 5개</div>
+    <div class="uns-kr" style="font-size:14.5px;line-height:1.7">"${escapeHtml(q.kr)}"</div>
+    <div class="at-para" id="atPara">${html}</div>
+    <div class="uns-status" id="atSt"></div>
+    <div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap;margin-top:14px">
+      <button class="vqreveal" type="button" id="atReveal" style="margin:0">💡 정답 보기</button>
+      <button class="vqnext" type="button" id="atCheck" style="margin:0">✔️ 확인하기</button>
+    </div>
+    <div id="atFb"></div>`;
+  const blanks = q.parts.filter(p=>p.b!==undefined);
+  const inputs = [...$("atPara").querySelectorAll(".at-blank")];
+  let firstCheck = true, solved = false;
+  const finishM2 = (fb)=>{
+    solved = true;
+    $("atCheck").style.display="none"; $("atReveal").style.display="none";
+    $("atFb").innerHTML = fb + `
+      <div style="display:flex;justify-content:center"><button class="vqnext" type="button" id="atN" style="margin-top:14px">미션 3으로 →</button></div>`;
+    $("atN").onclick = ()=> atM3();
+    speakText(q.en);
+  };
+  $("atCheck").onclick = ()=>{
+    if(solved) return; Sound.ensure();
+    let ok=0;
+    inputs.forEach((inp,i)=>{
+      const good = blanks[i].alt.includes(norm(inp.value));
+      inp.classList.toggle("ok", good); inp.classList.toggle("bad", !good);
+      if(good){ inp.disabled = true; ok++; }
+    });
+    if(firstCheck){ at.s2 = ok; firstCheck = false; }
+    if(ok===blanks.length){
+      addXP(at.s2*4);
+      finishM2(`<div class="vqfb good">🎉 문단 완성! 첫 확인에서 ${at.s2}/5 정답 (+${at.s2*4} XP)<br>📌 ${escapeHtml(q.en)}</div>`);
+    } else {
+      const st=$("atSt"); st.className="uns-status bad";
+      st.textContent=`❌ 빨간 빈칸 ${blanks.length-ok}개가 틀렸어요 — 고쳐서 다시 확인해보세요`;
+    }
+  };
+  $("atReveal").onclick = ()=>{
+    if(solved) return;
+    if(firstCheck){ at.s2 = 0; firstCheck = false; }
+    inputs.forEach((inp,i)=>{ inp.value = blanks[i].b; inp.classList.remove("bad"); inp.classList.add("ok"); inp.disabled=true; });
+    $("atSt").className="uns-status"; $("atSt").textContent="";
+    finishM2(`<div class="vqfb info">💡 정답: <b>${escapeHtml(q.en)}</b></div>`);
+  };
+}
+
+/* ----- 미션3·4: 문장 조합 Unscramble ----- */
+function atM3(){ atSetTop(3, `🧩 미션 3 · 문장 조합 ①`); atUns(at.unit.q3, 3); }
+function atM4(){ atSetTop(4, `🧩 미션 4 · 문장 조합 ②`); atUns(at.unit.q4, 4); }
+function atUns(item, mno){
+  const words = item.en.split(" ");
+  const pool = shuffleSeeded(words.map((w,i)=>({w,i})), at.unit.u*53 + mno*17 + words.length);
+  const st = { words, pool, placed:[], mistakes:0, done:false };
+  $("atBody").innerHTML = `
+    <div class="at-sub">${escapeHtml(item.label)} — 문장 ${item.n}개의 단어가 모두 섞여 있어요!</div>
+    <div class="uns-kr">"${escapeHtml(item.kr)}"</div>
+    <div class="uns-krsub">단어를 순서대로 탭해서 영어 문장 ${item.n}개를 이어서 완성하세요</div>
+    <div class="uns-answer" id="atUnsAns"></div>
+    <div class="uns-pool" id="atUnsPool"></div>
+    <div class="uns-status" id="atSt"></div>
+    <button class="vqreveal" type="button" id="atReveal">💡 정답 보기</button>
+    <div id="atFb"></div>`;
+  const finish=(score,fb)=>{
+    st.done=true;
+    if(mno===3) at.s3=score; else at.s4=score;
+    $("atReveal").style.display="none";
+    $("atFb").innerHTML = fb + `
+      <div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap">
+        <button class="vqreveal" type="button" id="atSay" style="margin:14px 0 0">🔊 문장 듣기</button>
+        <button class="vqnext" type="button" id="atN" style="margin:14px 0 0">${mno===3?"미션 4로 →":"미션 5로 →"}</button>
+      </div>`;
+    $("atSay").onclick=()=>speakText(item.en);
+    $("atN").onclick=()=>{ if(mno===3) atM4(); else atM5(0); };
+    speakText(item.en);
+  };
+  function draw(){
+    const ans=$("atUnsAns"), poolEl=$("atUnsPool");
+    ans.innerHTML = st.placed.length
+      ? st.placed.map((pi,pos)=>{
+          const ok = st.pool[pi].w === st.words[pos];
+          return `<button class="wchip ${ok?"ok":"bad"}" type="button" data-placed="${pos}">${escapeHtml(st.pool[pi].w)}</button>`;
+        }).join("")
+      : `<span style="color:#94a3b8;font-size:13.5px">여기에 문장이 만들어져요</span>`;
+    poolEl.innerHTML = st.pool.map((p,pi)=>{
+      const used = st.placed.includes(pi);
+      return `<button class="wchip${used?" used":""}" type="button" data-pool="${pi}">${escapeHtml(p.w)}</button>`;
+    }).join("");
+    const stat=$("atSt");
+    const wrong = st.placed.filter((pi,pos)=>st.pool[pi].w !== st.words[pos]).length;
+    if(wrong){ stat.className="uns-status bad"; stat.textContent="❌ 순서가 틀린 단어가 있어요 — 빨간 단어를 탭해서 빼세요"; }
+    else if(st.placed.length===st.words.length){
+      const perfect = st.mistakes===0;
+      addXP(perfect?20:10);
+      stat.className="uns-status good"; stat.textContent = perfect?"🎉 완벽해요! 한 번에 완성!":"✅ 완성!";
+      finish(perfect?100:70, `<div class="vqfb good">${perfect?"🏆 실수 없이 완성! (+20 XP)":"✅ 문장 완성! (+10 XP)"}<br>📌 ${escapeHtml(item.en)}</div>`);
+      return;
+    }
+    else { stat.className="uns-status"; stat.textContent=""; }
+    poolEl.querySelectorAll(".wchip:not(.used)").forEach(b=>{
+      b.onclick=()=>{ if(st.done) return; Sound.ensure();
+        const pi=parseInt(b.dataset.pool,10); const pos=st.placed.length;
+        if(st.pool[pi].w !== st.words[pos]) st.mistakes++;
+        st.placed.push(pi); draw(); };
+    });
+    ans.querySelectorAll(".wchip").forEach(b=>{
+      b.onclick=()=>{ if(st.done) return; Sound.ensure();
+        st.placed.splice(parseInt(b.dataset.placed,10),1); draw(); };
+    });
+  }
+  $("atReveal").onclick=()=>{
+    if(st.done) return;
+    const usedPi=[];
+    st.placed = st.words.map(w=>{ const pi=st.pool.findIndex((p,idx)=>p.w===w && !usedPi.includes(idx)); usedPi.push(pi); return pi; });
+    st.done=true;
+    $("atUnsAns").innerHTML = st.placed.map(pi=>`<button class="wchip ok" type="button">${escapeHtml(st.pool[pi].w)}</button>`).join("");
+    $("atUnsPool").innerHTML = st.pool.map(p=>`<button class="wchip used" type="button">${escapeHtml(p.w)}</button>`).join("");
+    $("atSt").className="uns-status"; $("atSt").textContent="";
+    finish(30, `<div class="vqfb info">💡 정답: <b>${escapeHtml(item.en)}</b></div>`);
+  };
+  draw();
+}
+
+/* ----- 미션5: 스피킹 미션 ----- */
+function atM5(i){
+  atStopRecog();
+  atSetTop(5, `🎤 미션 5 · 스피킹 미션`);
+  const it = at.unit.q5[i];
+  const last = i>=at.unit.q5.length-1;
+  $("atBody").innerHTML = `
+    <div class="at-sub">패턴 5개로 이어진 스토리 — 한글을 보고 영어로 직접 말해보세요 · ${i+1}/5</div>
+    <div class="vqword">
+      <div class="w" style="font-size:21px;line-height:1.55">${escapeHtml(it.kr)}</div>
+      <div class="sub">${it.no}강 패턴 · 한 단어도 빠짐없이 말해야 통과!</div>
+    </div>
+    <div id="atSen" style="text-align:center;font-size:19px;font-weight:800;line-height:1.6;min-height:30px;margin-top:12px;color:#334155"></div>
+    <div style="display:flex;gap:8px;justify-content:center;margin-top:14px;flex-wrap:wrap">
+      <button class="exbtn mic" type="button" id="atMic">🎤 영어로 말하기</button>
+    </div>
+    <div class="exfb hide" id="atSpFb" style="border-top:none;text-align:center"></div>
+    <div style="display:flex;justify-content:center" id="atNextWrap">
+      <button class="vqreveal" type="button" id="atSkip">${last?"결과 보기 →":"건너뛰기 →"}</button>
+    </div>`;
+  $("atSkip").onclick = ()=>{ atStopRecog(); if(last) atFinish(); else atM5(i+1); };
+  $("atMic").onclick  = ()=>{ Sound.ensure(); atRecord(i); };
+  if(!SR){
+    $("atSpFb").classList.remove("hide");
+    $("atSpFb").innerHTML = `<div class="msg">😥 이 브라우저는 음성 인식을 지원하지 않아요. 크롬(Chrome)에서 열어주세요.<br>🔊 정답을 듣고 따라 말한 뒤 넘어가세요.</div>`;
+    $("atSen").innerHTML = it.en.split(" ").map(w=>`<span class="w">${escapeHtml(w)}</span>`).join(" ");
+    $("atMic").disabled = true;
+  }
+}
+function atRecord(i){
+  if(!SR) return;
+  const fb = $("atSpFb");
+  atStopRecog();
+  if(window.speechSynthesis) window.speechSynthesis.cancel();
+  atRecogI = new SR();
+  atRecogI.lang="en-US"; atRecogI.interimResults=false; atRecogI.maxAlternatives=5;
+  atRecogI.onresult=(e)=>{ const alts=[...e.results[0]].map(r=>r.transcript); atEval(i, alts); };
+  atRecogI.onerror =()=>{ atStopRecog(); fb.classList.remove("hide"); fb.innerHTML=`<div class="msg">인식하지 못했어요. 🎤 버튼을 누르고 다시 또렷하게 말해보세요.</div>`; };
+  atRecogI.onend   =()=>{ atRecognizing=false; Sound.duck(false); const b=document.getElementById("atMic"); if(b) b.classList.remove("rec"); };
+  try{
+    atRecogI.start(); atRecognizing=true; Sound.duck(true);
+    $("atMic").classList.add("rec");
+    fb.classList.remove("hide");
+    fb.innerHTML=`<div class="msg">듣고 있어요... 🎙️ 한글 뜻을 영어로 말해보세요!</div>`;
+  }catch(err){}
+}
+function atEval(i, alts){
+  const it = at.unit.q5[i];
+  const targetWords = norm(it.en).split(" ").filter(Boolean);
+  let best={ratio:-1,heardWords:[],raw:alts[0]||""};
+  alts.forEach(a=>{
+    const hw=norm(a).split(" ").filter(Boolean);
+    const pool=[...hw]; let m=0;
+    targetWords.forEach(w=>{ const k=pool.indexOf(w); if(k>=0){m++; pool.splice(k,1);} });
+    const ratio=targetWords.length?m/targetWords.length:0;
+    if(ratio>best.ratio) best={ratio,heardWords:hw,raw:a};
+  });
+  const acc=Math.round(best.ratio*100);
+  at.s5[i]=Math.max(at.s5[i]||0, acc);
+  const words=it.en.split(" ");
+  const pool=[...best.heardWords];
+  $("atSen").innerHTML = targetWords.map((w,k)=>{
+    const p=pool.indexOf(w); const ok=p>=0; if(ok) pool.splice(p,1);
+    return `<span class="w ${ok?'ok':'miss'}">${escapeHtml(words[k]||w)}</span>`;
+  }).join(" ");
+  const pass = acc===100;
+  if(pass) addXP(15);
+  const fb=$("atSpFb"); fb.classList.remove("hide");
+  fb.innerHTML=`
+    <div class="scoreline" style="justify-content:center">단어 일치율 <span class="pct" style="color:${pass?'#16a34a':acc>=50?'#f59e0b':'#ef4444'}">${acc}%</span>${pass?' <span style="color:#d97706">+15 XP</span>':''}</div>
+    <div class="heardline">내가 말한 것: "${escapeHtml(best.raw)}"</div>
+    <div class="msg">${pass?"🎉 완벽해요! 모든 단어를 정확하게 말했어요.":"❌ <b>빨간 단어</b>가 틀렸거나 빠졌어요 — 🔊 정답을 듣고 다시 말해보세요."}</div>`;
+  const last=i>=at.unit.q5.length-1;
+  $("atNextWrap").innerHTML=`
+    <div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap">
+      <button class="vqreveal" type="button" id="atSpSay" style="margin-top:14px">🔊 정답 듣기</button>
+      <button class="vqreveal" type="button" id="atRetry" style="margin-top:14px">🎤 다시 말하기</button>
+      <button class="vqnext" type="button" id="atN" style="margin-top:14px">${last?"🏁 결과 보기":"다음 문장 →"}</button>
+    </div>`;
+  $("atSpSay").onclick=()=>speakText(it.en);
+  $("atRetry").onclick=()=>atRecord(i);
+  $("atN").onclick=()=>{ atStopRecog(); if(last) atFinish(); else atM5(i+1); };
+}
+
+/* ----- 결과 ----- */
+function atFinish(){
+  atStopRecog();
+  $("atBar").style.width="100%"; $("atStep").textContent="완료";
+  atSetTop; $("atTag").textContent=`📋 성취도 평가 · ${at.unit.label}`;
+  const u=at.unit;
+  const p5 = Math.round(u.q5.reduce((acc,_,i)=>acc+(at.s5[i]||0),0)/u.q5.length);
+  const rows=[
+    {n:"미션1 패턴 고르기", pct:Math.round(at.s1/5*100), sc:`${at.s1}/5`},
+    {n:"미션2 패턴 채우기", pct:Math.round(at.s2/5*100), sc:`${at.s2}/5`},
+    {n:"미션3 문장 조합①", pct:at.s3, sc:at.s3===100?"완벽":at.s3>=70?"완성":at.s3>0?"정답 봄":"-"},
+    {n:"미션4 문장 조합②", pct:at.s4, sc:at.s4===100?"완벽":at.s4>=70?"완성":at.s4>0?"정답 봄":"-"},
+    {n:"미션5 스피킹", pct:p5, sc:p5+"%"},
+  ];
+  const total=Math.round(rows.reduce((a,r)=>a+r.pct,0)/rows.length);
+  const good=total>=80, mid=total>=50;
+  if(good){ Sound.fanfare && Sound.fanfare(); Confetti && Confetti.burst && Confetti.burst(180); }
+  $("atBody").innerHTML=`
+    <div class="vqresult" style="padding-bottom:4px">
+      <div class="big">${good?"🏆":mid?"🎯":"🌱"}</div>
+      <div class="sc">${u.label} 성취도 <b style="color:${good?'#16a34a':mid?'#d97706':'#6366f1'}">${total}%</b></div>
+      <div class="msg2">${good?u.label+" 패턴을 완벽하게 내 것으로 만들었어요!":mid?"잘하고 있어요! 아쉬웠던 미션만 복습하고 다시 도전해봐요.":"괜찮아요! 예습·복습으로 패턴을 다진 뒤 다시 도전해봐요."}</div>
+    </div>
+    <div style="margin:8px 4px 18px" id="atBands"></div>
+    <div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap">
+      <button class="vqreveal" type="button" id="atAgain" style="margin:0">🔁 다시 풀기</button>
+      <button class="vqnext" type="button" id="atHome" style="margin:0">평가 목록으로</button>
+    </div>`;
+  $("atBands").innerHTML = rows.map(r=>`<div class="band reached">
+    <div class="bn" style="width:116px;font-size:12.5px;word-break:keep-all;line-height:1.35">${r.n}</div>
+    <div class="track"><div class="fill" style="width:${r.pct}%;background:linear-gradient(90deg,#6366f1,#4338ca)"></div></div>
+    <div class="sc" style="width:56px">${r.sc}</div></div>`).join("");
+  $("atAgain").onclick=()=>atIntro(u.u);
+  $("atHome").onclick=()=>renderTestHome();
+}
+$("atQuit").onclick = ()=>{ atStopRecog(); if(window.speechSynthesis) window.speechSynthesis.cancel(); renderTestHome(); };
 
 /* ---------- 시작: 언어 선택 없이 시원액티비티 메인부터 ---------- */
 renderRootHome();
