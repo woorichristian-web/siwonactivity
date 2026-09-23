@@ -713,7 +713,7 @@
     <button class="startbtn" id="startBtn" type="button">START</button>
   </section>
 
-  <!-- ============ ROOT HOME = 시원액티비티 메인 (예습 / 복습 / 진단평가) ============ -->
+  <!-- ============ ROOT HOME = 시원액티비티 메인 (예습 / 복습 / 성취도 평가) ============ -->
   <section id="rootHome" class="card hide">
     <span class="spark s1">⭐</span><span class="spark s2">✦</span>
     <span class="spark s3">✦</span><span class="spark s4">⭐</span>
@@ -733,7 +733,7 @@
       </button>
       <button class="cat" type="button" data-root="test" style="--c1:#a78bfa;--c2:#7c3aed">
         <div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="6" y="4" width="12" height="17" rx="2.5"/><path d="M9 4V3.4A1.6 1.6 0 0110.6 1.8h2.8A1.6 1.6 0 0115 3.4V4"/><path d="M8.8 13l2 2 4.2-4.2"/></svg></div>
-        <div class="t">진단평가</div><div class="d">Unit Tests</div>
+        <div class="t">성취도 평가</div><div class="d">Achievement Test</div>
       </button>
     </div>
   </section>
@@ -871,11 +871,11 @@
   <section id="testHome" class="card hide">
     <div class="topbar">
       <button class="iconbtn" id="testBack" title="뒤로">←</button>
-      <div class="qtag" style="margin:0">📋 Test</div>
+      <div class="qtag" style="margin:0">📋 Achievement Test</div>
     </div>
     <div class="hero" style="margin-top:6px">
-      <h1>레벨 테스트</h1>
-      <p>영역을 골라 실전처럼 풀어보세요.<br>결과로 내 레벨을 진단해 드려요.</p>
+      <h1>성취도 평가</h1>
+      <p>영역을 골라 실전처럼 풀어보세요.<br>배운 내용을 얼마나 성취했는지 확인해 드려요.</p>
     </div>
     <div class="cats" id="testCats"></div>
   </section>
@@ -1014,7 +1014,7 @@
   <!-- ============ TEST RESULT (레벨 진단) ============ -->
   <section id="testResult" class="card result hide">
     <div class="big" id="trEmoji">🎯</div>
-    <h2 id="trTitle">레벨 진단 결과</h2>
+    <h2 id="trTitle">성취도 평가 결과</h2>
     <div id="trLevel" style="font-size:30px;font-weight:900;color:var(--blue-d);margin:6px 0"></div>
     <p style="color:var(--muted);margin:0" id="trMsg"></p>
     <div id="trBands" style="margin:18px 0 6px;text-align:left"></div>
@@ -3239,7 +3239,7 @@ $("startBtn").addEventListener("click",()=>{
   else { showToast("먼저 언어를 선택하세요!"); }
 });
 
-/* ---------- 시원액티비티 메인 (예습 / 복습 / 진단평가) ---------- */
+/* ---------- 시원액티비티 메인 (예습 / 복습 / 성취도 평가) ---------- */
 function renderRootHome(){ Sound.stopBGM(); setChips(false); setBrand("📚","시원 액티비티"); show("rootHome"); }
 function renderQuestTracks(){ questMode = true; curCourse = null; setChips(true); renderModeHome(); }
 $("rootCats").addEventListener("click",(e)=>{
@@ -3291,7 +3291,7 @@ function renderTestHome(){
     el.className="cat"; el.type="button"; el.dataset.test=dk;
     el.style.setProperty("--c1",col[0]); el.style.setProperty("--c2",col[1]);
     el.innerHTML=`<div class="ic">${t.icon}</div><div class="t">${t.name}</div>
-      <div class="d">${t.items.length}문항 · 레벨 진단</div><div class="best">테스트 시작 →</div>`;
+      <div class="d">${t.items.length}문항 · 성취도 확인</div><div class="best">테스트 시작 →</div>`;
     wrap.appendChild(el);
   });
   // 말하기(준비 중)
@@ -3384,7 +3384,7 @@ function finishTest(){
 
   Sound.startBGM();
   $("trEmoji").textContent = needsBasics ? "🌱" : (level>=bands ? "🏆" : "🎯");
-  $("trTitle").textContent = `${cfg.icon} ${cfg.name} 레벨 진단`;
+  $("trTitle").textContent = `${cfg.icon} ${cfg.name} 성취도 결과`;
   $("trLevel").innerHTML = `<span class="lvbig" style="background:${col}">${lvName}</span>`;
   let msg;
   if(needsBasics) msg = `기초부터 차근차근 시작해요! 가장 쉬운 밴드부터 탄탄히 다져봐요.`;
