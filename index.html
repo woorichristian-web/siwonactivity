@@ -3608,10 +3608,12 @@ function atBuildUnit(u){
   return { u, from, to, label:`${from}~${to}강`, q1, q2, q3, q4, q5 };
 }
 
-let at = null, atRecogI = null, atRecognizing = false;
+let at = null, atMediaStream = null, atMediaRec = null, atAudioURL = null, atMyAudio = null;
 function atStopRecog(){
-  try{ if(atRecogI && atRecognizing) atRecogI.stop(); }catch(e){}
-  atRecognizing = false; Sound.duck(false);
+  try{ if(atMediaRec && atMediaRec.state === "recording") atMediaRec.stop(); }catch(e){}
+  try{ if(atMyAudio){ atMyAudio.pause(); atMyAudio = null; } }catch(e){}
+  try{ if(atMediaStream){ atMediaStream.getTracks().forEach(t=>t.stop()); atMediaStream = null; } }catch(e){}
+  Sound.duck(false);
   const b = document.getElementById("atMic"); if(b) b.classList.remove("rec");
 }
 function atSetTop(step, label){
@@ -3637,7 +3639,7 @@ function atIntro(u){
       <div class="at-mission"><div class="mi">⌨️</div><div><div class="mt">미션 2 · 패턴 채우기</div><div class="md">다섯 패턴으로 이어진 문단의 빈칸에 패턴을 직접 입력해요 (빈칸 5개)</div></div></div>
       <div class="at-mission"><div class="mi">🧩</div><div><div class="mt">미션 3 · 문장 조합 ①</div><div class="md">패턴 2개를 이어 만든 한글 문장을 영어 단어 배열로 완성해요</div></div></div>
       <div class="at-mission"><div class="mi">🧩</div><div><div class="mt">미션 4 · 문장 조합 ②</div><div class="md">패턴 3개 조합 — 세 문장의 단어가 모두 섞여 난이도 UP!</div></div></div>
-      <div class="at-mission"><div class="mi">🎤</div><div><div class="mt">미션 5 · 스피킹 미션</div><div class="md">패턴 5개로 이어진 한글 스토리를 영어로 직접 말해요 — 한 단어라도 틀리면 피드백!</div></div></div>
+      <div class="at-mission"><div class="mi">🎤</div><div><div class="mt">미션 5 · 스피킹 미션</div><div class="md">원어민 발음을 한 번 듣고 → 직접 녹음하고 → 내 발음을 들어보며 비교해요 (5문장)</div></div></div>
     </div>
     <div style="display:flex;justify-content:center"><button class="vqnext" type="button" id="atStart" style="margin:0">🚀 평가 시작하기</button></div>`;
   $("atStart").onclick = ()=> atM1();
@@ -3806,88 +3808,85 @@ function atUns(item, mno){
   draw();
 }
 
-/* ----- 미션5: 스피킹 미션 ----- */
+/* ----- 미션5: 스피킹 미션 (듣기 → 녹음 → 내 발음 비교) ----- */
 function atM5(i){
   atStopRecog();
   atSetTop(5, `🎤 미션 5 · 스피킹 미션`);
   const it = at.unit.q5[i];
-  const last = i>=at.unit.q5.length-1;
+  const last = i >= at.unit.q5.length-1;
+  at.m5 = { listened:false };
   $("atBody").innerHTML = `
-    <div class="at-sub">패턴 5개로 이어진 스토리 — 한글을 보고 영어로 직접 말해보세요 · ${i+1}/5</div>
+    <div class="at-sub">패턴 스토리 — 듣고 → 녹음하고 → 내 발음 들어보기 · ${i+1}/5</div>
     <div class="vqword">
       <div class="w" style="font-size:21px;line-height:1.55">${escapeHtml(it.kr)}</div>
-      <div class="sub">${it.no}강 패턴 · 한 단어도 빠짐없이 말해야 통과!</div>
+      <div class="sub">${it.no}강 패턴 · 원어민 발음을 듣고 똑같이 따라 말해보세요</div>
     </div>
     <div id="atSen" style="text-align:center;font-size:19px;font-weight:800;line-height:1.6;min-height:30px;margin-top:12px;color:#334155"></div>
     <div style="display:flex;gap:8px;justify-content:center;margin-top:14px;flex-wrap:wrap">
-      <button class="exbtn mic" type="button" id="atMic">🎤 영어로 말하기</button>
+      <button class="exbtn listen" type="button" id="atListen">🔊 ① 영어 듣기</button>
+      <button class="exbtn mic" type="button" id="atMic" disabled style="opacity:.45">🎤 ② 녹음하기</button>
+      <button class="exbtn" type="button" id="atPlayMine" disabled style="opacity:.45">▶️ ③ 내 녹음 듣기</button>
     </div>
     <div class="exfb hide" id="atSpFb" style="border-top:none;text-align:center"></div>
     <div style="display:flex;justify-content:center" id="atNextWrap">
       <button class="vqreveal" type="button" id="atSkip">${last?"결과 보기 →":"건너뛰기 →"}</button>
     </div>`;
   $("atSkip").onclick = ()=>{ atStopRecog(); if(last) atFinish(); else atM5(i+1); };
-  $("atMic").onclick  = ()=>{ Sound.ensure(); atRecord(i); };
-  if(!SR){
-    $("atSpFb").classList.remove("hide");
-    $("atSpFb").innerHTML = `<div class="msg">😥 이 브라우저는 음성 인식을 지원하지 않아요. 크롬(Chrome)에서 열어주세요.<br>🔊 정답을 듣고 따라 말한 뒤 넘어가세요.</div>`;
-    $("atSen").innerHTML = it.en.split(" ").map(w=>`<span class="w">${escapeHtml(w)}</span>`).join(" ");
-    $("atMic").disabled = true;
-  }
+  $("atListen").onclick = ()=>{
+    Sound.ensure(); speakText(it.en);
+    if(!at.m5.listened){
+      at.m5.listened = true;
+      $("atSen").innerHTML = it.en.split(" ").map(w=>`<span class="w">${escapeHtml(w)}</span>`).join(" ");
+      const mic = $("atMic"); mic.disabled = false; mic.style.opacity = "1";
+      const fb = $("atSpFb"); fb.classList.remove("hide");
+      fb.innerHTML = `<div class="msg">잘 들었나요? 이제 🎤 <b>녹음하기</b>를 누르고 따라 말해보세요!</div>`;
+    }
+  };
+  $("atMic").onclick = ()=>{ Sound.ensure(); atRecord(i); };
+  $("atPlayMine").onclick = ()=>{
+    if(!atAudioURL) return;
+    try{ if(atMyAudio) atMyAudio.pause(); atMyAudio = new Audio(atAudioURL); atMyAudio.play(); }catch(e){}
+  };
 }
-function atRecord(i){
-  if(!SR) return;
-  const fb = $("atSpFb");
-  atStopRecog();
-  if(window.speechSynthesis) window.speechSynthesis.cancel();
-  atRecogI = new SR();
-  atRecogI.lang="en-US"; atRecogI.interimResults=false; atRecogI.maxAlternatives=5;
-  atRecogI.onresult=(e)=>{ const alts=[...e.results[0]].map(r=>r.transcript); atEval(i, alts); };
-  atRecogI.onerror =()=>{ atStopRecog(); fb.classList.remove("hide"); fb.innerHTML=`<div class="msg">인식하지 못했어요. 🎤 버튼을 누르고 다시 또렷하게 말해보세요.</div>`; };
-  atRecogI.onend   =()=>{ atRecognizing=false; Sound.duck(false); const b=document.getElementById("atMic"); if(b) b.classList.remove("rec"); };
-  try{
-    atRecogI.start(); atRecognizing=true; Sound.duck(true);
-    $("atMic").classList.add("rec");
-    fb.classList.remove("hide");
-    fb.innerHTML=`<div class="msg">듣고 있어요... 🎙️ 한글 뜻을 영어로 말해보세요!</div>`;
-  }catch(err){}
-}
-function atEval(i, alts){
+async function atRecord(i){
   const it = at.unit.q5[i];
-  const targetWords = norm(it.en).split(" ").filter(Boolean);
-  let best={ratio:-1,heardWords:[],raw:alts[0]||""};
-  alts.forEach(a=>{
-    const hw=norm(a).split(" ").filter(Boolean);
-    const pool=[...hw]; let m=0;
-    targetWords.forEach(w=>{ const k=pool.indexOf(w); if(k>=0){m++; pool.splice(k,1);} });
-    const ratio=targetWords.length?m/targetWords.length:0;
-    if(ratio>best.ratio) best={ratio,heardWords:hw,raw:a};
-  });
-  const acc=Math.round(best.ratio*100);
-  at.s5[i]=Math.max(at.s5[i]||0, acc);
-  const words=it.en.split(" ");
-  const pool=[...best.heardWords];
-  $("atSen").innerHTML = targetWords.map((w,k)=>{
-    const p=pool.indexOf(w); const ok=p>=0; if(ok) pool.splice(p,1);
-    return `<span class="w ${ok?'ok':'miss'}">${escapeHtml(words[k]||w)}</span>`;
-  }).join(" ");
-  const pass = acc===100;
-  if(pass) addXP(15);
-  const fb=$("atSpFb"); fb.classList.remove("hide");
-  fb.innerHTML=`
-    <div class="scoreline" style="justify-content:center">단어 일치율 <span class="pct" style="color:${pass?'#16a34a':acc>=50?'#f59e0b':'#ef4444'}">${acc}%</span>${pass?' <span style="color:#d97706">+15 XP</span>':''}</div>
-    <div class="heardline">내가 말한 것: "${escapeHtml(best.raw)}"</div>
-    <div class="msg">${pass?"🎉 완벽해요! 모든 단어를 정확하게 말했어요.":"❌ <b>빨간 단어</b>가 틀렸거나 빠졌어요 — 🔊 정답을 듣고 다시 말해보세요."}</div>`;
-  const last=i>=at.unit.q5.length-1;
-  $("atNextWrap").innerHTML=`
-    <div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap">
-      <button class="vqreveal" type="button" id="atSpSay" style="margin-top:14px">🔊 정답 듣기</button>
-      <button class="vqreveal" type="button" id="atRetry" style="margin-top:14px">🎤 다시 말하기</button>
-      <button class="vqnext" type="button" id="atN" style="margin-top:14px">${last?"🏁 결과 보기":"다음 문장 →"}</button>
-    </div>`;
-  $("atSpSay").onclick=()=>speakText(it.en);
-  $("atRetry").onclick=()=>atRecord(i);
-  $("atN").onclick=()=>{ atStopRecog(); if(last) atFinish(); else atM5(i+1); };
+  const fb = $("atSpFb"); fb.classList.remove("hide");
+  const mic = $("atMic");
+  if(!(navigator.mediaDevices && navigator.mediaDevices.getUserMedia) || typeof MediaRecorder === "undefined"){
+    fb.innerHTML = `<div class="msg">😥 이 브라우저는 녹음을 지원하지 않아요. 크롬(Chrome)에서 열어주세요.</div>`;
+    return;
+  }
+  if(atMediaRec && atMediaRec.state === "recording"){ atMediaRec.stop(); return; }
+  try{
+    if(window.speechSynthesis) window.speechSynthesis.cancel();
+    if(!atMediaStream) atMediaStream = await navigator.mediaDevices.getUserMedia({ audio:true });
+    const chunks = [];
+    atMediaRec = new MediaRecorder(atMediaStream);
+    atMediaRec.ondataavailable = (e)=>{ if(e.data && e.data.size) chunks.push(e.data); };
+    atMediaRec.onstop = ()=>{
+      Sound.duck(false); mic.classList.remove("rec");
+      mic.innerHTML = "🎤 다시 녹음하기";
+      if(atAudioURL){ try{ URL.revokeObjectURL(atAudioURL); }catch(e){} }
+      atAudioURL = URL.createObjectURL(new Blob(chunks, { type: (atMediaRec && atMediaRec.mimeType) || "audio/webm" }));
+      if(!at.s5[i]) addXP(10);
+      at.s5[i] = 100;   // 녹음 완료 = 미션 수행
+      const play = $("atPlayMine"); if(play){ play.disabled = false; play.style.opacity = "1"; }
+      fb.innerHTML = `<div class="msg">✅ 녹음 완료! ▶️ <b>내 녹음 듣기</b>와 🔊 <b>영어 듣기</b>를 번갈아 들으며<br>원어민 발음과 내 발음을 비교해 보세요.</div>`;
+      const last = i >= at.unit.q5.length-1;
+      $("atNextWrap").innerHTML = `
+        <div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap">
+          <button class="vqnext" type="button" id="atN" style="margin-top:14px">${last?"🏁 결과 보기":"다음 문장 →"}</button>
+        </div>`;
+      $("atN").onclick = ()=>{ atStopRecog(); if(last) atFinish(); else atM5(i+1); };
+    };
+    atMediaRec.start();
+    Sound.duck(true);
+    mic.classList.add("rec");
+    mic.innerHTML = "⏹ 녹음 끝내기";
+    fb.innerHTML = `<div class="msg">🔴 녹음 중... 문장을 말한 뒤 <b>⏹ 녹음 끝내기</b>를 누르세요.</div>`;
+  }catch(err){
+    fb.innerHTML = `<div class="msg">🎙️ 마이크 권한이 필요해요. 브라우저에서 마이크 사용을 허용해 주세요.</div>`;
+  }
 }
 
 /* ----- 결과 ----- */
@@ -3902,7 +3901,7 @@ function atFinish(){
     {n:"미션2 패턴 채우기", pct:Math.round(at.s2/5*100), sc:`${at.s2}/5`},
     {n:"미션3 문장 조합①", pct:at.s3, sc:at.s3===100?"완벽":at.s3>=70?"완성":at.s3>0?"정답 봄":"-"},
     {n:"미션4 문장 조합②", pct:at.s4, sc:at.s4===100?"완벽":at.s4>=70?"완성":at.s4>0?"정답 봄":"-"},
-    {n:"미션5 스피킹", pct:p5, sc:p5+"%"},
+    {n:"미션5 스피킹", pct:p5, sc:`${at.s5.filter(s=>s).length}/5 녹음`},
   ];
   const total=Math.round(rows.reduce((a,r)=>a+r.pct,0)/rows.length);
   const good=total>=80, mid=total>=50;
