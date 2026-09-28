@@ -2508,11 +2508,17 @@ function rshFinish(){
       <div class="sc">${rsh.no}강 복습 완료! · 따라 말한 문장 ${rec}/${n}</div>
       <div class="msg2">${unitEnd ? `${from}~${to}강을 모두 배웠어요 — 성취도 평가로 실력을 확인해봐요!` : "오늘 배운 문장을 모두 복습했어요. 다음 강 예습에서 만나요!"}</div>
       <div class="btns2">
-        <button class="lbtn" type="button" id="rshAgain">🔁 다시 하기</button>
+        <button class="lbtn" type="button" id="rshAgain">🔁 다시 말하기</button>
+        <button class="lbtn" type="button" id="rshReplay">🎬 강의 다시 듣기</button>
+        <button class="lbtn" type="button" id="rshNextPrev">📖 다음 차시 예습</button>
+        <button class="lbtn" type="button" id="rshBot">🤖 챗봇과 대화</button>
       </div>
       ${unitEnd ? `<div class="nextflow"><button class="flowbtn test" type="button" id="rshTest">📋 ${from}~${to}강 성취도 평가 하러 가기 →</button></div>` : ""}
     </div>`;
-  $("rshAgain").onclick = ()=> startReviewShadow(rsh.no);
+  $("rshAgain").onclick    = ()=> startReviewShadow(rsh.no);
+  $("rshReplay").onclick   = ()=> renderPlayer(rsh.no);
+  $("rshNextPrev").onclick = ()=>{ lessonParent = "preview"; startVocabLesson(Math.min(rsh.no + 1, VOCAB_BANK.length)); };
+  $("rshBot").onclick      = ()=> renderTrainerHome();
   if(unitEnd) $("rshTest").onclick = ()=> atIntro(u);
 }
 
