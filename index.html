@@ -901,6 +901,19 @@
     <div id="playerFlow" style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap;margin-top:16px"></div>
   </section>
 
+  <!-- ============ VQ SCORES (차시별 어휘 퀴즈 점수) ============ -->
+  <section id="vqScores" class="card hide">
+    <div class="topbar">
+      <button class="iconbtn" id="vqScoresBack" title="뒤로">←</button>
+      <div class="qtag" style="margin:0">📊 어휘 퀴즈 결과</div>
+    </div>
+    <div class="hero" style="margin-top:6px">
+      <h1>차시별 퀴즈 점수</h1>
+      <p>강별 어휘 퀴즈 최고 점수를 한눈에 확인하고,<br>강을 누르면 바로 다시 풀 수 있어요.</p>
+    </div>
+    <div class="courselist" id="vqScoreRows"></div>
+  </section>
+
   <!-- ============ SHADOW DRILL (문장 쉐도잉) ============ -->
   <section id="shadowPr" class="card hide">
     <div class="topbar">
@@ -2063,6 +2076,7 @@ function vqFinish(){
   markDone("quiz", vq.no);
   $("vqBar").style.width = "100%";
   const n = vq.words.length;
+  saveVQScore(vq.no, vq.score, n);
   const good = vq.score >= 8, mid = vq.score >= 5;
   if(good){ Sound.fanfare && Sound.fanfare(); Confetti && Confetti.burst && Confetti.burst(140); }
   $("vqBody").innerHTML = `
@@ -2072,16 +2086,16 @@ function vqFinish(){
       <div class="msg2">${good ? "완벽해요! 이 강의 단어를 다 외웠어요." : mid ? "잘했어요! 틀린 단어만 카드로 한 번 더 봐요." : "괜찮아요! 단어 카드를 다시 보고 도전해요."}</div>
       <div class="btns2">
         <button class="lbtn" type="button" id="vqAgain">🔁 퀴즈 다시 풀기</button>
-        <button class="lbtn" type="button" id="vqReview">📖 단어 다시 보기</button>
-        <button class="lbtn" type="button" id="vqHome">🏠 홈으로</button>
+        <button class="lbtn" type="button" id="vqAll">📊 결과 전체보기</button>
+        <button class="lbtn" type="button" id="vqHome">🏠 예습 홈가기</button>
       </div>
       <div class="nextflow">
         <button class="flowbtn" type="button" id="vqPlayer">🎬 ${vq.no}강 인강 들으러 가기 →</button>
       </div>
     </div>`;
   $("vqAgain").onclick  = ()=> startVQuiz(vq.no);
-  $("vqReview").onclick = ()=> startVocabLesson(vq.no);
-  $("vqHome").onclick   = ()=> renderRootHome();
+  $("vqAll").onclick    = ()=> renderVQScores();
+  $("vqHome").onclick   = ()=> renderPreviewHome();
   $("vqPlayer").onclick = ()=> renderPlayer(vq.no);
 }
 $("vqBack").onclick = ()=>{ vqStopTimer(); renderLessonHome(); };
@@ -2443,6 +2457,44 @@ $("playerRows").addEventListener("click",(e)=>{
 });
 $("playerBack").onclick = ()=> renderLessonHome("quiz");
 
+/* ---------- 차시별 어휘 퀴즈 점수 (강별 최고 기록) ---------- */
+let vqScores = {};
+try{ vqScores = JSON.parse(localStorage.getItem("gq_vqscores") || "{}") || {}; }catch(e){ vqScores = {}; }
+function saveVQScore(no, score, total){
+  const prev = vqScores[no];
+  if(!prev || score > prev.s){
+    vqScores[no] = { s:score, t:total };
+    try{ localStorage.setItem("gq_vqscores", JSON.stringify(vqScores)); }catch(e){}
+  }
+}
+function renderVQScores(){
+  const wrap = $("vqScoreRows"); wrap.innerHTML = "";
+  VOCAB_BANK.forEach(L=>{
+    const r = vqScores[L.no];
+    const pct = r ? Math.round(r.s / r.t * 100) : 0;
+    const col = pct >= 80 ? "#059669,#047857" : pct >= 50 ? "#d97706,#b45309" : "#e11d48,#be123c";
+    const el = document.createElement("button");
+    el.className = "course"; el.type = "button"; el.dataset.vqs = L.no;
+    el.innerHTML = `
+      <div class="frnum" style="background:linear-gradient(155deg,${r ? col : "#94a3b8,#64748b"})">${L.no}강</div>
+      <div class="cbody">
+        <div class="cname">${escapeHtml(L.frame)}</div>
+        <div class="band" style="margin:6px 0 0">
+          <div class="track"><div class="fill" style="width:${pct}%"></div></div>
+          <div class="sc" style="width:58px">${r ? `${r.s}/${r.t}` : "미응시"}</div>
+        </div>
+      </div>
+      <div class="go">→</div>`;
+    wrap.appendChild(el);
+  });
+  show("vqScores");
+}
+$("vqScoreRows").addEventListener("click",(e)=>{
+  const btn = e.target.closest(".course"); if(!btn) return; Sound.ensure();
+  lessonParent = "preview"; startVQuiz(parseInt(btn.dataset.vqs, 10));
+});
+$("vqScoresBack").onclick = ()=> renderPreviewHome();
+
 /* ---------- 트랙별 징검다리 지도 ---------- */
 const ZIGZAG = [0, 1, 1, 0, -1, -1, 0, 1, 1, 0];   // 좌우 흔들림 패턴
 let trackAlias = null;   // 과정 액티비티에서 진입 시 표시 이름 유지
@@ -2500,7 +2552,7 @@ function flashLocked(node){
 let curScreen = "langHome";
 function show(which){
   curScreen = which;
-  ["langHome","rootHome","courseHome","modeHome","learn","frameHome","framePr","lessonHome","vquiz","squiz","shadowPr","player","testHome","test","atest","catHome","quiz","speak","trainer","result","testResult"].forEach(s=>$(s).classList.toggle("hide", s!==which));
+  ["langHome","rootHome","courseHome","modeHome","learn","frameHome","framePr","lessonHome","vquiz","squiz","shadowPr","player","vqScores","testHome","test","atest","catHome","quiz","speak","trainer","result","testResult"].forEach(s=>$(s).classList.toggle("hide", s!==which));
   $("bottomNav").classList.toggle("hide", which === "langHome" || which === "rootHome");
 }
 
@@ -2508,7 +2560,7 @@ function show(which){
 const BACK_MAP = {
   rootHome:"rootBack", courseHome:"courseBack", modeHome:"modeBack", learn:"learnBack",
   frameHome:"frameHomeBack", framePr:"framePrBack", lessonHome:"lessonHomeBack", vquiz:"vqBack",
-  squiz:"sqBack", shadowPr:"shadowPrBack", player:"playerBack",
+  squiz:"sqBack", shadowPr:"shadowPrBack", player:"playerBack", vqScores:"vqScoresBack",
   testHome:"testBack", test:"testQuit", atest:"atQuit", catHome:"catBack", quiz:"homeBtn",
   speak:"speakBack", trainer:"trainerBack", result:"backBtn", testResult:"trBack",
 };
