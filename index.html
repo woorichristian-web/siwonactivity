@@ -3798,9 +3798,11 @@ function atBuildUnit(u){
   const q4={ kr:s4.map(x=>x.kr).join(" "), en:s4.map(x=>x.en).join(" "), n:3,
     label:`패턴 3개 조합 (${Ls[1].no}강+${Ls[3].no}강+${Ls[4].no}강)` };
 
-  // 미션5: 주제별 프리스피킹 — 원어민 샘플을 듣고 나만의 답변을 녹음
-  const q5 = Ls.map(f=>({ no:f.no, frame:f.frame, goal:f.goal,
-    samples: [{en:f.repEn, kr:f.repKr}, ...f.items.slice(0, 2)] }));
+  // 미션5: 단위 패턴 5개로 이어진 원어민 샘플 이야기(1~5강=자기소개)를 듣고 나만의 이야기를 녹음
+  const q5 = {
+    title: u === 0 ? "나를 소개해 보세요" : `${from}~${to}강 패턴으로 나의 이야기를 말해보세요`,
+    samples: Ls.map(f=>{ const s = atPickSentence(f); return { en:s.en, kr:s.kr, no:f.no, frame:f.frame }; })
+  };
 
   return { u, from, to, label:`${from}~${to}강`, q1, q2, q3, q4, q5 };
 }
@@ -3836,7 +3838,7 @@ function atIntro(u){
       <button class="at-mission" type="button" data-m="2"><div class="mi">⌨️</div><div><div class="mt">미션 2 · 패턴 채우기</div><div class="md">다섯 패턴으로 이어진 문단의 빈칸에 패턴을 직접 입력해요 (빈칸 5개)</div></div><div class="mgo">→</div></button>
       <button class="at-mission" type="button" data-m="3"><div class="mi">🧩</div><div><div class="mt">미션 3 · 문장 조합 ①</div><div class="md">패턴 2개를 이어 만든 한글 문장을 영어 단어 배열로 완성해요</div></div><div class="mgo">→</div></button>
       <button class="at-mission" type="button" data-m="4"><div class="mi">🧩</div><div><div class="mt">미션 4 · 문장 조합 ②</div><div class="md">패턴 3개 조합 — 세 문장의 단어가 모두 섞여 난이도 UP!</div></div><div class="mgo">→</div></button>
-      <button class="at-mission" type="button" data-m="5"><div class="mi">🎤</div><div><div class="mt">미션 5 · 스피킹 미션</div><div class="md">원어민 샘플 문장들을 듣고, 주제에 맞게 나만의 답변을 녹음해 들어봐요 (5주제)</div></div><div class="mgo">→</div></button>
+      <button class="at-mission" type="button" data-m="5"><div class="mi">🎤</div><div><div class="mt">미션 5 · 스피킹 미션</div><div class="md">패턴 5개로 이어진 원어민 샘플(자기소개 5문장)을 듣고, 나만의 소개를 녹음해 들어봐요</div></div><div class="mgo">→</div></button>
     </div>
     <div class="at-sub" style="margin:0 0 12px">미션 카드를 누르면 그 미션부터 바로 시작할 수 있어요</div>
     <div style="display:flex;justify-content:center"><button class="vqnext" type="button" id="atStart" style="margin:0">🚀 처음부터 시작하기</button></div>`;
@@ -4018,55 +4020,57 @@ function atUns(item, mno){
   draw();
 }
 
-/* ----- 미션5: 스피킹 미션 (샘플 듣기 → 나만의 답변 녹음 → 다시 듣기) ----- */
-function atM5(i){
+/* ----- 미션5: 스피킹 미션 (원어민 샘플 이야기 듣기 → 나만의 이야기 녹음 → 다시 듣기) ----- */
+function atM5(){
   atStopRecog();
   atSetTop(5, `🎤 미션 5 · 스피킹 미션`);
-  const it = at.unit.q5[i];
-  const last = i >= at.unit.q5.length-1;
+  const q = at.unit.q5;
   at.m5 = { listened:false };
   $("atBody").innerHTML = `
-    <div class="at-sub" style="font-size:15px;color:#334155">🔊 원어민 샘플을 듣고, 주제에 맞게 <b>나만의 답변</b>을 말해보세요 <span style="color:#94a3b8">· ${i+1}/5</span></div>
+    <div class="at-sub" style="font-size:15px;color:#334155">🔊 원어민 샘플을 듣고, <b>나만의 이야기</b>를 녹음해 보세요</div>
     <div class="vqword">
-      <div class="w" style="font-size:21px;line-height:1.5">${escapeHtml(it.goal)}</div>
-      <div class="sub">'${escapeHtml(it.frame)}' 패턴으로 나만의 문장을 만들어 보세요 (${it.no}강)</div>
+      <div class="w" style="font-size:21px;line-height:1.5">${escapeHtml(q.title)}</div>
+      <div class="sub">${at.unit.label} 패턴 5개를 모두 사용해 말해보세요</div>
     </div>
-    <div class="exlist" style="margin-top:12px">
-      ${it.samples.map((s,k)=>`
-        <div class="exrow" style="display:flex;align-items:center;gap:11px">
+    <div style="display:flex;justify-content:center;margin-top:12px">
+      <button class="exbtn listen" type="button" id="atPlayAll">▶️ 샘플 전체 듣기 (5문장)</button>
+    </div>
+    <div class="exlist" style="margin-top:10px">
+      ${q.samples.map((s,k)=>`
+        <div class="exrow" style="display:flex;align-items:center;gap:11px;padding:11px 14px">
           <button class="exbtn listen" type="button" data-sample="${k}" style="flex:none">🔊</button>
           <div style="min-width:0">
             <div class="sen" style="font-size:15px">${escapeHtml(s.en)}</div>
-            <div class="krline">${escapeHtml(s.kr)}</div>
+            <div class="krline">${escapeHtml(s.kr)} <span style="color:#94a3b8">· ${s.no}강 패턴</span></div>
           </div>
         </div>`).join("")}
     </div>
     <div style="display:flex;gap:8px;justify-content:center;margin-top:14px;flex-wrap:wrap">
-      <button class="exbtn mic" type="button" id="atMic" disabled style="opacity:.45">🎤 나만의 답변 녹음하기</button>
+      <button class="exbtn mic" type="button" id="atMic" disabled style="opacity:.45">🎤 나만의 이야기 녹음하기</button>
     </div>
     <div id="atMineWrap" class="hide" style="margin-top:14px;text-align:center">
-      <div style="font-size:13px;font-weight:700;color:#475569;margin-bottom:6px">▶️ 내 답변 다시 듣기 — 샘플과 비교하며 다듬어 보세요</div>
+      <div style="font-size:13px;font-weight:700;color:#475569;margin-bottom:6px">▶️ 내 이야기 다시 듣기 — 샘플과 비교하며 다듬어 보세요</div>
       <audio id="atMine" controls preload="auto" style="width:100%;max-width:380px;height:42px"></audio>
     </div>
     <div class="exfb hide" id="atSpFb" style="border-top:none;text-align:center"></div>
     <div style="display:flex;justify-content:center" id="atNextWrap">
-      <button class="vqreveal" type="button" id="atSkip">${last?"결과 보기 →":"건너뛰기 →"}</button>
+      <button class="vqreveal" type="button" id="atSkip">결과 보기 →</button>
     </div>`;
-  $("atSkip").onclick = ()=>{ atStopRecog(); if(last) atFinish(); else atM5(i+1); };
+  $("atSkip").onclick = ()=>{ atStopRecog(); atFinish(); };
+  const onListen = ()=>{
+    if(at.m5.listened) return;
+    at.m5.listened = true;
+    const mic = $("atMic"); mic.disabled = false; mic.style.opacity = "1";   // 샘플을 들으면 녹음 활성화
+    const fb = $("atSpFb"); fb.classList.remove("hide");
+    fb.innerHTML = `<div class="msg">샘플처럼 패턴 5개를 이어서 <b>나만의 이야기</b>를 만들어 🎤 녹음해 보세요!</div>`;
+  };
+  $("atPlayAll").onclick = ()=>{ Sound.ensure(); speakText(q.samples.map(s=>s.en).join(" ")); onListen(); };
   $("atBody").querySelectorAll("[data-sample]").forEach(b=>{
-    b.onclick = ()=>{
-      Sound.ensure(); speakText(it.samples[parseInt(b.dataset.sample,10)].en);
-      if(!at.m5.listened){
-        at.m5.listened = true;
-        const mic = $("atMic"); mic.disabled = false; mic.style.opacity = "1";   // 샘플을 들으면 녹음 활성화
-        const fb = $("atSpFb"); fb.classList.remove("hide");
-        fb.innerHTML = `<div class="msg">샘플처럼 '${escapeHtml(it.frame)}' 패턴으로 <b>나만의 답변</b>을 만들어 🎤 녹음해 보세요!</div>`;
-      }
-    };
+    b.onclick = ()=>{ Sound.ensure(); speakText(q.samples[parseInt(b.dataset.sample,10)].en); onListen(); };
   });
-  $("atMic").onclick = ()=>{ Sound.ensure(); atRecord(i); };
+  $("atMic").onclick = ()=>{ Sound.ensure(); atRecord(); };
 }
-async function atRecord(i){
+async function atRecord(){
   const fb = $("atSpFb"); fb.classList.remove("hide");
   const mic = $("atMic");
   if(!(navigator.mediaDevices && navigator.mediaDevices.getUserMedia) || typeof MediaRecorder === "undefined"){
@@ -4084,26 +4088,25 @@ async function atRecord(i){
     atMediaRec.ondataavailable = (e)=>{ if(e.data && e.data.size) chunks.push(e.data); };
     atMediaRec.onstop = ()=>{
       Sound.duck(false); mic.classList.remove("rec");
-      mic.innerHTML = "🎤 답변 다시 녹음하기";
+      mic.innerHTML = "🎤 다시 녹음하기";
       if(atAudioURL){ try{ URL.revokeObjectURL(atAudioURL); }catch(e){} }
       atAudioURL = URL.createObjectURL(new Blob(chunks, { type: (atMediaRec && atMediaRec.mimeType) || "audio/webm" }));
       const au = $("atMine"); if(au) au.src = atAudioURL;
       $("atMineWrap").classList.remove("hide");
-      if(!at.s5[i]) addXP(10);
-      at.s5[i] = 100;   // 답변 녹음 완료 = 미션 수행
-      fb.innerHTML = `<div class="msg">✅ 답변 녹음 완료! 아래 <b>▶️ 재생 버튼</b>으로 내 답변을 듣고,<br>🔊 샘플과 비교하며 다듬어 보세요.</div>`;
-      const last = i >= at.unit.q5.length-1;
+      if(!at.s5[0]) addXP(30);
+      at.s5[0] = 100;   // 나만의 이야기 녹음 완료 = 미션 수행
+      fb.innerHTML = `<div class="msg">✅ 녹음 완료! 아래 <b>▶️ 재생 버튼</b>으로 내 이야기를 듣고,<br>🔊 샘플과 비교하며 다듬어 보세요.</div>`;
       $("atNextWrap").innerHTML = `
         <div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap">
-          <button class="vqnext" type="button" id="atN" style="margin-top:14px">${last?"🏁 결과 보기":"다음 주제 →"}</button>
+          <button class="vqnext" type="button" id="atN" style="margin-top:14px">🏁 결과 보기</button>
         </div>`;
-      $("atN").onclick = ()=>{ atStopRecog(); if(last) atFinish(); else atM5(i+1); };
+      $("atN").onclick = ()=>{ atStopRecog(); atFinish(); };
     };
     atMediaRec.start();
     Sound.duck(true);
     mic.classList.add("rec");
     mic.innerHTML = "⏹ 녹음 끝내기";
-    fb.innerHTML = `<div class="msg">🔴 녹음 중... 나만의 답변을 말한 뒤 <b>⏹ 녹음 끝내기</b>를 누르세요.</div>`;
+    fb.innerHTML = `<div class="msg">🔴 녹음 중... 나만의 이야기를 말한 뒤 <b>⏹ 녹음 끝내기</b>를 누르세요.</div>`;
   }catch(err){
     let inFrame = false; try{ inFrame = window.self !== window.top; }catch(e){ inFrame = true; }
     fb.innerHTML = (err && err.name === "NotAllowedError" && inFrame)
@@ -4118,13 +4121,13 @@ function atFinish(){
   $("atBar").style.width="100%"; $("atStep").textContent="완료";
   atSetTop; $("atTag").textContent=`📋 성취도 평가 · ${at.unit.label}`;
   const u=at.unit;
-  const p5 = Math.round(u.q5.reduce((acc,_,i)=>acc+(at.s5[i]||0),0)/u.q5.length);
+  const p5 = at.s5[0] ? 100 : 0;
   const rows=[
     {n:"미션1 패턴 고르기", pct:Math.round(at.s1/5*100), sc:`${at.s1}/5`},
     {n:"미션2 패턴 채우기", pct:Math.round(at.s2/5*100), sc:`${at.s2}/5`},
     {n:"미션3 문장 조합①", pct:at.s3, sc:at.s3===100?"완벽":at.s3>=70?"완성":at.s3>0?"정답 봄":"-"},
     {n:"미션4 문장 조합②", pct:at.s4, sc:at.s4===100?"완벽":at.s4>=70?"완성":at.s4>0?"정답 봄":"-"},
-    {n:"미션5 스피킹", pct:p5, sc:`${at.s5.filter(s=>s).length}/5 답변`},
+    {n:"미션5 스피킹", pct:p5, sc: at.s5[0] ? "녹음 완료" : "-"},
   ];
   const total=Math.round(rows.reduce((a,r)=>a+r.pct,0)/rows.length);
   const good=total>=80, mid=total>=50;
