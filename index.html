@@ -2399,16 +2399,121 @@ function shFinish(){
   $("shAgain").onclick = ()=> startShadow(sh.no);
   $("shList").onclick  = ()=> renderLessonHome("shadow");
 }
-$("shadowPrBack").onclick = ()=>{ shStopRecog(); renderLessonHome(sh && sh.review ? "sent" : "shadow"); };
+$("shadowPrBack").onclick = ()=>{ shStopRecog(); if(typeof rshStop === "function") rshStop(); renderLessonHome("sent"); };
 
-/* ---------- 복습 2단계: 완성한 문장 듣고 따라 말하기 ---------- */
+/* ---------- 복습 2단계: 완성한 문장 듣고 따라 녹음하기 (듣기 → 녹음 → 내 발음 다시 듣기) ---------- */
+let rsh = null, rshStream = null, rshRec = null, rshURL = null;
+function rshStop(){
+  try{ if(rshRec && rshRec.state === "recording") rshRec.stop(); }catch(e){}
+  try{ const au = document.getElementById("rshMine"); if(au) au.pause(); }catch(e){}
+  try{ if(rshStream){ rshStream.getTracks().forEach(t=>t.stop()); rshStream = null; } }catch(e){}
+  Sound.duck(false);
+  const b = document.getElementById("rshMic"); if(b) b.classList.remove("rec");
+}
 function startReviewShadow(no){
-  const items = SENT_BANK[no-1].items.map(x=>({ en:x.en, kr:x.kr }));
-  sh = { no, items, i:0, scores:[], review:true };
-  $("shTot").textContent = sh.items.length;
+  rsh = { no, items: SENT_BANK[no-1].items.map(x=>({ en:x.en, kr:x.kr })), i:0, done:[] };
+  $("shTot").textContent = rsh.items.length;
   $("shTag").textContent = "🎤 따라 말하기 · " + no + "강";
   show("shadowPr");
-  shQuestion();
+  rshQuestion();
+}
+function rshQuestion(){
+  rshStop();
+  const it = rsh.items[rsh.i];
+  const last = rsh.i >= rsh.items.length - 1;
+  $("shCur").textContent = rsh.i + 1;
+  $("shBar").style.width = (rsh.i / rsh.items.length * 100) + "%";
+  $("shBody").innerHTML = `
+    <div class="at-sub" style="font-size:15px;color:#334155">🔊 원어민 발음을 듣고 똑같이 따라 말해보세요 <span style="color:#94a3b8">· ${rsh.i+1}/${rsh.items.length}</span></div>
+    <div class="vqword">
+      <div class="w" style="font-size:21px;line-height:1.5">${escapeHtml(it.en)}</div>
+      <div class="sub">${escapeHtml(it.kr)}</div>
+    </div>
+    <div style="display:flex;gap:8px;justify-content:center;margin-top:14px;flex-wrap:wrap">
+      <button class="exbtn listen" type="button" id="rshListen">🔊 듣기</button>
+      <button class="exbtn listen" type="button" id="rshSlow">🐢 천천히</button>
+      <button class="exbtn mic" type="button" id="rshMic">🎤 녹음하기</button>
+    </div>
+    <div id="rshMineWrap" class="hide" style="margin-top:14px;text-align:center">
+      <div style="font-size:13px;font-weight:700;color:#475569;margin-bottom:6px">▶️ 내가 말한 문장 다시 듣기 — 원어민 발음과 비교해 보세요</div>
+      <audio id="rshMine" controls preload="auto" style="width:100%;max-width:380px;height:42px"></audio>
+    </div>
+    <div class="exfb hide" id="rshFb" style="border-top:none;text-align:center"></div>
+    <div style="display:flex;justify-content:center" id="rshNextWrap">
+      <button class="vqreveal" type="button" id="rshSkip">${last ? "복습 마치기 →" : "건너뛰기 →"}</button>
+    </div>`;
+  $("rshListen").onclick = ()=>{ Sound.ensure(); speakText(it.en, 0.95); };
+  $("rshSlow").onclick   = ()=>{ Sound.ensure(); speakText(it.en, 0.7); };
+  $("rshMic").onclick    = ()=>{ Sound.ensure(); rshRecord(); };
+  $("rshSkip").onclick   = ()=> rshNext();
+}
+function rshNext(){ rshStop(); if(rsh.i >= rsh.items.length - 1){ rshFinish(); return; } rsh.i++; rshQuestion(); }
+async function rshRecord(){
+  const fb = $("rshFb"); fb.classList.remove("hide");
+  const mic = $("rshMic");
+  if(!(navigator.mediaDevices && navigator.mediaDevices.getUserMedia) || typeof MediaRecorder === "undefined"){
+    fb.innerHTML = window.isSecureContext === false
+      ? `<div class="msg">😥 이 주소에서는 보안 정책상 녹음을 쓸 수 없어요.<br>https 주소(GitHub Pages)에서 열어주세요.</div>`
+      : `<div class="msg">😥 이 브라우저는 녹음을 지원하지 않아요. 크롬(Chrome)에서 열어주세요.</div>`;
+    return;
+  }
+  if(rshRec && rshRec.state === "recording"){ rshRec.stop(); return; }
+  try{
+    if(window.speechSynthesis) window.speechSynthesis.cancel();
+    if(!rshStream) rshStream = await navigator.mediaDevices.getUserMedia({ audio:true });
+    const chunks = [];
+    rshRec = new MediaRecorder(rshStream);
+    rshRec.ondataavailable = (e)=>{ if(e.data && e.data.size) chunks.push(e.data); };
+    rshRec.onstop = ()=>{
+      Sound.duck(false); mic.classList.remove("rec");
+      mic.innerHTML = "🎤 다시 녹음하기";
+      if(rshURL){ try{ URL.revokeObjectURL(rshURL); }catch(e){} }
+      rshURL = URL.createObjectURL(new Blob(chunks, { type: (rshRec && rshRec.mimeType) || "audio/webm" }));
+      const au = $("rshMine"); if(au) au.src = rshURL;
+      $("rshMineWrap").classList.remove("hide");
+      if(!rsh.done[rsh.i]) addXP(10);
+      rsh.done[rsh.i] = 1;
+      fb.innerHTML = `<div class="msg">✅ 녹음 완료! 아래 <b>▶️ 재생 버튼</b>으로 내가 말한 문장을 듣고,<br>🔊 <b>듣기</b>와 번갈아 들으며 비교해 보세요.</div>`;
+      const last = rsh.i >= rsh.items.length - 1;
+      $("rshNextWrap").innerHTML = `
+        <div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap">
+          <button class="vqnext" type="button" id="rshN" style="margin-top:14px">${last ? "🏁 복습 마치기" : "다음 문장 →"}</button>
+        </div>`;
+      $("rshN").onclick = ()=> rshNext();
+    };
+    rshRec.start();
+    Sound.duck(true);
+    mic.classList.add("rec");
+    mic.innerHTML = "⏹ 녹음 끝내기";
+    fb.innerHTML = `<div class="msg">🔴 녹음 중... 문장을 말한 뒤 <b>⏹ 녹음 끝내기</b>를 누르세요.</div>`;
+  }catch(err){
+    let inFrame = false; try{ inFrame = window.self !== window.top; }catch(e){ inFrame = true; }
+    fb.innerHTML = (err && err.name === "NotAllowedError" && inFrame)
+      ? `<div class="msg">😥 이 미리보기 화면(임베드)에서는 브라우저 정책상 마이크를 쓸 수 없어요.<br>크롬 새 탭에서 GitHub Pages 주소로 열면 녹음할 수 있습니다.</div>`
+      : `<div class="msg">🎙️ 마이크 권한이 필요해요. 브라우저 주소창의 마이크 아이콘을 눌러 사용을 허용한 뒤 다시 시도해 주세요.</div>`;
+  }
+}
+function rshFinish(){
+  rshStop();
+  $("shBar").style.width = "100%";
+  const n = rsh.items.length, rec = rsh.done.filter(Boolean).length;
+  if(rec > 0) markDone("shadow", rsh.no);
+  const unitEnd = rsh.no % 5 === 0;
+  const u = Math.floor((rsh.no - 1) / 5), from = u*5+1, to = u*5+5;
+  const good = rec >= 8;
+  if(good){ Sound.fanfare && Sound.fanfare(); Confetti && Confetti.burst && Confetti.burst(140); }
+  $("shBody").innerHTML = `
+    <div class="vqresult">
+      <div class="big">${good ? "🏆" : rec > 0 ? "💪" : "🎧"}</div>
+      <div class="sc">${rsh.no}강 복습 완료! · 따라 말한 문장 ${rec}/${n}</div>
+      <div class="msg2">${unitEnd ? `${from}~${to}강을 모두 배웠어요 — 성취도 평가로 실력을 확인해봐요!` : "오늘 배운 문장을 모두 복습했어요. 다음 강 예습에서 만나요!"}</div>
+      <div class="btns2">
+        <button class="lbtn" type="button" id="rshAgain">🔁 다시 하기</button>
+      </div>
+      ${unitEnd ? `<div class="nextflow"><button class="flowbtn test" type="button" id="rshTest">📋 ${from}~${to}강 성취도 평가 하러 가기 →</button></div>` : ""}
+    </div>`;
+  $("rshAgain").onclick = ()=> startReviewShadow(rsh.no);
+  if(unitEnd) $("rshTest").onclick = ()=> atIntro(u);
 }
 
 /* ---------- 스타플레이어 (인강 차시 목록 · 데모) ---------- */
@@ -2585,6 +2690,7 @@ function navCleanup(){
   try{ if(typeof vqStopTimer === "function") vqStopTimer(); }catch(e){}
   try{ if(typeof shStopRecog === "function") shStopRecog(); }catch(e){}
   try{ if(typeof atStopRecog === "function") atStopRecog(); }catch(e){}
+  try{ if(typeof rshStop === "function") rshStop(); }catch(e){}
   try{ stopRecog(); }catch(e){}
   try{ if(window.speechSynthesis) window.speechSynthesis.cancel(); }catch(e){}
 }
