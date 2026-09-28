@@ -2091,7 +2091,6 @@ function vqFinish(){
       <div class="btns2">
         <button class="lbtn" type="button" id="vqAgain">🔁 퀴즈 다시 풀기</button>
         <button class="lbtn" type="button" id="vqAll">📊 결과 전체보기</button>
-        <button class="lbtn" type="button" id="vqHome">🏠 예습 홈가기</button>
       </div>
       <div class="nextflow">
         <button class="flowbtn" type="button" id="vqPlayer">🎬 ${vq.no}강 인강 들으러 가기 →</button>
@@ -2099,7 +2098,6 @@ function vqFinish(){
     </div>`;
   $("vqAgain").onclick  = ()=> startVQuiz(vq.no);
   $("vqAll").onclick    = ()=> renderVQScores();
-  $("vqHome").onclick   = ()=> renderPreviewHome();
   $("vqPlayer").onclick = ()=> renderPlayer(vq.no);
 }
 $("vqBack").onclick = ()=>{ vqStopTimer(); renderLessonHome(); };
