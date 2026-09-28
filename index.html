@@ -348,6 +348,12 @@
   .at-sub{text-align:center;color:#64748b;font-size:13.5px;margin:4px 0 10px;font-weight:600}
   .at-missions{display:flex;flex-direction:column;gap:10px;margin:14px 0 18px}
   .at-mission{display:flex;gap:12px;align-items:flex-start;background:#f8fafc;border:1px solid #e2e8f0;border-radius:14px;padding:12px 14px;text-align:left}
+  button.at-mission{cursor:pointer;font-family:inherit;width:100%;color:inherit;
+    transition:transform .13s ease, border-color .13s ease, box-shadow .13s ease, background .13s ease}
+  button.at-mission:hover{transform:translateY(-2px);border-color:#c7d2fe;background:#fff;box-shadow:0 10px 20px -14px rgba(2,6,23,.35)}
+  button.at-mission:active{transform:translateY(0)}
+  .at-mission .mgo{margin-left:auto;align-self:center;color:#94a3b8;font-weight:800;font-size:16px;flex:none}
+  button.at-mission:hover .mgo{color:#4f46e5}
   .at-mission .mi{font-size:22px;flex:none}
   .at-mission .mt{font-weight:800;font-size:14.5px;color:#1e293b}
   .at-mission .md{font-size:12.5px;color:#64748b;margin-top:2px;line-height:1.5}
@@ -3635,15 +3641,28 @@ function atIntro(u){
       <p>${unit.label}에서 배운 핵심 패턴 5개를<br>다섯 가지 미션으로 확인해요.</p>
     </div>
     <div class="at-missions">
-      <div class="at-mission"><div class="mi">🔤</div><div><div class="mt">미션 1 · 패턴 고르기</div><div class="md">한글 뜻을 보고 빈칸에 맞는 패턴을 유사 표현 중에서 골라요 (5문항)</div></div></div>
-      <div class="at-mission"><div class="mi">⌨️</div><div><div class="mt">미션 2 · 패턴 채우기</div><div class="md">다섯 패턴으로 이어진 문단의 빈칸에 패턴을 직접 입력해요 (빈칸 5개)</div></div></div>
-      <div class="at-mission"><div class="mi">🧩</div><div><div class="mt">미션 3 · 문장 조합 ①</div><div class="md">패턴 2개를 이어 만든 한글 문장을 영어 단어 배열로 완성해요</div></div></div>
-      <div class="at-mission"><div class="mi">🧩</div><div><div class="mt">미션 4 · 문장 조합 ②</div><div class="md">패턴 3개 조합 — 세 문장의 단어가 모두 섞여 난이도 UP!</div></div></div>
-      <div class="at-mission"><div class="mi">🎤</div><div><div class="mt">미션 5 · 스피킹 미션</div><div class="md">원어민 발음을 한 번 듣고 → 직접 녹음하고 → 내 발음을 들어보며 비교해요 (5문장)</div></div></div>
+      <button class="at-mission" type="button" data-m="1"><div class="mi">🔤</div><div><div class="mt">미션 1 · 패턴 고르기</div><div class="md">한글 뜻을 보고 빈칸에 맞는 패턴을 유사 표현 중에서 골라요 (5문항)</div></div><div class="mgo">→</div></button>
+      <button class="at-mission" type="button" data-m="2"><div class="mi">⌨️</div><div><div class="mt">미션 2 · 패턴 채우기</div><div class="md">다섯 패턴으로 이어진 문단의 빈칸에 패턴을 직접 입력해요 (빈칸 5개)</div></div><div class="mgo">→</div></button>
+      <button class="at-mission" type="button" data-m="3"><div class="mi">🧩</div><div><div class="mt">미션 3 · 문장 조합 ①</div><div class="md">패턴 2개를 이어 만든 한글 문장을 영어 단어 배열로 완성해요</div></div><div class="mgo">→</div></button>
+      <button class="at-mission" type="button" data-m="4"><div class="mi">🧩</div><div><div class="mt">미션 4 · 문장 조합 ②</div><div class="md">패턴 3개 조합 — 세 문장의 단어가 모두 섞여 난이도 UP!</div></div><div class="mgo">→</div></button>
+      <button class="at-mission" type="button" data-m="5"><div class="mi">🎤</div><div><div class="mt">미션 5 · 스피킹 미션</div><div class="md">원어민 발음을 한 번 듣고 → 직접 녹음하고 → 내 발음을 들어보며 비교해요 (5문장)</div></div><div class="mgo">→</div></button>
     </div>
-    <div style="display:flex;justify-content:center"><button class="vqnext" type="button" id="atStart" style="margin:0">🚀 평가 시작하기</button></div>`;
-  $("atStart").onclick = ()=> atM1();
+    <div class="at-sub" style="margin:0 0 12px">미션 카드를 누르면 그 미션부터 바로 시작할 수 있어요</div>
+    <div style="display:flex;justify-content:center"><button class="vqnext" type="button" id="atStart" style="margin:0">🚀 처음부터 시작하기</button></div>`;
+  $("atStart").onclick = ()=> atGo(1);
+  $("atBody").querySelectorAll(".at-mission").forEach(b=>{
+    b.onclick = ()=>{ Sound.ensure(); atGo(parseInt(b.dataset.m,10)); };
+  });
   show("atest");
+}
+
+/* ----- 미션 바로 시작 (중간 미션부터 가능) ----- */
+function atGo(m){
+  if(m===1){ at.i = 0; atM1(); }
+  else if(m===2) atM2();
+  else if(m===3) atM3();
+  else if(m===4) atM4();
+  else atM5(0);
 }
 
 /* ----- 미션1: 패턴 고르기 ----- */
