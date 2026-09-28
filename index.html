@@ -4020,55 +4020,49 @@ function atUns(item, mno){
   draw();
 }
 
-/* ----- 미션5: 스피킹 미션 (원어민 샘플 이야기 듣기 → 나만의 이야기 녹음 → 다시 듣기) ----- */
+/* ----- 미션5: 스피킹 미션 (샘플 문단 듣기 → 녹음 → 나의 스피치 들어보기) ----- */
 function atM5(){
   atStopRecog();
   atSetTop(5, `🎤 미션 5 · 스피킹 미션`);
   const q = at.unit.q5;
   at.m5 = { listened:false };
+  const enPara = q.samples.map(s=>s.en).join(" ");
+  const krPara = q.samples.map(s=>s.kr).join(" ");
   $("atBody").innerHTML = `
     <div class="at-sub" style="font-size:15px;color:#334155">🔊 원어민 샘플을 듣고, <b>나만의 이야기</b>를 녹음해 보세요</div>
-    <div class="vqword">
+    <div class="vqword" style="margin:12px 0 2px">
       <div class="w" style="font-size:21px;line-height:1.5">${escapeHtml(q.title)}</div>
       <div class="sub">${at.unit.label} 패턴 5개를 모두 사용해 말해보세요</div>
     </div>
-    <div style="display:flex;justify-content:center;margin-top:12px">
-      <button class="exbtn listen" type="button" id="atPlayAll">▶️ 샘플 전체 듣기 (5문장)</button>
-    </div>
-    <div class="exlist" style="margin-top:10px">
-      ${q.samples.map((s,k)=>`
-        <div class="exrow" style="display:flex;align-items:center;gap:11px;padding:11px 14px">
-          <button class="exbtn listen" type="button" data-sample="${k}" style="flex:none">🔊</button>
-          <div style="min-width:0">
-            <div class="sen" style="font-size:15px">${escapeHtml(s.en)}</div>
-            <div class="krline">${escapeHtml(s.kr)} <span style="color:#94a3b8">· ${s.no}강 패턴</span></div>
-          </div>
-        </div>`).join("")}
+    <div class="at-para" style="text-align:left;line-height:1.9">
+      <div style="font-size:16.5px;font-weight:700;color:#1e293b">${escapeHtml(enPara)}</div>
+      <div style="font-size:13.5px;font-weight:500;color:#64748b;margin-top:8px;line-height:1.7">${escapeHtml(krPara)}</div>
     </div>
     <div style="display:flex;gap:8px;justify-content:center;margin-top:14px;flex-wrap:wrap">
-      <button class="exbtn mic" type="button" id="atMic" disabled style="opacity:.45">🎤 나만의 이야기 녹음하기</button>
+      <button class="exbtn listen" type="button" id="atListen">🔊 ① 샘플 듣기</button>
+      <button class="exbtn mic" type="button" id="atMic" disabled style="opacity:.45">🎤 ② 녹음하기</button>
+      <button class="exbtn" type="button" id="atPlayMine" disabled style="opacity:.45">▶️ ③ 나의 스피치 들어보기</button>
     </div>
-    <div id="atMineWrap" class="hide" style="margin-top:14px;text-align:center">
-      <div style="font-size:13px;font-weight:700;color:#475569;margin-bottom:6px">▶️ 내 이야기 다시 듣기 — 샘플과 비교하며 다듬어 보세요</div>
-      <audio id="atMine" controls preload="auto" style="width:100%;max-width:380px;height:42px"></audio>
-    </div>
+    <audio id="atMine" preload="auto" style="display:none"></audio>
     <div class="exfb hide" id="atSpFb" style="border-top:none;text-align:center"></div>
     <div style="display:flex;justify-content:center" id="atNextWrap">
       <button class="vqreveal" type="button" id="atSkip">결과 보기 →</button>
     </div>`;
   $("atSkip").onclick = ()=>{ atStopRecog(); atFinish(); };
-  const onListen = ()=>{
-    if(at.m5.listened) return;
-    at.m5.listened = true;
-    const mic = $("atMic"); mic.disabled = false; mic.style.opacity = "1";   // 샘플을 들으면 녹음 활성화
-    const fb = $("atSpFb"); fb.classList.remove("hide");
-    fb.innerHTML = `<div class="msg">샘플처럼 패턴 5개를 이어서 <b>나만의 이야기</b>를 만들어 🎤 녹음해 보세요!</div>`;
+  $("atListen").onclick = ()=>{
+    Sound.ensure(); speakText(enPara);
+    if(!at.m5.listened){
+      at.m5.listened = true;
+      const mic = $("atMic"); mic.disabled = false; mic.style.opacity = "1";   // 샘플을 들으면 녹음 활성화
+      const fb = $("atSpFb"); fb.classList.remove("hide");
+      fb.innerHTML = `<div class="msg">샘플처럼 패턴 5개를 이어서 <b>나만의 문장들</b>을 만들어 🎤 <b>녹음하기</b>를 눌러 말해보세요!</div>`;
+    }
   };
-  $("atPlayAll").onclick = ()=>{ Sound.ensure(); speakText(q.samples.map(s=>s.en).join(" ")); onListen(); };
-  $("atBody").querySelectorAll("[data-sample]").forEach(b=>{
-    b.onclick = ()=>{ Sound.ensure(); speakText(q.samples[parseInt(b.dataset.sample,10)].en); onListen(); };
-  });
   $("atMic").onclick = ()=>{ Sound.ensure(); atRecord(); };
+  $("atPlayMine").onclick = ()=>{
+    const au = $("atMine"); if(!au || !au.src) return;
+    if(au.paused){ au.currentTime = 0; au.play(); } else au.pause();
+  };
 }
 async function atRecord(){
   const fb = $("atSpFb"); fb.classList.remove("hide");
@@ -4088,14 +4082,14 @@ async function atRecord(){
     atMediaRec.ondataavailable = (e)=>{ if(e.data && e.data.size) chunks.push(e.data); };
     atMediaRec.onstop = ()=>{
       Sound.duck(false); mic.classList.remove("rec");
-      mic.innerHTML = "🎤 다시 녹음하기";
+      mic.innerHTML = "🎤 ② 다시 녹음하기";
       if(atAudioURL){ try{ URL.revokeObjectURL(atAudioURL); }catch(e){} }
       atAudioURL = URL.createObjectURL(new Blob(chunks, { type: (atMediaRec && atMediaRec.mimeType) || "audio/webm" }));
       const au = $("atMine"); if(au) au.src = atAudioURL;
-      $("atMineWrap").classList.remove("hide");
+      const play = $("atPlayMine"); if(play){ play.disabled = false; play.style.opacity = "1"; }
       if(!at.s5[0]) addXP(30);
-      at.s5[0] = 100;   // 나만의 이야기 녹음 완료 = 미션 수행
-      fb.innerHTML = `<div class="msg">✅ 녹음 완료! 아래 <b>▶️ 재생 버튼</b>으로 내 이야기를 듣고,<br>🔊 샘플과 비교하며 다듬어 보세요.</div>`;
+      at.s5[0] = 100;   // 나만의 스피치 녹음 완료 = 미션 수행
+      fb.innerHTML = `<div class="msg">✅ 녹음 완료! ▶️ <b>나의 스피치 들어보기</b>로 내 이야기를 듣고,<br>🔊 <b>샘플 듣기</b>와 비교하며 다듬어 보세요.</div>`;
       $("atNextWrap").innerHTML = `
         <div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap">
           <button class="vqnext" type="button" id="atN" style="margin-top:14px">🏁 결과 보기</button>
@@ -4106,7 +4100,7 @@ async function atRecord(){
     Sound.duck(true);
     mic.classList.add("rec");
     mic.innerHTML = "⏹ 녹음 끝내기";
-    fb.innerHTML = `<div class="msg">🔴 녹음 중... 나만의 이야기를 말한 뒤 <b>⏹ 녹음 끝내기</b>를 누르세요.</div>`;
+    fb.innerHTML = `<div class="msg">🔴 녹음 중... 나만의 문장들을 말한 뒤 <b>⏹ 녹음 끝내기</b>를 누르세요.</div>`;
   }catch(err){
     let inFrame = false; try{ inFrame = window.self !== window.top; }catch(e){ inFrame = true; }
     fb.innerHTML = (err && err.name === "NotAllowedError" && inFrame)
