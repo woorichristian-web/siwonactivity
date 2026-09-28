@@ -2136,9 +2136,16 @@ function sqQuestion(){
     <div class="uns-answer" id="unsAns"></div>
     <div class="uns-pool" id="unsPool"></div>
     <div class="uns-status" id="unsStatus"></div>
-    <button class="vqreveal" type="button" id="sqReveal">💡 정답 보기</button>
+    <div id="sqCtl" style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap">
+      <button class="vqreveal" type="button" id="sqReveal" style="margin:14px 0 0">💡 정답 보기</button>
+      <button class="vqreveal" type="button" id="sqSkip" style="margin:14px 0 0">다음 →</button>
+    </div>
     <div id="sqFb"></div>`;
   $("sqReveal").onclick = ()=>{ if(!sq.done) sqReveal(); };
+  $("sqSkip").onclick = ()=>{   // 건너뛰기 = 이 문장은 오답 처리
+    if(sq.done) return; Sound.ensure();
+    sq.i++; if(sq.i >= sq.items.length) sqFinish(); else sqQuestion();
+  };
   sqDraw();
 }
 function sqDraw(){
@@ -2189,7 +2196,7 @@ function sqSolved(){
   const st = $("unsStatus");
   st.className = "uns-status good";
   st.textContent = perfect ? "🎉 완벽해요! 한 번에 완성!" : "✅ 완성!";
-  $("sqReveal").style.display = "none";
+  $("sqCtl").style.display = "none";
   sqShowNext(`<div class="vqfb good">${perfect?"🏆 실수 없이 완성! (+10 XP)":"✅ 문장 완성! (+5 XP)"}<br>📌 ${escapeHtml(it.en)} — ${escapeHtml(it.kr)}</div>`);
   speakText(it.en);
 }
@@ -2206,7 +2213,7 @@ function sqReveal(){
   ans.innerHTML = sq.placed.map(pi=>`<button class="wchip ok" type="button">${escapeHtml(sq.pool[pi].w)}</button>`).join("");
   $("unsPool").innerHTML = sq.pool.map(p=>`<button class="wchip used" type="button">${escapeHtml(p.w)}</button>`).join("");
   $("unsStatus").className = "uns-status"; $("unsStatus").textContent = "";
-  $("sqReveal").style.display = "none";
+  $("sqCtl").style.display = "none";
   sqShowNext(`<div class="vqfb info">💡 정답: <b>${escapeHtml(it.en)}</b> — ${escapeHtml(it.kr)}<br>📗 문법 포인트: ${escapeHtml(sq.tip)}</div>`);
   speakText(it.en);
 }
@@ -2230,7 +2237,7 @@ function sqFinish(){
   $("sqBody").innerHTML = `
     <div class="vqresult">
       <div class="big">${good ? "🏆" : sq.perfect >= 5 ? "💪" : "📖"}</div>
-      <div class="sc">${n}문장 완성 · 한 번에 성공 ${sq.perfect}개</div>
+      <div class="sc">완성 ${sq.solved}/${n} · 한 번에 성공 ${sq.perfect}개</div>
       <div class="msg2">${good ? "완벽해요! 어순 감각이 몸에 뱄어요." : sq.perfect >= 5 ? "잘했어요! 헷갈린 문장만 다시 만들어봐요." : "괜찮아요! 🔊 문장을 들으면서 어순을 익혀봐요."}</div>
       <div class="btns2">
         <button class="lbtn" type="button" id="sqAgain">🔁 다시 풀기</button>
