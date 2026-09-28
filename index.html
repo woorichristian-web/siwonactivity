@@ -3835,10 +3835,10 @@ function atM5(i){
   const last = i >= at.unit.q5.length-1;
   at.m5 = { listened:false };
   $("atBody").innerHTML = `
-    <div class="at-sub">패턴 스토리 — 듣고 → 녹음하고 → 내 발음 들어보기 · ${i+1}/5</div>
+    <div class="at-sub" style="font-size:15px;color:#334155">🔊 원어민 발음을 듣고 똑같이 따라 말해보세요 <span style="color:#94a3b8">· ${i+1}/5</span></div>
     <div class="vqword">
       <div class="w" style="font-size:21px;line-height:1.55">${escapeHtml(it.kr)}</div>
-      <div class="sub">${it.no}강 패턴 · 원어민 발음을 듣고 똑같이 따라 말해보세요</div>
+      <div class="sub">${it.no}강 패턴</div>
     </div>
     <div id="atSen" style="text-align:center;font-size:19px;font-weight:800;line-height:1.6;min-height:30px;margin-top:12px;color:#334155"></div>
     <div style="display:flex;gap:8px;justify-content:center;align-items:center;margin-top:14px;flex-wrap:wrap">
@@ -3871,7 +3871,9 @@ async function atRecord(i){
   const fb = $("atSpFb"); fb.classList.remove("hide");
   const mic = $("atMic");
   if(!(navigator.mediaDevices && navigator.mediaDevices.getUserMedia) || typeof MediaRecorder === "undefined"){
-    fb.innerHTML = `<div class="msg">😥 이 브라우저는 녹음을 지원하지 않아요. 크롬(Chrome)에서 열어주세요.</div>`;
+    fb.innerHTML = window.isSecureContext === false
+      ? `<div class="msg">😥 이 주소에서는 보안 정책상 녹음을 쓸 수 없어요.<br>https 주소(GitHub Pages)에서 열어주세요.</div>`
+      : `<div class="msg">😥 이 브라우저는 녹음을 지원하지 않아요. 크롬(Chrome)에서 열어주세요.</div>`;
     return;
   }
   if(atMediaRec && atMediaRec.state === "recording"){ atMediaRec.stop(); return; }
@@ -3904,7 +3906,10 @@ async function atRecord(i){
     mic.innerHTML = "⏹ 녹음 끝내기";
     fb.innerHTML = `<div class="msg">🔴 녹음 중... 문장을 말한 뒤 <b>⏹ 녹음 끝내기</b>를 누르세요.</div>`;
   }catch(err){
-    fb.innerHTML = `<div class="msg">🎙️ 마이크 권한이 필요해요. 브라우저 주소창의 마이크 아이콘에서 사용을 허용해 주세요.</div>`;
+    let inFrame = false; try{ inFrame = window.self !== window.top; }catch(e){ inFrame = true; }
+    fb.innerHTML = (err && err.name === "NotAllowedError" && inFrame)
+      ? `<div class="msg">😥 이 미리보기 화면(임베드)에서는 브라우저 정책상 마이크를 쓸 수 없어요.<br>크롬 새 탭에서 GitHub Pages 주소로 열면 녹음할 수 있습니다.</div>`
+      : `<div class="msg">🎙️ 마이크 권한이 필요해요. 브라우저 주소창의 마이크 아이콘을 눌러 사용을 허용한 뒤 다시 시도해 주세요.</div>`;
   }
 }
 
